@@ -7,6 +7,7 @@ use crate::contract::errors::{AppError, AppResult, ErrorCode};
 use crate::contract::events::{MenuReadyPayload, OcrStatusPayload, OcrStatusState};
 use crate::contract::types::{RectPhys, SelectionResult, SessionId};
 use crate::events::{emit_menu_ready, emit_ocr_status};
+use crate::platform::capture::FrozenFrame;
 use crate::services::ocr_service;
 
 /// 命令：提交选区 → 返回识别结果；异步触发 `ocr:status(done)` 与 `menu:ready`。
@@ -27,8 +28,42 @@ pub async fn selection_commit(
         );
     }
 
-    // 骨架模式：单条覆盖选区的占位框；文字存在判定使用真实纯逻辑。
-    let scan = ocr_service::placeholder_selection(&rect);
+    // S-02/S-03：优先用「整屏 det 缓存 → 选区过滤 + rec-only」路径（实测 P95 596ms）；
+    // 缓存缺失/无命中时 pipeline 内部回退选区 det+rec（约 1s 级降级）。
+    let (frame_meta, ocr_key) = {
+        let store = state.session.lock();
+        let current = store.current();
+        (
+            current.and_then(|item| item.frame.clone()),
+            current
+                .and_then(|item| item.ocr_session_id.clone())
+                .unwrap_or_else(|| session.as_str().to_string()),
+        )
+    };
+    // 帧左上角为虚拟桌面左上角（绝对物理坐标，可为负）；缓存框为绝对坐标，选区可直接比较。
+    let desktop = crate::services::capture_service::virtual_desktop(&app);
+    let scan = match frame_meta {
+        Some(meta) => {
+            let frame = FrozenFrame {
+                width: meta.width,
+                height: meta.height,
+                data_url: meta.data_url,
+            };
+            state
+                .ocr
+                .recognize_selection(
+                    &ocr_key,
+                    &frame,
+                    &desktop.rect,
+                    &rect,
+                    config.ocr.det_max_edge,
+                    config.ocr.text_threshold,
+                )
+                .await?
+        }
+        // 理论不可达（选区只在冻结帧存在时产生）：退回占位结果，保证命令不因缓存缺失失败。
+        None => ocr_service::placeholder_selection(&rect),
+    };
     let boxes = ocr_service::filter_boxes(&scan.boxes, &rect, config.ocr.text_threshold);
     let has_text = ocr_service::presence(&boxes, &rect, config.ocr.text_threshold);
     let preview = {

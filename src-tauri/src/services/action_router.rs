@@ -106,7 +106,7 @@ impl ActionRouter {
                         engine: "local".to_string(),
                         fallback,
                         kind: TaskKind::Translate,
-                        prompt_key: "translate".to_string(),
+                        prompt_key: translate_prompt_key(config).to_string(),
                     })
                 }
             },
@@ -148,6 +148,26 @@ impl ActionRouter {
         routed.kind = TaskKind::Followup;
         routed.prompt_key = "followup".to_string();
         Ok(routed)
+    }
+}
+
+/// 本地「极小模型」档：这些模型需要用精简翻译提示词（`translate_minimal`）。
+///
+/// S-05 实测（2026-11-05）：Qwen2.5-0.5B-Instruct Q4 用产品 `translate.md` 长提示词时 10/10
+/// 输出中文原文复述；换精简提示词后可以正常翻译（200 字 P95 3.21s）。名单与模型清单
+/// `resources/models.manifest.json` 的 `params.profile = "tiny-local"` 对应。
+pub const TINY_LOCAL_MODEL_IDS: &[&str] = &["qwen2.5-0.5b-instruct-q4", "qwen2.5-1.5b-instruct-q4"];
+
+/// 翻译动作应使用的提示词 key：本地极小模型 → `translate_minimal`，其余 → `translate`。
+pub fn translate_prompt_key(config: &Config) -> &'static str {
+    if config.translate.backend == TranslateBackend::Local
+        && TINY_LOCAL_MODEL_IDS
+            .iter()
+            .any(|id| config.local.model.eq_ignore_ascii_case(id))
+    {
+        "translate_minimal"
+    } else {
+        "translate"
     }
 }
 
@@ -250,6 +270,35 @@ mod tests {
             .resolve(&config, ActionId::Copy, Mode::Quick, false)
             .unwrap_err();
         assert_eq!(error.code, "SA-2002");
+    }
+
+    #[test]
+    fn tiny_local_model_uses_minimal_translate_prompt() {
+        // 云端：始终用产品长提示词。
+        let config = Config::default();
+        assert_eq!(translate_prompt_key(&config), "translate");
+
+        // 本地 + 普通模型（hy-mt）：产品长提示词。
+        let mut config = Config::default();
+        config.translate = TranslatePrefs {
+            backend: TranslateBackend::Local,
+            ..TranslatePrefs::default()
+        };
+        config.local.model = "hy-mt-1.8b-q4".to_string();
+        assert_eq!(translate_prompt_key(&config), "translate");
+
+        // 本地 + 极小模型：精简提示词（S-05 实测避免复述原文）。
+        config.local.model = "qwen2.5-0.5b-instruct-q4".to_string();
+        assert_eq!(translate_prompt_key(&config), "translate_minimal");
+        let routed = router()
+            .resolve(&config, ActionId::Translate, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.prompt_key, "translate_minimal");
+        assert_eq!(routed.engine, "local");
+
+        // 大小写不敏感（配置可能来自用户输入/迁移）。
+        config.local.model = "QWEN2.5-0.5B-INSTRUCT-Q4".to_string();
+        assert_eq!(translate_prompt_key(&config), "translate_minimal");
     }
 
     #[test]

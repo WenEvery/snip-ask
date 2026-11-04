@@ -23,6 +23,8 @@ const STATE_LABELS: Record<DownloadState, string> = {
 
 export interface ModelDownloadListProps {
   selectedModelId: string | null;
+  /** 仅展示该模型（item3 三档「聚焦」对应模型下载）；null 表示展示全部。 */
+  focusModelId?: string | null;
   onSelectModel: (id: string) => void;
   onError: (error: unknown) => void;
 }
@@ -85,11 +87,22 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
   };
 
   if (loading) return <p className="ob-hint">正在读取本地模型清单…</p>;
+  const focusModelId = props.focusModelId ?? null;
+  const visibleModels = focusModelId
+    ? models.filter((model) => model.id === focusModelId)
+    : models;
   if (models.length === 0) return <p className="ob-hint">未找到可下载模型（骨架模式下清单为空时属正常）。</p>;
+  if (visibleModels.length === 0) {
+    return (
+      <p className="ob-hint">
+        模型清单中暂未找到 {focusModelId}（清单更新后可用）；也可以先继续，稍后在设置 → 翻译中下载。
+      </p>
+    );
+  }
 
   return (
     <div className="ob-models">
-      {models.map((model) => {
+      {visibleModels.map((model) => {
         const state = states[model.id] ?? model.downloadState;
         const installed = state === "installed" || model.installed;
         const active = state === "queued" || state === "downloading" || state === "verifying";

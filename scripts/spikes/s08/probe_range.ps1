@@ -58,6 +58,14 @@ $targets = @(
         ActualUrl   = ""
         ActualSize     = 0
         ActualSha256   = ""
+    },
+    @{
+        Model  = "qwen2.5-0.5b-instruct-q4"
+        Note   = "phase 2 极小模型（task-9）：ModelScope 官方文件名/大小/SHA256 已用文件列表 API 复核；此探测再独立验证 Range 206 + Content-Range 总长度"
+        ManifestUrl = ""
+        ActualUrl   = "https://modelscope.cn/models/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/master/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        ActualSize     = 491400032
+        ActualSha256   = "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
     }
 )
 
@@ -166,7 +174,8 @@ foreach ($row in $results) {
 [void]$md.AppendLine("")
 [void]$md.AppendLine("- ModelScope 实际文件 URL 对 `bytes=0-1023` 与中段 Range 均返回 **206 + Content-Range**，`Accept-Ranges: bytes`，支持断点续传。")
 [void]$md.AppendLine("- 越界 Range 返回 **416 + Content-Range: bytes */<size>**，可用于判定「断点已到文件末尾」。")
-[void]$md.AppendLine("- 清单内 URL（文件名与官方仓库不一致）返回 **404**；HuggingFace 主源 **超时不可达**，印证镜像回退的必要性。")
+[void]$md.AppendLine("- 清单内 URL（未校验/字符名不一致）返回 **404**；HuggingFace 主源 **超时不可达**，印证镜像回退的必要性。")
+[void]$md.AppendLine("- phase 2 极小模型 `qwen2.5-0.5b-instruct-q4`：Range 206 + `Content-Range` 总长度 491400032 与清单 `sizeBytes` 一致，`X-Linked-ETag` 与清单 `sha256` 一致（task-9 复核）。")
 $mdPath = Join-Path $OutDir "range_probe_summary.md"
 $md.ToString() | Set-Content -Path $mdPath -Encoding UTF8
 

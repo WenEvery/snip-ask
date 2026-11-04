@@ -157,11 +157,14 @@ class HttpClient:
                 resp = conn.getresponse()
                 t_first = time.perf_counter()
                 if stream:
-                    text, usage, first_token_ms = self._read_sse(resp, t_req)
+                    text, usage, first_token_ms, stream_total_ms = self._read_sse(
+                        resp, t_req
+                    )
                     raw = text
                 else:
                     raw_bytes = resp.read()
                     t_done = time.perf_counter()
+                    stream_total_ms = (t_done - t_req) * 1000.0
                     raw = raw_bytes.decode("utf-8", "replace")
                 if resp.will_close:
                     self.new_connection = True
@@ -173,10 +176,9 @@ class HttpClient:
                     "connect_ms": connect_ms,
                     "send_ms": (t_sent - t_req) * 1000.0,
                     "first_byte_ms": (t_first - t_req) * 1000.0,
-                    "total_ms": (
-                        first_token_ms if stream else (t_done - t_req) * 1000.0
-                    ),
+                    "total_ms": stream_total_ms,
                     "first_token_ms": first_token_ms if stream else None,
+                    "usage": usage if stream else None,
                     "reconnect_count": reconnects,
                 }
             except (
@@ -197,8 +199,8 @@ class HttpClient:
     @staticmethod
     def _read_sse(
         resp: http.client.HTTPResponse, t_req: float
-    ) -> Tuple[str, Optional[Dict[str, Any]], float]:
-        """读取 SSE 流，返回完整文本、usage 与首 token 延时（ms）。"""
+    ) -> Tuple[str, Optional[Dict[str, Any]], float, float]:
+        """读取 SSE 流，返回完整文本、usage、首 token 延时与流结束总耗时（ms）。"""
         chunks: List[str] = []
         usage: Optional[Dict[str, Any]] = None
         first_token_ms: Optional[float] = None
@@ -225,9 +227,10 @@ class HttpClient:
                     if first_token_ms is None:
                         first_token_ms = (time.perf_counter() - t_req) * 1000.0
                     chunks.append(content)
+        total_ms = (time.perf_counter() - t_req) * 1000.0
         if first_token_ms is None:
-            first_token_ms = (time.perf_counter() - t_req) * 1000.0
-        return "".join(chunks), usage, first_token_ms
+            first_token_ms = total_ms
+        return "".join(chunks), usage, first_token_ms, total_ms
 
 
 # --------------------------------------------------------------------------- #
@@ -365,6 +368,9 @@ def run_benchmark(
         "stream": stream,
     }
     payload.update(extra)
+    if stream:
+        # 让兼容端点返回 usage（OpenAI/DeepSeek 均支持；不支持时静默忽略）
+        payload.setdefault("stream_options", {"include_usage": True})
 
     client = HttpClient(base_url, timeout=timeout, keep_alive=True)
     records: List[Dict[str, Any]] = []
@@ -385,18 +391,24 @@ def run_benchmark(
                 "status": None,
             }
         if res["status"] == 200:
-            try:
-                obj = json.loads(res["raw"])
-            except json.JSONDecodeError:
-                obj = None
             content = ""
             usage = None
-            if obj is not None:
-                content = (
-                    ((obj.get("choices") or [{}])[0].get("message") or {}).get("content")
-                    or ""
-                )
-                usage = obj.get("usage")
+            if res["stream"]:
+                content = res["raw"]
+                usage = res.get("usage")
+            else:
+                try:
+                    obj = json.loads(res["raw"])
+                except json.JSONDecodeError:
+                    obj = None
+                if obj is not None:
+                    content = (
+                        ((obj.get("choices") or [{}])[0].get("message") or {}).get(
+                            "content"
+                        )
+                        or ""
+                    )
+                    usage = obj.get("usage")
             return {
                 "run": label,
                 "ok": True,
@@ -456,6 +468,26 @@ def run_benchmark(
         (r.get("usage") or {}).get("total_tokens", 0) for r in measured
     )
 
+    total_sum = summarize(total_ms)
+    fb_sum = summarize(fb_ms)
+    ttft_vals = [
+        r["first_token_ms"] for r in measured if r.get("first_token_ms") is not None
+    ]
+    ttft_sum = summarize(ttft_vals)
+    if mock:
+        verdicts = {"ttft": "MOCK_SELF_CHECK_OK", "total": "MOCK_SELF_CHECK_OK"}
+    elif measured:
+        verdicts = {
+            "ttft": "DONE"
+            if (ttft_sum.get("p95_ms") is not None and ttft_sum["p95_ms"] <= THRESHOLD_MS)
+            else "FAILED",
+            "total": "DONE"
+            if (total_sum.get("p95_ms") is not None and total_sum["p95_ms"] <= THRESHOLD_MS)
+            else "FAILED",
+        }
+    else:
+        verdicts = {"ttft": "BLOCKED", "total": "BLOCKED"}
+
     result: Dict[str, Any] = {
         "meta": collect_meta(mock),
         "config": {
@@ -471,6 +503,11 @@ def run_benchmark(
             "prompt_chars": len(prompt),
             "extra_params": sorted(extra.keys()),
             "api_key_provided": bool(api_key),
+            "calibers": {
+                "ttft_threshold_ms": THRESHOLD_MS,
+                "total_threshold_ms": THRESHOLD_MS,
+                "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。",
+            },
         },
         "records": records,
         "summary": {
@@ -478,8 +515,10 @@ def run_benchmark(
             "failures": failures,
             "failure_rate": round(failures / runs, 4) if runs else None,
             "http_status_distribution": statuses,
-            "total_ms": summarize(total_ms),
-            "first_byte_ms": summarize(fb_ms),
+            "total_ms": total_sum,
+            "first_byte_ms": fb_sum,
+            "first_token_ms": ttft_sum,
+            "verdicts": verdicts,
             "usage_total_tokens_all_runs": usage_total,
             "first_failure": first_failure,
         },
@@ -502,7 +541,11 @@ def print_report(result: Dict[str, Any]) -> None:
     print(f"样例：{meta['sample_len_chars']} 字（prompt {cfg['prompt_chars']} 字符）")
     print(f"运行：warmup={cfg['warmup']} + measured={cfg['runs']}  阈值 P95 ≤ {meta['threshold_ms']:.0f}ms")
     print("-" * 74)
-    for label, key in (("总耗时", "total_ms"), ("首字节", "first_byte_ms")):
+    for label, key in (
+        ("总耗时", "total_ms"),
+        ("首字节", "first_byte_ms"),
+        ("首 token (TTFT)", "first_token_ms"),
+    ):
         st = s.get(key) or {}
         if st.get("count"):
             print(
@@ -512,17 +555,15 @@ def print_report(result: Dict[str, Any]) -> None:
     print(f"HTTP 状态分布：{s['http_status_distribution']}  失败率：{s['failure_rate']}")
     if s.get("first_failure"):
         print(f"首个失败：{json.dumps(s['first_failure'], ensure_ascii=False)[:300]}")
-    verdict = "UNKNOWN"
-    if s["measured_runs"] > 0:
-        p95 = (s["total_ms"] or {}).get("p95_ms")
-        if p95 is not None:
-            if meta["mode"] == "MOCK_SELF_TEST":
-                # mock 自检永远不给出 DONE/FAILED 验收结论
-                verdict = "MOCK_SELF_CHECK_OK"
-                print(f"判定：{verdict}（mock 数据 P95 {p95:.1f}ms，仅验证框架，不得作为 DONE 依据）")
-            else:
-                verdict = "DONE" if p95 <= meta["threshold_ms"] else "FAILED"
-                print(f"判定：{verdict}（P95 {p95:.1f}ms vs 阈值 {meta['threshold_ms']:.0f}ms）")
+    if meta["mode"] == "MOCK_SELF_TEST":
+        print("判定：MOCK_SELF_CHECK_OK（mock 数据仅验证框架，不得作为 DONE 依据）")
+    elif s["measured_runs"] > 0:
+        v = s["verdicts"]
+        th = meta["threshold_ms"]
+        print(
+            f"判定（首 token ≤{th:.0f}ms）：{v['ttft']}；"
+            f"判定（总耗时 ≤{th:.0f}ms）：{v['total']}"
+        )
     print("=" * 74)
 
 

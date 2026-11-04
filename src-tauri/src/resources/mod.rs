@@ -15,6 +15,11 @@ pub const PROMPT_IMAGE_SEARCH: &str = include_str!("../../../resources/prompts/i
 /// 翻译提示词（变量 `{text}` `{targetLang}` `{sourceLang}` `{glossary}`；只输出译文）。
 pub const PROMPT_TRANSLATE: &str = include_str!("../../../resources/prompts/translate.md");
 
+/// 本地「极小模型」精简翻译提示词（S-05 实测：0.5B 类小模型用长提示词会复述原文）。
+/// 变量与 `translate.md` 相同；仅当 `translate.backend = local` 且 `local.model` 属于极小模型档时使用。
+pub const PROMPT_TRANSLATE_MINIMAL: &str =
+    include_str!("../../../resources/prompts/translate_minimal.md");
+
 /// 解答提示词（变量 `{text}` `{lang}` `{mode}`）。
 pub const PROMPT_ANSWER: &str = include_str!("../../../resources/prompts/answer.md");
 
@@ -37,6 +42,7 @@ mod tests {
             ("text_search", PROMPT_TEXT_SEARCH),
             ("image_search", PROMPT_IMAGE_SEARCH),
             ("translate", PROMPT_TRANSLATE),
+            ("translate_minimal", PROMPT_TRANSLATE_MINIMAL),
             ("answer", PROMPT_ANSWER),
             ("followup", PROMPT_FOLLOWUP),
             ("models.manifest", MODELS_MANIFEST),

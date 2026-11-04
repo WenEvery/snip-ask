@@ -20,6 +20,7 @@ use crate::services::config_center::ConfigCenter;
 use crate::services::credential_service::CredentialService;
 use crate::services::history_repo::HistoryRepo;
 use crate::services::model_manager::ModelManager;
+use crate::services::ocr_service::OcrPipeline;
 use crate::services::onboarding_service::OnboardingService;
 use crate::services::prompt_engine::PromptEngine;
 
@@ -39,6 +40,8 @@ pub struct AppState {
     pub credentials: Arc<dyn CredentialStore>,
     /// 历史与用量仓储。
     pub history: HistoryRepo,
+    /// OCR 流水线（S-02/S-03：整屏 det 缓存 → 选区 rec-only，按 `ocr_session_id` 关联会话）。
+    pub ocr: OcrPipeline,
     /// 本地模型管理。
     pub models: ModelManager,
     /// 首启引导状态。
@@ -82,6 +85,8 @@ impl AppState {
             config_center,
             credentials,
             history,
+            // 骨架模式：占位 OCR 引擎（真实 RapidOCR 引擎见 ocr_service 的 TODO(real)）。
+            ocr: OcrPipeline::with_skeleton(),
             models,
             onboarding: Mutex::new(onboarding),
             engine: RwLock::new(EngineStatus::Stopped),

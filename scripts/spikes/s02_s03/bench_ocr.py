@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import threading
 import time
 from pathlib import Path
@@ -58,6 +59,21 @@ DEFAULT_THREADS = 8
 DEFAULT_DET_MAX_EDGE = 3200  # config.json ocr.detMaxEdge
 TEXT_THRESHOLD = 0.6  # config.json ocr.textThreshold
 PERIOD_60HZ_MS = 1000.0 / 60.0
+
+
+def budget_target_size(
+    w: int, h: int, budget_px: float, long_edge_cap: int = DEFAULT_DET_MAX_EDGE
+) -> Tuple[int, int, float]:
+    """像素预算口径：det 输入同时满足「长边 ≤ long_edge_cap」与「像素 ≤ budget_px」。
+
+    scale = min(long_edge_cap / max(w,h), sqrt(budget_px / (w*h)))，scale ≥ 1 时不放大。
+    例：双 4K 7680x2160 + 3.0Mpx → 受长边 3200 约束 → 3200x900（2.88Mpx）；
+        单 4K 3840x2160 + 3.0Mpx → 受像素预算约束 → 2309x1299（3.0Mpx）。
+    """
+    scale = min(long_edge_cap / max(w, h), math.sqrt(budget_px / float(w * h)))
+    if scale >= 1.0:
+        return w, h, 1.0
+    return max(1, int(round(w * scale))), max(1, int(round(h * scale))), scale
 
 
 # ------------------------------------------------------------------ 引擎
@@ -132,6 +148,34 @@ class OcrEngines:
         if boxes.ndim != 3:
             boxes = np.zeros((0, 4, 2), np.float32)
         meta = {"det_input_h": resized.shape[0], "det_input_w": resized.shape[1]}
+        return boxes, resize_ms, det_s * 1000.0, meta
+
+    # -- 像素预算口径 det：输入同时满足「长边 ≤ det_max_edge」与「像素 ≤ budget_px」
+    def det_budget(
+        self, img: np.ndarray, budget_mpx: float, det_max_edge: int | None = None
+    ) -> Tuple[np.ndarray, float, float, Dict[str, Any]]:
+        cap = self.det_max_edge if det_max_edge is None else det_max_edge
+        h, w = img.shape[:2]
+        budget_px = budget_mpx * 1e6
+        tw, th, scale = budget_target_size(w, h, budget_px, cap)
+        resize_ms = 0.0
+        resized = img
+        if scale < 1.0 and (tw, th) != (w, h):
+            t0 = time.perf_counter()
+            resized = cv2.resize(img, (tw, th), interpolation=cv2.INTER_AREA)
+            resize_ms = (time.perf_counter() - t0) * 1000
+        boxes, det_s = self.det(resized)
+        boxes = np.asarray(boxes, dtype=np.float32) if boxes is not None else np.zeros((0, 4, 2), np.float32)
+        if boxes.ndim != 3:
+            boxes = np.zeros((0, 4, 2), np.float32)
+        meta = {
+            "det_input_h": resized.shape[0],
+            "det_input_w": resized.shape[1],
+            "det_input_mpx": round(resized.shape[0] * resized.shape[1] / 1e6, 3),
+            "scale": round((resized.shape[0] * resized.shape[1]) / (h * w), 4),
+            "budget_mpx": budget_mpx,
+            "long_edge_cap": cap,
+        }
         return boxes, resize_ms, det_s * 1000.0, meta
 
     # -- 选区：det → 裁框 → rec（各段分别计时）
@@ -555,6 +599,144 @@ def run_edge_sweep(threads: int, reps: int) -> Dict[str, Any]:
     return sweep
 
 
+# ------------------------------------------------------------------ 像素预算复核（phase 2 / task-12）
+def run_budget_review(threads: int = DEFAULT_THREADS) -> Dict[str, Any]:
+    """复核「det 输入 = min(长边 3200, 像素预算)」口径（item2 用户决策）。
+
+    用例：
+      1) 双 4K 7680x2160，旧口径长边 3200 → 3200x900，30 次（应 ≈ 旧值 P95 926ms）
+      2) 单 4K 3840x2160，旧口径长边 3200 → 3200x1800，10 次（同窗口参考，对照 1695ms）
+      3) 单 4K，预算 3.0Mpx → 2309x1299，30 次（新口径主用例）
+      4) 单 4K，预算扫描 2.5 / 3.0 / 3.5 Mpx，各 20 次（记录框数）
+      5) 主屏 2560x1440，预算 3.0Mpx → 2309x1299，20 次（附带：旧口径 979ms，余量小）
+    """
+    print(f"\n=== 像素预算复核（threads={threads}, long_edge_cap={DEFAULT_DET_MAX_EDGE}）===")
+    eng = OcrEngines(threads)
+    img_dual = load_bgr(INPUTS_DIR / "dual_4k_7680x2160.png")
+    img_single = load_bgr(INPUTS_DIR / "screen_4k_3840x2160.png")
+    img_primary = load_bgr(INPUTS_DIR / "screen_primary_2560x1440.png")
+
+    out: Dict[str, Any] = {
+        "reviewed_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "threads": threads,
+        "long_edge_cap": DEFAULT_DET_MAX_EDGE,
+        "engine_init_ms": {"det": round(eng.det_init_ms, 1), "rec": round(eng.rec_init_ms, 1)},
+        "cases": {},
+    }
+    all_rows: List[Dict[str, Any]] = []
+
+    def run_case(
+        tag: str,
+        img: np.ndarray,
+        reps: int,
+        budget_mpx: float | None,
+        desc: str,
+        warmup: int = 3,
+    ) -> Dict[str, Any]:
+        runner = (lambda: eng.det_budget(img, budget_mpx)) if budget_mpx else (lambda: eng.det_full(img))
+        for _ in range(warmup):
+            runner()
+        rows = []
+        for i in range(reps):
+            t0 = time.perf_counter()
+            boxes, resize_ms, det_ms, meta = runner()
+            rows.append(
+                {
+                    "case": tag,
+                    "rep": i,
+                    "resize_ms": round(resize_ms, 3),
+                    "det_ms": round(det_ms, 3),
+                    "total_ms": round((time.perf_counter() - t0) * 1000, 3),
+                    "boxes": _box_count(boxes),
+                    "det_input_w": meta["det_input_w"],
+                    "det_input_h": meta["det_input_h"],
+                    "det_input_mpx": meta.get("det_input_mpx"),
+                    "budget_mpx": meta.get("budget_mpx"),
+                }
+            )
+        all_rows.extend(rows)
+        box_obs = sorted({r["boxes"] for r in rows})
+        case = {
+            "desc": desc,
+            "input_w": int(img.shape[1]),
+            "input_h": int(img.shape[0]),
+            "det_input_w": meta["det_input_w"],
+            "det_input_h": meta["det_input_h"],
+            "det_input_mpx": meta.get("det_input_mpx")
+            or round(meta["det_input_w"] * meta["det_input_h"] / 1e6, 3),
+            "budget_mpx": budget_mpx,
+            "reps": reps,
+            "summary": {
+                "resize_ms": summarize([r["resize_ms"] for r in rows]),
+                "det_ms": summarize([r["det_ms"] for r in rows]),
+                "total_ms": summarize([r["total_ms"] for r in rows]),
+            },
+            "boxes_observed": box_obs,
+            "rows": rows,
+        }
+        out["cases"][tag] = case
+        s = case["summary"]["total_ms"]
+        print(
+            f"  [{tag:28s}] {img.shape[1]}x{img.shape[0]} → det {meta['det_input_w']}x{meta['det_input_h']}"
+            f" ({case['det_input_mpx']} Mpx) | total P50={s['p50']:.0f}ms P95={s['p95']:.0f}ms max={s['max']:.0f}ms"
+            f" | resize P50={case['summary']['resize_ms']['p50']:.1f}ms | boxes={box_obs}"
+        )
+        return case
+
+    run_case("dual4k_legacy3200_30", img_dual, 30, None, "双 4K 7680x2160，旧口径长边 3200（=像素预算口径下的同一结果）")
+    run_case("single4k_legacy3200_10", img_single, 10, None, "单 4K 3840x2160，旧口径长边 3200（对照 1695ms）")
+    run_case("single4k_budget3.0mpx_30", img_single, 30, 3.0, "单 4K 3840x2160，像素预算 3.0Mpx（新口径主用例）")
+    for b in (2.5, 3.0, 3.5):
+        run_case(f"single4k_budget{b:.1f}mpx_20", img_single, 20, b, f"单 4K 像素预算扫描 {b:.1f}Mpx")
+    run_case("primary2560x1440_budget3.0mpx_20", img_primary, 20, 3.0, "主屏 2560x1440，像素预算 3.0Mpx（附带）")
+
+    save_csv(
+        RESULTS_DIR / "budget_sweep_raw.csv",
+        all_rows,
+        ["case", "rep", "resize_ms", "det_ms", "total_ms", "boxes", "det_input_w", "det_input_h", "det_input_mpx", "budget_mpx"],
+    )
+    save_json(RESULTS_DIR / "budget_sweep.json", out)
+    print(f"  -> {RESULTS_DIR / 'budget_sweep_raw.csv'}")
+    return out
+
+
+def update_summary_with_budget(review: Dict[str, Any]) -> None:
+    """把预算复核结果增补进 docs/spikes/data/s02_s03/summary.json（保留原有 phase 1 字段）。"""
+    path = SUMMARY_DIR / "summary.json"
+    summary = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    compact = {}
+    for tag, c in review["cases"].items():
+        compact[tag] = {
+            "desc": c["desc"],
+            "input_w": c["input_w"],
+            "input_h": c["input_h"],
+            "det_input_w": c["det_input_w"],
+            "det_input_h": c["det_input_h"],
+            "det_input_mpx": c["det_input_mpx"],
+            "budget_mpx": c["budget_mpx"],
+            "reps": c["reps"],
+            "boxes_observed": c["boxes_observed"],
+            "summary": c["summary"],
+        }
+    summary["budget_sweep"] = {
+        "reviewed_at": review["reviewed_at"],
+        "threads": review["threads"],
+        "long_edge_cap": review["long_edge_cap"],
+        "recommendation": {
+            "rule": "det 输入 scale = min(long_edge_cap / max(w,h), sqrt(budget_px / (w*h)))，不放大",
+            "budget_mpx": 3.0,
+            "long_edge_cap": DEFAULT_DET_MAX_EDGE,
+            "note": "双 4K 仍由长边 3200 约束（3200x900）；单 4K/2560x1440 由 3.0Mpx 预算约束（2309x1299）。"
+                    "单 4K P95 由 1695ms 降至 ~850ms 量级，双 4K 保持 ~926ms。",
+        },
+        "cases": compact,
+        "raw": ".verify/spikes/S-02-S-03/results/budget_sweep_raw.csv",
+        "full_json": ".verify/spikes/S-02-S-03/results/budget_sweep.json",
+    }
+    save_json(path, summary)
+    print(f"  -> 已增补 {path}（budget_sweep 字段）")
+
+
 # ------------------------------------------------------------------ 线程数扫描
 def run_thread_sweep(reps: int = 10) -> Dict[str, Any]:
     print(f"\n=== ORT 线程数扫描（dual 4K 冻结帧，det 总耗时，reps={reps}）===")
@@ -701,7 +883,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="S-02/S-03 OCR 时延基准")
     ap.add_argument(
         "cmd",
-        choices=["smoke", "s02", "s03", "jitter", "edge-sweep", "thread-sweep", "all"],
+        choices=["smoke", "s02", "s03", "jitter", "edge-sweep", "thread-sweep", "budget", "all"],
         help="要执行的基准",
     )
     ap.add_argument("--threads", type=int, default=DEFAULT_THREADS, help="ORT intra_op 线程数")
@@ -728,6 +910,10 @@ def main() -> None:
     elif args.cmd == "thread-sweep":
         with bench_lock("ocr-bench"):
             run_thread_sweep(args.reps or 10)
+    elif args.cmd == "budget":
+        with bench_lock("ocr-bench"):
+            review = run_budget_review(args.threads)
+            update_summary_with_budget(review)
     else:
         run_all(args.threads, 30, 100, 20)
 

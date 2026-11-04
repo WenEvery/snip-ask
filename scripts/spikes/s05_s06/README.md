@@ -8,22 +8,34 @@
 
 | 文件 | 用途 | 真实测量条件 |
 | --- | --- | --- |
-| `bench_translate.py` | S-05 云端：200 字中文样例 → OpenAI 兼容 `chat/completions`，20 次 P50/P95/max + HTTP 状态/首字节/token 用量/失败率 | 需 `SNIPASK_BENCH_*`（URL/模型/Key） |
-| `bench_local_translate.mjs` | S-05 本地：启动 `llama-server` + HY-MT1.5-1.8B Q4_K_M，200 字样例 20 次，记录冷加载、P50/P95/max、服务端 prefill/decode/tok-s、进程 WorkingSet | 需 `llama-server.exe` + GGUF |
-| `bench_image_search.py` | S-06：①视觉识别 → ②生成检索词 → ③Search → ④摘要，quick/deep 两档，20 次端到端 + 分阶段时延 | 需 vision 模型 Key + 检索 API Key |
-| `run_local_bench.ps1` | 本地正式测量运行器：安静窗口等待 → 线程候选调优 → 正式 10 次 → 输出长度敏感性 → 确认无 llama-server 残留 | 同 `bench_local_translate.mjs` |
-| `benchlock.ps1` | `.verify/bench.lock` CPU 独占锁（acquire/status/release，40 分钟陈旧锁接管） | — |
+| `bench_translate.py` | S-05 云端：200 字中文样例 → OpenAI 兼容 `chat/completions`，20 次 P50/P95/max + 首字节/TTFT/总耗时/token 用量/失败率 | 需 `SNIPASK_BENCH_*`（URL/模型/Key）；`--stream` 记录 TTFT |
+| `bench_local_translate.mjs` | S-05 本地：启动 `llama-server` + 1.8B/0.5B GGUF，200 字样例，记录冷加载、P50/P95/max、服务端 prefill/decode/tok-s、进程 WorkingSet | 需 `llama-server.exe` + GGUF |
+| `bench_image_search.py` | S-06：①视觉识别 → ②生成检索词 → ③Search → ④摘要，quick/deep 两档；`--allow-mock-search` 可做视觉真实/检索 mock 的 PARTIAL 估算 | 需 vision Key + 检索 API Key |
+| `probe_s06_negative.py` | S-06 能力探测：DeepSeek 是否支持视觉（image content）与 Search 端点，原样落盘真实响应 | 需 DeepSeek Key |
+| `run_local_bench.ps1` | 本地 1.8B 正式测量运行器：安静窗口 → 线程调优 → 正式 10 次 → 长度敏感性 → 无残留确认 | 同 `bench_local_translate.mjs` |
+| `benchlock.ps1` / `build_data_summary.py` | CPU 独占锁；原始数据聚合到 `docs/spikes/data/s05_s06/` | — |
+
+**Key 纪律**：所有脚本只从环境变量读 Key，**不打印、不落盘**（响应/配置 JSON 只含 `api_key_provided: true` 与脱敏 host）。
 
 原始数据目录：`.verify/spikes/S-05-S-06/raw/`；汇总数据目录：`docs/spikes/data/s05_s06/`。
 
-## 1.1 本次实测摘要（2026-11-04，详见 S-05/S-06 文档）
+## 1.1 本次实测摘要（2026-11-04/05，详见 S-05/S-06 文档）
 
-- S-05 云端：**BLOCKED**（无 Key，DeepSeek 空 Key 实测 401）；脚本可一键复跑，`--self-test` 框架自检通过（MOCK）。
-- S-05 本地：**FAILED**——i7-12650H CPU 16 线程、HY-MT1.5-1.8B Q4_K_M、`temperature=0.2`、200 字完整译文：
-  P50 **11.76s** / P95 **21.84s** / 最快一次 9.89s（阈值 ≤8s）；prefill P50 3.0s、decode P50 8.5s、150 token、
-  17.6 tok/s；冷加载 1.5–2.9s；常驻 WorkingSet 2.05–2.10 GiB；`max_tokens=100` 截断时 P95 7.09s（译文不完整）。
-- S-06 图片搜索：**BLOCKED**（无 vision/检索 Key）；mock 自检框架通过（quick 121ms / deep 143ms 为人为 mock 延时，
-  不作验收依据）。拿到 Key 后按文档 §5 清单 15 分钟可完成。
+- **S-05 云端（DeepSeek `deepseek-flash`，stream 20 次）**：
+  - 默认 thinking：TTFT P50 3.47s / P95 4.59s，总耗时 P50 4.05s / P95 5.15s → **两口径均 FAILED**（reasoning_tokens 384–736）。
+  - `thinking:{"type":"disabled"}`：TTFT P50 0.61s / P95 0.87s → **首字口径 DONE**；总耗时 P50 1.51s / P95 1.75s → 总耗时口径 FAILED（差 ~0.25s）。
+  - 结论：网关必须显式关闭 DeepSeek 思考才能满足「快速模式首字 ≤1.5s」。
+- **S-05 本地 1.8B（CPU 16 线程）**：**FAILED**——P50 11.76s / P95 21.84s / 最快 9.89s（≤8s 阈值）；150 token、17.6 tok/s；
+  常驻 WorkingSet 2.05–2.10 GiB；`max_tokens=100` 截断 P95 7.09s（译文不完整）。
+- **S-05 极小模型 Qwen2.5-0.5B Q4_K_M（CPU 16 线程，10 次）**：时延 **DONE**——P50 3.78s / P95 4.13s、51 tok/s、
+  常驻 0.51–0.55 GiB、冷加载 1.34s；**但产品 `translate.md` 提示词下 10/10 输出中文原文（未翻译）**。
+  候选复核（task-13）：换极简指令「将下面的中文翻译成英文，只输出译文：」后 0.5B **可正常翻译**（200 字 P95 3.21s、
+  30 字 P95 0.42s，质量一般但可用）；`few-shot` 对 200 字有害（只输出示例）。**Qwen2.5-1.5B Q4 + 极简指令**：
+  200 字 P95 6.72s、25.7 tok/s、常驻 1.67–1.70 GiB、冷加载 1.44s，质量更好。极小档推荐
+  **0.5B + 极简提示词**（质量优先用 1.5B），两者都不能配产品 `translate.md`。
+- **S-06 图片搜索**：验收仍 **BLOCKED**；DeepSeek 单 Key 的 `deepseek-flash` **支持图片输入且能识别真实截图**，
+  但 `/search` 等端点全部 **404**（无 Search API）→ 只缺 1 个搜索 API Key。视觉真实/检索 mock 的 PARTIAL 估算：
+  quick P50 4.74s / P95 5.26s，deep P50 5.15s / P95 5.68s（非验收结论）。
 
 ## 2. S-05 云端（填 Key 后一键复跑）
 
@@ -82,23 +94,33 @@ node scripts/spikes/s05_s06/bench_local_translate.mjs --threads 6 --runs 20 --wa
 可覆盖。**不要用模型卡推荐的 temperature=0.7 复跑对比**：本次实测 0.7 会出现重复输出、
 耗时翻倍，与产品默认配置不一致。
 
-## 4. S-06 图片搜索（填 Key 后 15 分钟复跑）
+## 4. S-06 图片搜索（只差 1 个搜索 Key，15 分钟复跑）
+
+**已实测**：DeepSeek `deepseek-flash` 支持 OpenAI 兼容图片消息，能识别真实截图 → 视觉腿可用（DeepSeek Key 已有）；
+但 DeepSeek 没有任何 Search API（`/search` 等全部 404）→ **只缺 1 个搜索 API Key**。
 
 ```powershell
-$env:SNIPASK_BENCH_VISION_BASE_URL = "https://api.openai.com/v1"   # 任意 OpenAI 兼容 vision 端点
-$env:SNIPASK_BENCH_VISION_MODEL    = "gpt-4o-mini"                 # 或 qwen-vl-max 等
-$env:SNIPASK_BENCH_VISION_API_KEY  = "<Key>"
-$env:SNIPASK_BENCH_SEARCH_PROVIDER = "tavily"                      # 或 serper
-$env:SNIPASK_BENCH_SEARCH_API_KEY  = "<检索 Key>"
+# 视觉腿：复用 DeepSeek Key（运行时环境变量）
+$env:SNIPASK_BENCH_VISION_BASE_URL = "https://api.deepseek.com"
+$env:SNIPASK_BENCH_VISION_MODEL    = "deepseek-flash"
+$env:SNIPASK_BENCH_VISION_API_KEY  = "<DeepSeek Key>"
+$env:SNIPASK_BENCH_VISION_EXTRA_JSON = '{"thinking":{"type":"disabled"}}'   # 可选，降低视觉腿延时
+# 检索腿：只缺这个（Tavily / Serper）
+$env:SNIPASK_BENCH_SEARCH_PROVIDER = "tavily"
+$env:SNIPASK_BENCH_SEARCH_API_KEY  = "<搜索 API Key>"
 python scripts/spikes/s05_s06/bench_image_search.py --modes quick,deep --runs 20
 ```
 
 - 阈值：quick P95 ≤ 10s、deep P95 ≤ 25s；`--runs` 为每档次数。
 - 检索服务为 `none`（默认）时脚本打印 BLOCKED：纯 mock Search 不满足「1 次真实 Search」的验收口径。
+- 部分真实估算：`--allow-mock-search`（视觉/摘要真实、Search mock），结果标注 `PARTIAL_REAL_VISION_MOCK_SEARCH`，
+  **不得作为验收结论**；本轮 PARTIAL：quick P50 4.74s / deep P50 5.15s。
 - 无 Key 时先跑框架自检（数据为 MOCK，不得作为 DONE 依据）：
 
 ```powershell
 python scripts/spikes/s05_s06/bench_image_search.py --mock-self-check --runs 3
+# DeepSeek 能力探测（视觉是否可用 / Search 是否 404），响应原样落盘
+python scripts/spikes/s05_s06/probe_s06_negative.py
 ```
 
 ## 5. CPU 独占纪律与复现注意

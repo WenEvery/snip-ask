@@ -1,6 +1,6 @@
 /** 引导页内置预设（静态文案参考可行性报告 §2.4.3 / §3.2.6） */
 
-import type { Cap, Language, Mode } from "@/shared/contract/types";
+import type { Cap, Language, Mode, TranslateBackend } from "@/shared/contract/types";
 
 export interface OnboardingProviderPreset {
   id: string;
@@ -18,8 +18,8 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     name: "DeepSeek",
     baseUrl: "https://api.deepseek.com",
     model: "deepseek-flash",
-    caps: ["vision", "search", "thinking"],
-    note: "推荐，支持视觉与联网搜索",
+    caps: ["vision", "thinking"],
+    note: "文本+视觉（deepseek-flash，实测可识别截图）；无联网搜索 API；默认思考会显著推高首字延迟",
   },
   {
     id: "openai",
@@ -55,35 +55,77 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
   },
 ];
 
-export interface LocalTier {
-  id: string;
+/** 「极小模型」id（与 models.manifest.json 一致，task-9 新增）。 */
+export const TINY_LOCAL_MODEL_ID = "qwen2.5-0.5b-instruct-q4";
+/** 「普通模型」id（沿用现有 HY-MT1.5-1.8B）。 */
+export const STANDARD_LOCAL_MODEL_ID = "hy-mt-1.8b-q4";
+
+export type TranslateTierId = "cloud" | "tiny" | "standard";
+
+export interface TranslateTier {
+  id: TranslateTierId;
   title: string;
+  tag: string | null;
   description: string;
-  sizeText: string;
-  ramText: string;
-  licenseText: string;
+  /** 写回 `draft.translate.backend`。 */
+  backend: TranslateBackend;
+  /** 写回 `draft.translate.modelId`；云端为 null。 */
+  modelId: string | null;
+  /** 体积 / 内存提示（云端为 null）。 */
+  sizeText: string | null;
+  ramText: string | null;
+  /** 性能文案：使用 S-05/S-06 实测数据，不足处明确标注「预估/待实测」。 */
   speedText: string;
+  /** 质量/隐私/成本定位文案（用户选本地的主要理由）。 */
+  qualityText: string;
 }
 
-/** 报告 §2.4.3 的本地翻译档位 */
-export const LOCAL_TIERS: LocalTier[] = [
+/**
+ * 引导第 3 步「翻译方式」三档（item3 用户决策）。
+ *
+ * 数据来源：`docs/spikes/data/s05_s06/summary_s05_s06.json`（2026-11-05 实测）
+ * - 普通模型（HY-MT1.5-1.8B Q4，200 字）：P50 11.76s / P95 21.84s / 最快 9.89s；
+ * - 极小模型（Qwen2.5-0.5B-Instruct Q4 + 精简提示词，200 字）：P50 3.09s / P95 3.21s，常驻 ≈0.55 GB；
+ *   注意：必须配 `resources/prompts/translate_minimal.md`，用产品长提示词会复述原文（S-05 实测）；
+ * - 云端（DeepSeek deepseek-flash，200 字）：thinking 关闭时首字 P50 0.61s / P95 0.87s（达标）；
+ *   默认 thinking 时首字 P95 4.59s（不达标，网关接入时需显式关闭思考）。
+ */
+export const TRANSLATE_TIERS: TranslateTier[] = [
   {
-    id: "light",
-    title: "轻量档",
-    description: "Bergamot / OPUS-MT 类小模型，低配机器可用",
-    sizeText: "约 100–300 MB",
-    ramText: "内存 < 1 GB",
-    licenseText: "MIT / CC-BY 等开源许可",
-    speedText: "约 20–40 句/秒",
+    id: "cloud",
+    title: "云端翻译",
+    tag: "推荐 · 最快",
+    description: "需 API Key；不占磁盘与内存，按量计费",
+    backend: "cloud",
+    modelId: null,
+    sizeText: null,
+    ramText: null,
+    speedText: "实测（DeepSeek deepseek-flash / thinking 关闭）：首字 P50 0.61s / P95 0.87s 达标；默认 thinking 首字 P95 4.59s（不达标，接入网关需显式关闭思考）",
+    qualityText: "质量最高（大模型）；需联网并同意文本上传，按量计费",
   },
   {
-    id: "quality",
-    title: "质量档",
-    description: "HY-MT1.5-1.8B 量化版，译文更自然",
-    sizeText: "约 1.2 GB",
-    ramText: "建议 16 GB 内存",
-    licenseText: "Apache-2.0",
-    speedText: "约 5–10 句/秒",
+    id: "tiny",
+    title: "极小模型（本地）",
+    tag: "低配友好",
+    description: "Qwen2.5-0.5B-Instruct Q4_K_M，隐私/离线/零成本",
+    backend: "local",
+    modelId: TINY_LOCAL_MODEL_ID,
+    sizeText: "≈470 MB",
+    ramText: "内存 ≈1 GB",
+    speedText: "实测 P50 3.1s / P95 3.2s（200 字，纯 CPU；需精简提示词）；30 字短句约 0.4s",
+    qualityText: "快、省内存（常驻 ≈0.55 GB）；译文质量一般，适合短句/轻度使用，长文建议云端或普通模型",
+  },
+  {
+    id: "standard",
+    title: "普通模型（本地）",
+    tag: "本地推荐质量",
+    description: "HY-MT1.5-1.8B Q4，专注翻译、译文更自然",
+    backend: "local",
+    modelId: STANDARD_LOCAL_MODEL_ID,
+    sizeText: "≈1.08 GB",
+    ramText: "常驻内存 ≈2.1 GB",
+    speedText: "实测 P50 11.76s / P95 21.84s / 最快 9.89s（200 字，纯 CPU i7-12650H）",
+    qualityText: "质量好但纯 CPU 慢：8s 目标仅云端满足；适合重质量、可等待的场景",
   },
 ];
 

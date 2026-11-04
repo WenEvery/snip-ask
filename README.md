@@ -230,13 +230,14 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 
 可执行的验证任务（负责人、方法、阈值、状态）见 [`docs/技术验证清单.md`](docs/技术验证清单.md)。
 
-**P0 首轮 Spike 实测（2026-11-04/05，骨架模式之上，真实应用/真实模型/真实网络）**：
-S-01 混合 DPI 多屏坐标（跨屏误差 0.01px）、S-02 整屏 OCR det（P95 926ms）、S-04 全局热键与冲突、
-S-07 离线受限模式、S-08 模型下载断点续传与校验 = **DONE**；
-S-03 选区 OCR det+rec P95 968ms（>800ms，**FAILED**；「det 缓存复用 → rec-only」P95 596ms 达标，需架构决策）；
-S-05 本地翻译 CPU P50 11.76s（>8s，**FAILED**；云端无 Key **BLOCKED**）；S-06 图片搜索 **BLOCKED**（无 Key）。
+**P0 Spike 实测与门禁处置（2026-11-04/05，真实应用/真实模型/真实网络）**：
+S-01 混合 DPI 多屏坐标（跨屏误差 0.01px）、S-02 整屏 OCR det（像素预算 3.0Mpx 后双 4K P95 743ms / 单 4K P95 794ms）、
+S-04 全局热键与冲突、S-07 离线受限模式 + **引导页三档 AI 服务**、S-08 模型下载断点续传与校验 = **DONE**；
+S-03 已按决策落地「整屏 det 缓存 → 选区 rec-only」（P95 596ms，原 det+rec 口径 968ms 保留为对照）；
+S-05 云端（DeepSeek，关闭 thinking）首字 P95 0.87s、本地**极小档** P95 3.21s = **DONE**，本地 1.8B「普通档」CPU P95 21.84s
+不满足 8s → 按用户决策作为**可选质量档并显式提示**；S-06 仅缺检索 Key（DeepSeek 视觉腿已可用，mock 检索下 quick P95 5.26s）。
 逐项记录与原始数据索引见 [`docs/spikes/`](docs/spikes/README.md)，复跑脚本见 [`scripts/spikes/`](scripts/spikes/README.md)。
-FAILED/BLOCKED 项需先完成技术方案决策（选区 OCR 口径、本地翻译阈值/GPU、云端 Key 与检索 API）再进入 MVP。
+剩余决策项：S-05 云端**总耗时**口径（P95 1.75s vs ≤1.5s，首字已达标）建议明确为「首字」；S-06 需检索 Key。
 
 ## 许可与隐私
 

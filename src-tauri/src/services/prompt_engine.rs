@@ -12,6 +12,7 @@ use crate::contract::errors::{AppError, AppResult};
 use crate::platform::paths::AppPaths;
 use crate::resources::{
     PROMPT_ANSWER, PROMPT_FOLLOWUP, PROMPT_IMAGE_SEARCH, PROMPT_TEXT_SEARCH, PROMPT_TRANSLATE,
+    PROMPT_TRANSLATE_MINIMAL,
 };
 
 /// 支持的变量名。
@@ -31,6 +32,7 @@ pub const PROMPT_FILES: &[(&str, &str)] = &[
     ("text_search", "text_search.md"),
     ("image_search", "image_search.md"),
     ("translate", "translate.md"),
+    ("translate_minimal", "translate_minimal.md"),
     ("answer", "answer.md"),
     ("followup", "followup.md"),
 ];
@@ -41,10 +43,34 @@ pub fn builtin_template(key: &str) -> Option<&'static str> {
         "text_search" => Some(PROMPT_TEXT_SEARCH),
         "image_search" => Some(PROMPT_IMAGE_SEARCH),
         "translate" => Some(PROMPT_TRANSLATE),
+        "translate_minimal" => Some(PROMPT_TRANSLATE_MINIMAL),
         "answer" => Some(PROMPT_ANSWER),
         "followup" => Some(PROMPT_FOLLOWUP),
         _ => None,
     }
+}
+
+/// 剔除模板开头的维护注释块（模板约定：「开头行为维护注释，渲染时由 prompt_engine 剔除」）。
+///
+/// 规则：从文件头开始，跳过以 `#` 开头的行与空行，直到第一个正文行；正文之后原样保留。
+/// 这样发给模型的提示词不含 `# 用途 / # 变量 / # 版本 / ==== 正文 ====` 等维护信息（对小模型尤其重要，
+/// S-05 实测长注释会让 0.5B 类小模型分心/复述原文）。
+/// 纯函数，便于单测；用户覆盖的同名提示词同样生效。
+pub fn strip_maintenance_header(template: &str) -> String {
+    let mut body_started = false;
+    let mut body = String::new();
+    for line in template.lines() {
+        if !body_started {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('#') || trimmed.is_empty() {
+                continue;
+            }
+            body_started = true;
+        }
+        body.push_str(line);
+        body.push('\n');
+    }
+    body.trim_end().to_string()
 }
 
 /// 纯函数：按变量表替换模板；替换后仍残留已知变量则报错。
@@ -107,10 +133,11 @@ impl PromptEngine {
             .ok_or_else(|| AppError::invalid_config("prompt", format!("未知提示词 key：{key}")))
     }
 
-    /// 读取并渲染模板。
+    /// 读取并渲染模板（先剔除维护注释头，再替换变量）。
     pub fn render(&self, key: &str, vars: &HashMap<&str, &str>) -> AppResult<String> {
         let template = self.load(key)?;
-        render_template(&template, vars)
+        let body = strip_maintenance_header(&template);
+        render_template(&body, vars)
     }
 
     /// 覆盖目录路径。
@@ -195,6 +222,7 @@ mod tests {
             "text_search",
             "image_search",
             "translate",
+            "translate_minimal",
             "answer",
             "followup",
         ] {
@@ -202,6 +230,50 @@ mod tests {
                 .render(key, &vars)
                 .unwrap_or_else(|err| panic!("{key}: {err}"));
             assert!(!rendered.contains("{text}"));
+            // 维护注释头必须被剔除，不能发给模型。
+            assert!(
+                !rendered.trim_start().starts_with('#'),
+                "{key} 渲染结果仍以 # 开头：{}",
+                rendered.lines().next().unwrap_or_default()
+            );
+            assert!(
+                !rendered.contains("以下为发送给模型的正文"),
+                "{key} 保留了正文分隔注释"
+            );
         }
+    }
+
+    #[test]
+    fn strip_maintenance_header_keeps_body_only() {
+        let template = "# 用途：示例\n# 变量：{text}\n\n# ==== 以下为发送给模型的正文 ====\n【角色】翻译。\n\n{text}\n";
+        assert_eq!(
+            strip_maintenance_header(template),
+            "【角色】翻译。\n\n{text}"
+        );
+        // 没有维护头（用户覆盖）时原样保留正文。
+        assert_eq!(strip_maintenance_header("正文 {text}"), "正文 {text}");
+        assert_eq!(strip_maintenance_header(""), "");
+    }
+
+    #[test]
+    fn translate_minimal_template_is_small_and_minimal() {
+        let engine = PromptEngine::with_override_dir("C:/not-exists");
+        let mut vars = HashMap::new();
+        vars.insert("text", "你好");
+        vars.insert("targetLang", "en");
+        vars.insert("sourceLang", "zh-CHS");
+        vars.insert("glossary", "");
+        let rendered = engine.render("translate_minimal", &vars).unwrap();
+        assert!(rendered.contains("en"));
+        assert!(rendered.contains("你好"));
+        assert!(!rendered.contains('#'));
+        // 精简提示词应显著短于产品长提示词（实测长提示词会让 0.5B 类小模型复述原文）。
+        let full = engine.render("translate", &vars).unwrap();
+        assert!(
+            rendered.chars().count() * 3 < full.chars().count(),
+            "精简提示词应显著短于 translate.md（minimal={} full={}）",
+            rendered.chars().count(),
+            full.chars().count()
+        );
     }
 }

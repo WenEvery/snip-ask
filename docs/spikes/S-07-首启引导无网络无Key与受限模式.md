@@ -92,7 +92,7 @@ pub struct Capabilities {
 | --- | --- | --- | --- |
 | 1 | 第 1 / 6 步 · 欢迎与语言 | 框一下，就懂了（语言预览） | `01-step1-框一下，就懂了.png` |
 | 2 | 第 2 / 6 步 · AI 服务 | 不选预设、不填 Key，直接下一步 | `02-step2-连接一个 AI 服务.png` |
-| 3 | 第 3 / 6 步 · 翻译方式 | 默认云端（复用 AI 服务），不下载模型 | `03-step3-选择翻译方式.png` |
+| 3 | 第 3 / 6 步 · 翻译方式 | 三档卡片（item3，§4.6）：云端 / 极小模型 / 普通模型；默认云端 | `03-step3-选择翻译方式.png` |
 | 4 | 第 4 / 6 步 · AI 模式 | 为每个动作选择默认模式 | `04-step4-为每个动作选择默认模式.png` |
 | 5 | 第 5 / 6 步 · 外观与行为 | 外观与热键默认值 | `05-step5-外观与行为.png` |
 | 6 | 第 6 / 6 步 · 隐私与完成 | 显示受限模式说明（不限流），勾选同意后「完成并进入」 | `06-step6-隐私与完成.png`、`17-step6-restricted-notice.png` |
@@ -169,6 +169,44 @@ UI 路径（设置 → AI 服务 → 展开编辑 → 测试连接）实测显�
 - 主界面横幅切换为「受限模式 / 当前未配置任何 AI 服务（无 API Key、无本地模型）」（`18-main-restricted-banner-completed.png`）；
 - 点「去配置 AI 服务」→ 设置页自动落到「AI 服务」分组（`19-main-goto-config.png`，active nav = AI 服务，PASS）。
 
+### 4.6 item3：翻译方式三档选择（云端 / 极小模型 / 普通模型，2026-11-05 追加）
+
+用户决策 item3：把本地模型做成**可选项**，引导第 3/6 步（`TranslateStep`）给出三选一，并明确提示性能/隐私差异
+（部分用户为保密/成本选本地）。实现与验证如下。
+
+**三档与写入字段**（复用现有 schema，不改契约）：
+
+| 档位 | `draft.translate` | 模型/体积/内存 | 性能与定位文案（实测优先） |
+| --- | --- | --- | --- |
+| 云端翻译（推荐·最快） | `{backend:"cloud", modelId:null, cloudModel}` | 不占磁盘/内存，按量计费 | 「首字目标 ≤1.5s、200 字总耗时约 2–4s（S-05 云端实测待补：Key 已到位，ext-bench 重测中）」；质量最高、需联网+同意上传 |
+| 极小模型（本地，低配友好） | `{backend:"local", modelId:"qwen2.5-0.5b-instruct-q4", cloudModel:""}` | Qwen2.5-0.5B-Instruct Q4_K_M，≈470 MB / ≈1 GB | 「预估 P50 约 1–3s（200 字，纯 CPU 估算；实测待 ext-bench 补测）」；快、省内存、质量一般 |
+| 普通模型（本地，推荐质量） | `{backend:"local", modelId:"hy-mt-1.8b-q4", cloudModel:""}` | HY-MT1.5-1.8B Q4，≈1.08 GB / 常驻 ≈2.1 GB | **实测 P50 11.76s / P95 21.84s / 最快 9.89s**（200 字，纯 CPU i7-12650H）；「8s 目标仅云端满足」 |
+
+- 档位切换会清理无关字段：切到本地清空 `cloudModel`；切回云端保留已填 `cloudModel` 且 `modelId=null`。
+- 本地档下方「对应模型下载」列表按档位**聚焦**对应模型（`ModelDownloadList` 新增 `focusModelId`），
+  未下载时明确提示「未下载完成前本地翻译不可用」。
+- `presets.ts`：DeepSeek 预设 note 修正为「文本+视觉（deepseek-flash，实测可识别截图）；无联网搜索 API；默认思考会显著推高首字延迟」（phase 2 实测：视觉腿可用、`/search` 全 404）。
+
+**真机验证**（脚本 `scripts/spikes/s07/run_tiers.mjs`，`--reset` 首次启动，applab 驱动真实应用）：
+
+- 到达第 3/6 步后依次点选三档并截图：`20-item3-tier-cloud.png`、`21-item3-tier-tiny.png`、`22-item3-tier-standard.png`；
+- 每档断言：卡片选中态、性能文案可见（云端含「≤1.5s」「实测待补」；极小含「470 MB」「预估」「低配」；
+  普通含「11.76s」「21.84s」「8s 目标仅云端满足」）、本地档下载列表只显示对应模型
+  （`Qwen2.5-0.5B-Instruct（Q4_K_M，极小模型）` / `HY-MT1.5-1.8B（Q4_K_M）`）、云端档不显示本地模型列表；
+- 每档点「下一步」经 `onboarding_update` 持久化后读 `onboarding_state.data.translate` 断言映射：
+  云端 `{"backend":"cloud","modelId":null}`；极小 `{"backend":"local","modelId":"qwen2.5-0.5b-instruct-q4"}`；
+  普通 `{"backend":"local","modelId":"hy-mt-1.8b-q4"}`；
+- 三档切换清理校验（云端 → 普通后 `cloudModel=""`）通过；
+- 最终选「普通模型」完成引导，`config_get` 断言：`config.translate.backend="local"`、
+  `config.local.model="hy-mt-1.8b-q4"`（`raw/item3-final-config.json`、`23-item3-final-config.png`）。
+- 结果：**20/20 断言 PASS**（`raw/item3-evidence.json`、`raw/item3-*-dom.json`）。
+- Rust 单测 `merge_into_config_maps_three_translate_tiers` 覆盖三档 → `config.translate.backend` / `config.local.model` 映射。
+
+> 数据时效说明：本记录 §4.6 编写时（2026-11-05 00:50）云端/极小尚无实测，界面曾标注「待实测 / 预估」。
+> **phase 2 已完成实测回填**：云端（DeepSeek，关闭 thinking）首字 P50 0.61s / P95 0.87s；极小档
+> （Qwen2.5-0.5B + 精简提示词）P50 3.09s / P95 3.21s、常驻 ≈0.55GiB；普通档保持 P50 11.76s / P95 21.84s。
+> `presets.ts` 的 `TRANSLATE_TIERS[].speedText` 已按实测更新，详见 §10。
+
 ## 5 截图清单
 
 | 文件（`.verify/spikes/S-07/shots/`） | 内容 |
@@ -186,6 +224,10 @@ UI 路径（设置 → AI 服务 → 展开编辑 → 测试连接）实测显�
 | `17-step6-restricted-notice.png` | 第 6 步完成页的「受限模式」明确说明 |
 | `18-main-restricted-banner-completed.png` | 完成引导（未配置能力）后的主界面受限横幅 |
 | `19-main-goto-config.png` | 「去配置 AI 服务」跳转到设置 → AI 服务 |
+| `20-item3-tier-cloud.png` | item3 第 3/6 步三档卡：选中「云端翻译」（性能/成本提示 + 云端配置） |
+| `21-item3-tier-tiny.png` | item3 选中「极小模型」（≈470MB）；下载列表聚焦 Qwen2.5-0.5B 并显示「已选用」 |
+| `22-item3-tier-standard.png` | item3 选中「普通模型」（≈1.08GB，实测 P50 11.76s/P95 21.84s） |
+| `23-item3-final-config.png` | item3 完成引导后的设置页（config_get 断言 local + hy-mt-1.8b-q4） |
 
 原始 JSON：`raw/evidence.json`（主跑 24 项断言）、`raw/evidence-menu-only.json`（菜单补充复测 7/7）、
 `raw/evidence-summary.json`（合并摘要）、`raw/menu-ready-payload-dom.json`、`raw/provider-test-direct.json`、
@@ -212,11 +254,13 @@ UI 路径（设置 → AI 服务 → 展开编辑 → 测试连接）实测显�
 | 4. 引导完成但未配置能力 → 完成页/主界面同为受限状态 | ✅ PASS | `17/18/19`；`raw/onboarding-state-completed.json` |
 | 5. `skeletonMode=false` + 空 Key + 不可达 baseUrl：真实错误可操作、不崩溃 | ✅ PASS（provider_test SA-3001） | `10`；`raw/provider-test-direct.json`、`provider-test-ui.json`、`app-alive-after-error.json` |
 | 6. 走查发现缺陷修复并回归 | ✅ PASS（D-1/D-2） | §6；Rust 单测 + 完整 6 步回归 |
+| 7. item3 三档 AI 服务（云端/极小/普通）：性能提示 + 下载列表聚焦 + 映射写入 config | ✅ PASS（20/20 断言） | §4.6；`20/21/22/23`；`raw/item3-*.json` |
 
 自动化断言合计：主跑 24 项（23 PASS；1 项为驱动解包 bug，非应用缺陷）+ 菜单补充复测 7/7 PASS；
-唯一失败项已在补充会话中用修正后的驱动复测通过。Rust 单测：`domain::action` 10 项、`domain::onboarding` 8 项全绿；
-`cargo clippy --all-targets -- -D warnings` 通过；`pnpm typecheck` 通过（`cargo test` 全量仍有 1 项
-`services::model_manager::tests::derives_download_filename_from_url` 失败，属 S-08 在改文件，与本任务无关）。
+item3 三档补充 20/20 PASS。Rust 单测：`domain::action` 10 项、`domain::onboarding` 8 项全绿
+（含三档映射 `merge_into_config_maps_three_translate_tiers`）；
+`cargo clippy --all-targets -- -D warnings` 通过；`pnpm typecheck` 通过。phase 2 收尾时全仓
+`cargo test` 为 **242 passed / 0 failed**（含此前被 S-08 在改文件暂时影响的 `model_manager` 单测，现已修复）。
 
 ## 8 遗留
 
@@ -226,7 +270,7 @@ UI 路径（设置 → AI 服务 → 展开编辑 → 测试连接）实测显�
 | L-2 | 图片菜单（`hasText=false`）实机不可稳定构造 | 骨架 OCR 的 `hasText` 恒为 true；由 Rust 单测 `restricted_mode_disables_cloud_actions_but_keeps_browser_search_and_copy` 覆盖。真实 OCR 接入后补实机。 | S-02/S-03 之后 |
 | L-3 | 「骨架模式」徽标与「受限模式」并存 | 标题栏仍写「骨架模式」，与受限模式提示语义不同，易让验收者误解为开发态。建议后续把开发态徽标与用户态受限提示分开。 | 产品/前端 |
 | L-4 | 断网模拟方式单一 | 用 `127.0.0.1:1` 连接拒绝等价断网；DNS 超时、代理、TLS 错误等未覆盖（`provider_test` 为 `TODO(real)`，错误码细分待真实实现）。 | S-17 网络与额度 |
-| L-5 | 「本地模型就绪 → 本地翻译可用」仅单测覆盖 | 本机无本地模型（HF 不可达，ModelScope 可下载但体积/时间超本任务预算）。该分支由 `restricted_mode_keeps_local_translate_when_model_installed` 单测覆盖。 | S-08 之后补实机 |
+| L-5 | 「本地模型就绪 → 本地翻译可用」仅单测覆盖 | 本机已按需下载极小模型（S-05/S-08 phase 2），但应用侧真实本地推理引擎（llama.cpp 进程管理/流式调用）仍为 `TODO(real)`，故「已安装模型 → 翻译可用」实机链路待真实引擎接入后补验；当前由 `restricted_mode_keeps_local_translate_when_model_installed` 单测覆盖。 | 真实本地引擎接入后 |
 | F-1 | 错误 fallback 文案显示英文 id | UI 显示「可尝试：browser_search、local_translate」（PASS 但未本地化），建议映射为「浏览器搜索 / 本地翻译」。作为 S-19 的用户困惑输入。 | S-19 / 前端 |
 
 ## 9 复跑方法
@@ -236,8 +280,34 @@ UI 路径（设置 → AI 服务 → 展开编辑 → 测试连接）实测显�
 cargo build --manifest-path src-tauri/Cargo.toml
 # 一键跑完（自动 start --reset / stop，约 3–5 分钟）
 node scripts/spikes/s07/run_s07.mjs
+# item3 三档选择专项（20 条断言，约 2 分钟）
+node scripts/spikes/s07/run_tiers.mjs
 # 只复用已启动实例调试
 node scripts/spikes/s07/run_s07.mjs --attach
 ```
 
 原始数据：`.verify/spikes/S-07/raw/`（`evidence.json`、`menu-ready-payload-dom.json`、`provider-test-*.json`、`onboarding-state-*.json`、`steps.json`）；截图：`.verify/spikes/S-07/shots/`。
+
+## 10 phase 2 实测回填与提示词路由（2026-11-05）
+
+### 10.1 三档性能文案已用实测数据回填（`presets.ts`）
+
+| 档位 | 实测数据（200 字） | 说明 |
+| --- | --- | --- |
+| 云端（DeepSeek `deepseek-flash`） | thinking 关闭：首字 P50 **0.61s** / P95 **0.87s**；默认 thinking：首字 P95 **4.59s**（不达标） | 接入真实网关时必须显式关闭 thinking；总耗时 P95 1.75s（略超 1.5s，首字口径达标） |
+| 极小模型（Qwen2.5-0.5B-Instruct Q4） | P50 **3.09s** / P95 **3.21s**；常驻 **≈0.55GiB**；冷加载 1.34s | **必须配精简提示词**；质量一般（适合短句/轻度使用，长文建议云端或普通模型） |
+| 普通模型（HY-MT1.5-1.8B Q4） | P50 **11.76s** / P95 **21.84s** / 最快 9.89s；常驻 ≈2.1GiB | 质量优先；纯 CPU 慢，8s 目标仅云端/极小档满足 |
+
+> DeepSeek 供应商说明同步修正：`deepseek-flash` **支持图片输入**（实测可识别真实截图，S-06 视觉腿可用），
+> 但**无联网搜索 API**（`/search` 全 404）。
+
+### 10.2 极小档提示词路由（落地）
+
+- 新增 `resources/prompts/translate_minimal.md`（精简翻译指令，变量同 `translate.md`）；
+- `action_router::translate_prompt_key`：`translate.backend = local` 且 `local.model` ∈ 极小模型 id 列表
+  （`qwen2.5-0.5b-instruct-q4`、`qwen2.5-1.5b-instruct-q4`）→ `translate_minimal`，否则 → `translate`；
+- `prompt_engine` 渲染前剔除模板维护注释头（修复契约承诺此前未实现的问题，避免把 `# 用途/# 变量` 等发给模型，
+  对 0.5B 小模型尤其重要）；
+- 单测：`tiny_local_model_uses_minimal_translate_prompt`、`translate_minimal_template_is_small_and_minimal`、
+  `strip_maintenance_header_keeps_body_only` 等。
+

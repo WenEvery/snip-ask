@@ -20,6 +20,9 @@ node scripts/spikes/s07/run_s07.mjs
 # 只跑 overlay 动作菜单取证（不 reset；用于改完 ActionMenu/门禁后的快速回归）
 node scripts/spikes/s07/run_s07.mjs --only-menu
 
+# item3 三档 AI 服务（云端/极小/普通）专项：--reset 首启 → 第 3/6 步三档截图 + 映射/config 断言
+node scripts/spikes/s07/run_tiers.mjs
+
 # 调试：复用已启动实例（不 start/stop，不动已有状态）
 node scripts/spikes/s07/run_s07.mjs --attach
 

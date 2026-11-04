@@ -1,7 +1,7 @@
 {
   "version": 1,
   "verified": false,
-  "notes": "模型清单（S-08 于 2026-11-04 按 ModelScope 官方仓库文件列表核对）：hy-mt-1.8b-q4 与 qwen3-4b-q4 的文件名/大小/SHA256 已核实（真实 Range 下载返回 206；见 docs/spikes/S-08-模型下载断点续传与校验.md）。opus-mt-zh-en 对应仓库当前没有 Ct2 产物（仅有 pytorch_model.bin 等），故 urls 置空，待官方发布 ct2-int8 后补齐 URL 与 SHA256。top-level verified=false 表示仍存在未核验条目，不能据此认定全部清单可信。模型文件不随安装包分发，由用户按需下载。",
+  "notes": "模型清单（S-08 于 2026-11-04 按 ModelScope 官方仓库文件列表核对，2026-11-05 phase 2 增补极小模型）：hy-mt-1.8b-q4、qwen3-4b-q4 与 qwen2.5-0.5b-instruct-q4 的文件名/大小/SHA256 已核实（真实 Range 请求返回 206 + Content-Range；见 docs/spikes/S-08-模型下载断点续传与校验.md）。opus-mt-zh-en 对应仓库当前没有 Ct2 产物（仅有 pytorch_model.bin 等），故 urls 置空，待官方发布 ct2-int8 后补齐 URL 与 SHA256。top-level verified=false 表示仍存在未核验条目（当前仅 opus-mt-zh-en），不能据此认定全部清单可信。模型文件不随安装包分发，由用户按需下载。",
   "models": [
     {
       "id": "hy-mt-1.8b-q4",
@@ -56,6 +56,30 @@
         "quant": "int8",
         "beamSize": 4,
         "pending": "ModelScope/HuggingFace 的 opus-mt-zh-en 仓库当前无 ct2-int8 产物（仅有 pytorch_model.bin / tf_model.h5 / rust_model.ot），待官方发布后补 urls 与 sha256；在此之前该模型不可下载（S-08 证据）。"
+      }
+    },
+    {
+      "id": "qwen2.5-0.5b-instruct-q4",
+      "name": "Qwen2.5-0.5B-Instruct（Q4_K_M，极小模型）",
+      "kind": "gguf",
+      "sizeBytes": 491400032,
+      "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+      "license": "Apache-2.0",
+      "minRamMB": 1024,
+      "urls": [
+        "https://modelscope.cn/models/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/master/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+      ],
+      "params": {
+        "quant": "Q4_K_M",
+        "role": "tiny-local",
+        "profile": "tiny-local",
+        "context": 32768,
+        "languages": 29,
+        "engine": "llama.cpp",
+        "promptProfile": "translate-minimal",
+        "qualityNote": "S-05 实测（2026-11-05）：需配合精简翻译提示词（resources/prompts/translate_minimal.md），否则会复述原文；200 字 P95 3.21s，译文质量一般（适合短句/轻度使用，长文建议云端或普通模型）。",
+        "verifiedBy": "S-08 phase 2：ModelScope 文件列表 API + Range bytes=0-1023 → 206 Content-Range bytes 0-1023/491400032，X-Linked-ETag 与 sha256 一致（原始数据 .verify/spikes/S-08/）"
       }
     }
   ]

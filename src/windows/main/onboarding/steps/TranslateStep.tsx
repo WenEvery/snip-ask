@@ -1,15 +1,35 @@
-/** 引导第 2 步：翻译方式 —— 云端（复用 AI 服务 / 单独模型）或本地（档位 + 实时下载） */
+/**
+ * 引导第 3 步：翻译方式 —— 三档选择（item3 用户决策）。
+ *
+ * 三档：云端翻译（需 Key，最快）/ 极小模型（Qwen2.5-0.5B，≈470MB，低配友好）/
+ * 普通模型（HY-MT1.5-1.8B，≈1.08GB，质量好但纯 CPU 慢）。
+ *
+ * 选择即写回 `draft.translate = { backend, modelId, cloudModel }`：
+ * - 云端：`backend="cloud"`，`modelId=null`（沿用既有 cloudModel：复用 AI 服务 / 专用 Qwen-MT）；
+ * - 极小/普通：`backend="local"`，`modelId` 对应模型 id，并清空无关的 `cloudModel`。
+ */
 
 import { useState } from "react";
-import type { TranslateBackend } from "@/shared/contract/types";
 import { ModelDownloadList } from "../components/ModelDownloadList";
 import { OptionCard } from "../components/OptionCard";
-import { LOCAL_TIERS } from "../presets";
+import {
+  TINY_LOCAL_MODEL_ID,
+  TRANSLATE_TIERS,
+  type TranslateTier,
+} from "../presets";
 import type { StepProps } from "../types";
 
 type TranslateDraft = NonNullable<StepProps["draft"]["translate"]>;
+type TierId = TranslateTier["id"];
 
 const FALLBACK: TranslateDraft = { backend: "cloud", modelId: null, cloudModel: "" };
+
+/** 由草稿反推当前档位（云端 / 极小 / 普通）。 */
+function resolveTierId(translate: TranslateDraft): TierId {
+  if (translate.backend === "cloud") return "cloud";
+  if (translate.modelId === TINY_LOCAL_MODEL_ID) return "tiny";
+  return "standard";
+}
 
 export function TranslateStep(props: StepProps) {
   const { draft, onEdit, onError } = props;
@@ -17,35 +37,53 @@ export function TranslateStep(props: StepProps) {
   const [cloudMode, setCloudMode] = useState<"reuse" | "separate">(
     translate.cloudModel ? "separate" : "reuse",
   );
-  const [tier, setTier] = useState("light");
+  const activeTierId = resolveTierId(translate);
+  const activeTier = TRANSLATE_TIERS.find((item) => item.id === activeTierId) ?? TRANSLATE_TIERS[0];
 
-  const update = (patch: Partial<TranslateDraft>) => onEdit({ translate: { ...translate, ...patch } });
+  const update = (patch: Partial<TranslateDraft>) =>
+    onEdit({ translate: { ...translate, ...patch } });
 
-  const selectBackend = (backend: TranslateBackend) => update({ backend });
+  const selectTier = (tier: TranslateTier) => {
+    update({
+      backend: tier.backend,
+      modelId: tier.modelId,
+      // 切到本地时清空云端专用字段；切回云端时保留用户已填的 cloudModel。
+      cloudModel: tier.backend === "cloud" ? translate.cloudModel : "",
+    });
+  };
 
   return (
     <div className="ob-step">
       <h2 className="ob-step-title">选择翻译方式</h2>
       <p className="ob-hint">
-        云端质量更高、无需下载；本地离线运行、更重隐私，但需要下载模型（建议 16 GB 内存体验质量档）。
+        三档任选其一：云端最快、质量最好（需 API Key 且上传文本）；本地模型不上传、无调用费用，
+        但纯 CPU 速度较慢。可随时在设置 → 翻译中更改。
       </p>
 
-      <div className="ob-cards2">
-        <OptionCard
-          selected={translate.backend === "cloud"}
-          title="云端翻译（推荐）"
-          description="复用第 2 步的 AI 服务 Key，或使用单独的 Qwen-MT 模型"
-          onSelect={() => selectBackend("cloud")}
-        />
-        <OptionCard
-          selected={translate.backend === "local"}
-          title="本地翻译（离线）"
-          description="下载小模型后离线运行，不上传任何文本"
-          onSelect={() => selectBackend("local")}
-        />
+      <div className="ob-cards3">
+        {TRANSLATE_TIERS.map((tier) => (
+          <OptionCard
+            key={tier.id}
+            selected={activeTierId === tier.id}
+            title={tier.title}
+            description={tier.description}
+            onSelect={() => selectTier(tier)}
+          >
+            <span className="ob-tier-meta">
+              {tier.tag ? <strong className="ob-tier-tag">{tier.tag}</strong> : null}
+              {tier.sizeText ? (
+                <span>
+                  体积 {tier.sizeText} · {tier.ramText}
+                </span>
+              ) : null}
+              <span>{tier.speedText}</span>
+              <span>{tier.qualityText}</span>
+            </span>
+          </OptionCard>
+        ))}
       </div>
 
-      {translate.backend === "cloud" ? (
+      {activeTierId === "cloud" ? (
         <div className="ob-block">
           <h3 className="ob-block-title">云端配置</h3>
           <div className="ob-radio-group">
@@ -88,32 +126,18 @@ export function TranslateStep(props: StepProps) {
         </div>
       ) : (
         <div className="ob-block">
-          <h3 className="ob-block-title">本地模型档位</h3>
-          <div className="ob-cards2">
-            {LOCAL_TIERS.map((item) => (
-              <OptionCard
-                key={item.id}
-                selected={tier === item.id}
-                title={item.title}
-                description={item.description}
-                onSelect={() => setTier(item.id)}
-              >
-                <span className="ob-tier-meta">
-                  <span>体积 {item.sizeText}</span>
-                  <span>{item.ramText}</span>
-                  <span>许可 {item.licenseText}</span>
-                  <span>{item.speedText}</span>
-                </span>
-              </OptionCard>
-            ))}
-          </div>
+          <h3 className="ob-block-title">
+            {activeTierId === "tiny" ? "极小模型（约 470 MB）" : "普通模型（约 1.08 GB）"}
+          </h3>
           <p className="ob-notice">
-            下载前请预留约 {tier === "quality" ? "1.5 GB" : "400 MB"} 磁盘空间（模型体积 + 20%）；下载支持断点续传与
-            SHA256 校验，可在后台继续。
+            选择本地模型的理由：文本不离开本机、无按次调用费用；代价是纯 CPU 推理较慢
+            {activeTierId === "standard" ? "（普通模型实测 P50 11.76s / P95 21.84s，200 字）" : "（极小模型质量一般）"}。
+            下载支持断点续传与 SHA256 校验，可在后台继续；未下载完成前本地翻译不可用。
           </p>
-          <h3 className="ob-block-title">可下载模型</h3>
+          <h3 className="ob-block-title">对应模型下载</h3>
           <ModelDownloadList
             selectedModelId={translate.modelId}
+            focusModelId={activeTier.modelId}
             onSelectModel={(modelId) => update({ modelId })}
             onError={onError}
           />

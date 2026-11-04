@@ -75,12 +75,14 @@ function parseArgs(argv) {
     out: '',
     selfCheck: false,
     logFile: '',
+    promptVariant: 'product',
+    text: '',
   };
   const take = (name, key, kind = 'string') => {
     const i = argv.indexOf(name);
     if (i >= 0 && i + 1 < argv.length) out[key] = kind === 'number' ? Number(argv[i + 1]) : argv[i + 1];
   };
-  ['--exe', '--model', '--port', '--host', '--ctx', '--threads', '--gpu-layers', '--runs', '--warmup', '--max-tokens', '--temperature', '--top-p', '--top-k', '--repeat-penalty', '--timeout', '--out', '--log-file'].forEach(
+  ['--exe', '--model', '--port', '--host', '--ctx', '--threads', '--gpu-layers', '--runs', '--warmup', '--max-tokens', '--temperature', '--top-p', '--top-k', '--repeat-penalty', '--timeout', '--out', '--log-file', '--prompt-variant', '--text'].forEach(
     (flag, i) => {
       const key = {
         '--exe': 'exe',
@@ -100,6 +102,8 @@ function parseArgs(argv) {
         '--timeout': 'timeout',
         '--out': 'out',
         '--log-file': 'logFile',
+        '--prompt-variant': 'promptVariant',
+        '--text': 'text',
       }[flag];
       const num = ['port', 'ctx', 'threads', 'gpuLayers', 'runs', 'warmup', 'maxTokens', 'temperature', 'topP', 'topK', 'repeatPenalty', 'timeout'].includes(key);
       take(flag, key, num ? 'number' : 'string');
@@ -154,6 +158,28 @@ function renderTranslatePrompt(text, targetLang = 'en', sourceLang = 'zh-CHS', g
     if (rendered.includes(`{${v}}`)) throw new Error(`提示词未替换变量 {${v}}`);
   }
   return rendered.trim();
+}
+
+function renderVariantPrompt(variant, text) {
+  if (variant === 'product') return renderTranslatePrompt(text);
+  if (variant === 'minimal') {
+    return `将下面的中文翻译成英文，只输出译文：\n\n${text}`;
+  }
+  if (variant === 'minimal-fewshot') {
+    return (
+      '将下面的中文翻译成英文，只输出译文：\n\n' +
+      '示例：\n中文：今天天气不错。\n英文：The weather is nice today.\n\n' +
+      `现在翻译：\n${text}`
+    );
+  }
+  throw new Error(`未知 prompt variant：${variant}（支持 product / minimal / minimal-fewshot）`);
+}
+
+function cjkRatio(text) {
+  const chars = [...text];
+  if (!chars.length) return 0;
+  const cjk = chars.filter((c) => /[\u4e00-\u9fff]/.test(c)).length;
+  return cjk / chars.length;
 }
 
 function sha256File(path) {
@@ -364,8 +390,11 @@ class LlamaServer {
 // ------------------------------------------------------------------- main --
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const exe = args.exe || findCandidateExe();
-  const model = args.model || findCandidateModel();
+  // 统一转绝对路径：llama-server 以自身目录为 cwd 启动，相对模型路径会加载失败
+  const exeRaw = args.exe || findCandidateExe();
+  const modelRaw = args.model || findCandidateModel();
+  const exe = exeRaw ? resolve(exeRaw) : '';
+  const model = modelRaw ? resolve(modelRaw) : '';
   if (!args.logFile) args.logFile = join(RAW_DIR, `llama_server_${dateStamp()}.log`);
 
   const precheck = {
@@ -391,7 +420,8 @@ async function main() {
   }
 
   mkdirSync(RAW_DIR, { recursive: true });
-  const prompt = renderTranslatePrompt(SAMPLE_TEXT);
+  const text = args.text || SAMPLE_TEXT;
+  const prompt = renderVariantPrompt(args.promptVariant, text);
   const messages = [{ role: 'user', content: prompt }];
   const server = new LlamaServer({
     exe,
@@ -411,7 +441,8 @@ async function main() {
   });
 
   console.log('='.repeat(74));
-  console.log('S-05 本地翻译链路时延基准（llama.cpp llama-server + HY-MT1.5-1.8B Q4_K_M）');
+  console.log('S-05 本地翻译链路时延基准（llama.cpp llama-server）');
+  console.log(`variant: ${args.promptVariant}  text_chars=${text.length}`);
   console.log(`exe:   ${exe}`);
   console.log(`model: ${model}`);
   console.log(`threads=${args.threads} ctx=${args.ctx} port=${args.port} ngl=${args.gpuLayers}`);
@@ -479,8 +510,9 @@ async function main() {
         host: hostInfo(),
         repo_commit: gitCommit(),
         threshold_ms: THRESHOLD_MS,
-        sample_len_chars: SAMPLE_TEXT.length,
-        sample_text_sha256: createHash('sha256').update(SAMPLE_TEXT).digest('hex'),
+        sample_len_chars: text.length,
+        sample_text_sha256: createHash('sha256').update(text).digest('hex'),
+        prompt_variant: args.promptVariant,
         prompt_file: 'resources/prompts/translate.md',
         prompt_sha256: sha256File(PROMPT_FILE),
         prompt_chars: prompt.length,
@@ -578,7 +610,9 @@ async function runOnce(server, messages, maxTokens, label) {
       prompt_tokens: usage.prompt_tokens ?? null,
       completion_tokens: usage.completion_tokens ?? null,
       output_chars: content.length,
-      output_sample: content.slice(0, 160),
+      output_cjk_ratio: Math.round(cjkRatio(content) * 1000) / 1000,
+      looks_translated: content.length > 0 && cjkRatio(content) < 0.2,
+      output_sample: content.slice(0, 400),
       output_sha256: createHash('sha256').update(content).digest('hex'),
     };
   } catch (err) {

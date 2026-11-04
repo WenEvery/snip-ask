@@ -343,6 +343,7 @@ def run_pipeline_once(
     mock: bool,
     timeout: float,
     template: str,
+    extra: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     record: Dict[str, Any] = {"mode": mode, "mock": mock, "ok": False, "stages": {}}
     t_pipeline0 = time.perf_counter()
@@ -363,6 +364,8 @@ def run_pipeline_once(
         "temperature": 0.0,
         "max_tokens": 700,
     }
+    if extra:
+        payload.update(extra)
     try:
         if mock:
             time.sleep(0.05)
@@ -434,6 +437,8 @@ def run_pipeline_once(
         "temperature": 0.0,
         "max_tokens": 600,
     }
+    if extra:
+        summary_payload.update(extra)
     try:
         if mock:
             time.sleep(0.05)
@@ -514,7 +519,7 @@ def image_info(path: Path) -> Dict[str, Any]:
     }
 
 
-def collect_meta(mock: bool) -> Dict[str, Any]:
+def collect_meta(mock: bool, partial: bool = False) -> Dict[str, Any]:
     commit = "unknown"
     try:
         commit = subprocess.run(
@@ -526,7 +531,9 @@ def collect_meta(mock: bool) -> Dict[str, Any]:
         "script": "bench_image_search.py",
         "script_version": SCRIPT_VERSION,
         "generated_at": datetime.now(timezone(timedelta(hours=8))).isoformat(),
-        "mode": "MOCK_SELF_CHECK" if mock else "REAL",
+        "mode": "MOCK_SELF_CHECK"
+        if mock
+        else ("PARTIAL_REAL_VISION_MOCK_SEARCH" if partial else "REAL"),
         "host": {
             "os": platform.platform(),
             "cpu_count": os.cpu_count(),
@@ -540,7 +547,14 @@ def collect_meta(mock: bool) -> Dict[str, Any]:
         "labels": (
             ["MOCK_SELF_CHECK：数字来自本地 mock，仅验证框架，不得作为 S-06 DONE/FAILED 依据。"]
             if mock
-            else []
+            else (
+                [
+                    "PARTIAL：视觉识别与摘要为真实 DeepSeek 调用，Search 为 mock（20ms 假延时）；"
+                    "不得作为 S-06 验收结论，仅用于估算视觉腿时延。"
+                ]
+                if partial
+                else []
+            )
         ),
     }
 
@@ -572,6 +586,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--timeout", type=float, default=60.0)
     ap.add_argument("--max-queries-deep", type=int, default=3)
     ap.add_argument("--mock-self-check", action="store_true", help="无 Key 时跑 mock 流水线自检")
+    ap.add_argument(
+        "--allow-mock-search",
+        action="store_true",
+        help="视觉/摘要走真实端点、Search 用 mock 做部分测量（结果标注 PARTIAL，不得作为验收结论）",
+    )
     ap.add_argument("--out", default="")
     args = ap.parse_args(argv)
 
@@ -592,6 +611,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     missing: List[str] = []
     mock = bool(args.mock_self_check)
+    partial = False
     if not mock:
         if not args.base_url:
             missing.append("SNIPASK_BENCH_VISION_BASE_URL")
@@ -621,6 +641,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     file_bytes = image_path.read_bytes()
     data_url = "data:image/png;base64," + base64.b64encode(file_bytes).decode("ascii")
     template = load_image_search_template(args.lang, modes[0])
+    try:
+        vision_extra = json.loads(os.environ.get("SNIPASK_BENCH_VISION_EXTRA_JSON") or "{}")
+    except json.JSONDecodeError as err:
+        print(f"BLOCKED：SNIPASK_BENCH_VISION_EXTRA_JSON 不是合法 JSON：{err}")
+        return EXIT_ERROR
 
     if mock:
         print("[MOCK] 使用 mock 视觉模型 + mock Search，仅验证测量框架；数字不可作为 DONE 依据。")
@@ -633,6 +658,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             search = TavilySearchProvider(args.search_api_key)
         elif args.search_provider == "serper":
             search = SerperSearchProvider(args.search_api_key)
+        elif args.allow_mock_search:
+            # 部分真实：视觉/摘要真实调用，Search 用 mock（不满足验收口径，结果标注 PARTIAL）
+            search = MockSearchProvider()
+            partial = True
+            print(
+                "[PARTIAL] Search 使用 mock（20ms 假延时）；视觉/摘要为真实调用。"
+                "结果标注 PARTIAL_REAL_VISION_MOCK_SEARCH，不得作为 S-06 验收结论。"
+            )
         else:
             print(
                 "BLOCKED：未配置真实检索服务（SNIPASK_BENCH_SEARCH_PROVIDER=none）。\n"
@@ -642,11 +675,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         runs, warmup = args.runs, args.warmup
 
     result: Dict[str, Any] = {
-        "meta": collect_meta(mock),
+        "meta": collect_meta(mock, partial),
         "config": {
             "base_url_masked": vision_client.masked_url,
             "model": args.model or "mock-vision",
             "search_provider": search.name,
+            "vision_extra_param_keys": sorted(vision_extra.keys()),
             "lang": args.lang,
             "modes": modes,
             "runs": runs,
@@ -668,7 +702,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 mode=mode, image_data_url=data_url, vision_client=vision_client,
                 vision_model=args.model or "mock-vision", vision_key=args.api_key or "mock-key",
                 search=search, lang=args.lang, mock=mock, timeout=args.timeout,
-                template=template_mode,
+                template=template_mode, extra=vision_extra,
             )
             rec["warmup"] = True
             records.append(rec)
@@ -677,7 +711,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 mode=mode, image_data_url=data_url, vision_client=vision_client,
                 vision_model=args.model or "mock-vision", vision_key=args.api_key or "mock-key",
                 search=search, lang=args.lang, mock=mock, timeout=args.timeout,
-                template=template_mode,
+                template=template_mode, extra=vision_extra,
             )
             rec["warmup"] = False
             records.append(rec)
@@ -697,6 +731,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         if mock:
             # mock 自检永远不给出 DONE/FAILED 验收结论
             verdict = "MOCK_SELF_CHECK_OK" if measured else "MOCK_SELF_CHECK_FAILED"
+        elif partial:
+            # 部分真实（Search 为 mock）也不给验收结论
+            verdict = "PARTIAL_REAL_VISION_MOCK_SEARCH" if measured else "PARTIAL_FAILED"
         else:
             verdict = "DONE" if (measured and p95 <= threshold) else ("BLOCKED" if not measured else "FAILED")
         result["modes"][mode] = {

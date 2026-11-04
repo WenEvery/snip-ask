@@ -84,6 +84,14 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         }
     }
     let session = start.session;
+    // S-02/S-03：新会话作废旧整屏 det 缓存（缓存键为 Session::ocr_session_id，新会话会换键）。
+    state.ocr.clear();
+    let ocr_session_id = state
+        .session
+        .lock()
+        .current()
+        .and_then(|current| current.ocr_session_id.clone())
+        .unwrap_or_else(|| session.as_str().to_string());
 
     // 2) 捕获（骨架模式：主显示器物理尺寸合成帧，dataUrl = null）。
     let capturer: Arc<dyn ScreenCapturer> = Arc::new(SkeletonCapturer::new(app.clone()));
@@ -133,10 +141,15 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         },
     );
 
-    // 7) 前置 OCR 状态时序：150ms scanning → 400ms done（契约 §12）。
+    // 7) 前置 OCR：整屏 det（S-02 像素预算降采样）→ 缓存；时序保持 150ms scanning → 400ms done。
     let background_app = app.clone();
     let background_session = session.clone();
+    let background_frame = frame.clone();
+    // 帧左上角的绝对物理坐标（虚拟桌面左上角，可为负）；缓存框 = 帧局部 + 该 origin。
+    let background_origin = desktop.rect;
+    let background_ocr_key = ocr_session_id;
     let _handle = tauri::async_runtime::spawn(async move {
+        let started = std::time::Instant::now();
         tokio::time::sleep(Duration::from_millis(SKELETON_SCANNING_DELAY_MS)).await;
         emit_ocr_status(
             &background_app,
@@ -146,8 +159,41 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
                 boxes: None,
             },
         );
+
+        // S-02/S-03：整屏 det 并缓存（骨架引擎瞬时；真实引擎 ~0.9s 在后台完成）。
+        // 缓存命中的选区识别（rec-only）在 selection_commit 中使用，不重复 det。
+        {
+            let state = background_app.state::<AppState>();
+            let config = state.snapshot_config();
+            let scan = state
+                .ocr
+                .scan_screen(
+                    &background_ocr_key,
+                    &background_frame,
+                    &background_origin,
+                    config.ocr.det_max_edge,
+                    config.ocr.text_threshold,
+                )
+                .await;
+            match scan {
+                Ok(result) => tracing::debug!(
+                    target: "snip_ask_lib::trace",
+                    "整屏 OCR det 完成：{} 框，hasText={}",
+                    result.boxes.len(),
+                    result.has_text
+                ),
+                Err(err) => tracing::warn!(
+                    code = %err.code,
+                    message = %err.message,
+                    "整屏 OCR det 失败，选区将走 det+rec 兜底"
+                ),
+            }
+        }
+
+        // 契约时序：150ms scanning → 400ms done。det 更快时不提前、更慢时不再额外等待。
+        let elapsed = started.elapsed().as_millis() as u64;
         tokio::time::sleep(Duration::from_millis(
-            SKELETON_DONE_DELAY_MS - SKELETON_SCANNING_DELAY_MS,
+            SKELETON_DONE_DELAY_MS.saturating_sub(elapsed),
         ))
         .await;
         // 仅在仍处于选区阶段时补发 done；用户已提交选区时由 selection_commit 负责。

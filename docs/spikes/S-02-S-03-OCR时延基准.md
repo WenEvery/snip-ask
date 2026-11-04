@@ -399,3 +399,156 @@ powershell -ExecutionPolicy Bypass -File scripts/spikes/tools/screenshot.ps1 -Ou
 | 原始数据（本机，gitignored） | `.verify/spikes/S-02-S-03/results/`：`s02_raw.csv`（90 行逐次样本）、`s02_det.json`、`s03_raw.csv`（100 行）、`s03_rec_only_raw.csv`、`s03_det_rec.json`、`jitter.json`、`edge_sweep.json`、`thread_sweep.json`、`load_monitor.csv`、`preload_snapshot.txt`、`postload_snapshot.txt`、`bench_run.log` |
 | 输入清单（本机，gitignored） | `.verify/spikes/S-02-S-03/inputs/inputs_manifest.json`（尺寸/构造方法/sha256） |
 | 完整运行日志 | `.verify/spikes/S-02-S-03/results/bench_run.log` |
+
+---
+
+## 13 实施落地（2026-11-05，S-03 缓存口径 + S-02 像素预算）
+
+> 本节为**追加更新**：用户已确认落地「S-03 缓存口径 + OCR 像素预算」。§8 中 S-03 的「需架构/阈值决策」
+> 与 §10.1 的「建议作为实现阶段修改点」在本节转为**已实施**；其余测量数据（§5–§7、§9）不变。
+
+### 13.1 结论变更
+
+| 条目 | 原结论（§8） | 实施后 |
+| --- | --- | --- |
+| **S-03** 选区 OCR | FAILED（det+rec P95=968ms）；缓存复用路径 DONE（P95=596ms），处置「需架构/阈值决策」 | **已实施 det 缓存 → rec-only（实测 rec-only P95=596ms ≤800ms，处置改为「已实施」）**；无缓存/无命中时回退选区 det+rec（约 1s 级降级，见 §10.3） |
+| **S-02** 整屏 det | DONE（双 4K P95=926ms）；单 4K 1695ms 超阈值，处置「改长边语义为像素预算」 | **已采用像素预算 `DET_PIXEL_BUDGET = 3.0 Mpx`**：单 4K 3840x2160 的 det 输入由 3200x1800（5.76 Mpx）收敛为 2309x1299（3.0 Mpx）；按本机 det 吞吐 ≈3.7–4.0 Mpx/s 外推约 **~750ms**（具体数值见 ocr-bench 复核），双 4K 行为不变（3200x900，926ms） |
+
+### 13.2 代码落地
+
+| 位置 | 内容 |
+| --- | --- |
+| `services/ocr_service.rs` · `det_input_size` | det 输入尺寸**双约束**：长边 ≤ `det_max_edge`（配置 `ocr.detMaxEdge`=3200）**且** 宽×高 ≤ `DET_PIXEL_BUDGET`（3.0 Mpx）；等比缩放、`floor` 取整**绝不放大**；返回 `(w, h, scale)`，框坐标 × `1/scale` 还原为帧局部物理像素（取整误差 ≤1px） |
+| `services/ocr_service.rs` · `OcrEngine` | trait 拆为 `detect`（整屏只 det，帧局部物理框）/ `recognize`（只 rec 补文本）/ `detect_and_recognize`（选区兜底 det+rec）；`SkeletonOcrEngine` 三者均实现，占位语义与契约 150/400ms 时序不变（时序由 `commands::capture` 的后台任务控制，引擎不 sleep） |
+| `services/ocr_service.rs` · `OcrPipeline` | `scan_screen`：det → 帧局部框 + `frame_origin`（虚拟桌面左上角，可负）平移为绝对物理坐标 → 按 `ocr_session_id` 缓存；`recognize_selection`：缓存命中且有框与选区相交 → **只 rec**（不再 det）；缓存缺失 / 无命中 / 空框 → 回退 `detect_and_recognize`；`invalidate/clear` 支持新会话失效 |
+| `app/state.rs` | `AppState.ocr: OcrPipeline`（骨架模式 `with_skeleton()`），跨会话复用同一实例 |
+| `commands/capture.rs` | 新会话开始 `state.ocr.clear()`；后台任务在 `ocr:status(scanning)`（150ms）之后做整屏 det 并缓存，`done` 仍按 400ms 契约时序发出（det 更快不提前、更慢不额外等待） |
+| `commands/selection.rs` | `selection_commit` 改用 `recognize_selection`（缓存 rec-only 优先，兜底 det+rec）生成 `preview/has_text/boxes`；保留 S-07 能力门禁逻辑 |
+
+坐标口径：缓存框为**绝对物理像素**（虚拟桌面左上角为原点，可负），负坐标副屏选区可直接与缓存框做相交判定；
+引擎 `detect/recognize` 使用**帧局部物理像素**，由 pipeline 平移，避免多显示器坐标歧义。
+
+### 13.3 像素预算单测结果（`cargo test`）
+
+| 输入帧（物理） | det_max_edge=3200 | 输出 det 输入 | 像素量 | 断言 |
+| --- | --- | --- | --- | --- |
+| 2560x1440 | 长边不超 | 2309x1299 | 2,999,391 ≤3.0Mpx | 不放大 ✔ / 预算 ✔ |
+| 3840x2160（单 4K） | 3200x1800 会超预算 | **2309x1299** | 2,999,391 ≤3.0Mpx | 由 5.76 Mpx 收敛 ✔ |
+| 7680x2160（双 4K） | 3200 | **3200x900** | 2,880,000 ≤3.0Mpx | 与 S-02 主用例一致 ✔ |
+| 5120x1440（32:9 超宽） | 3200 | 3200x900 | 2,880,000 | ✔ |
+| 2160x3840（9:16 超长） | 3200 后仍超预算 | 1299x2309 | 2,999,391 | 宽<高保持 ✔ |
+| 320x200 / 800x600 / 1920x1080 / 1x1 | — | 原尺寸 | — | **绝不放大** ✔ |
+
+覆盖矩阵单测：8 种真实/极端帧 × 3 档 det_max_edge（1600/3200/4800）全部断言「不放大、长边 ≤ 上限、像素 ≤ 3.0Mpx」。
+
+### 13.4 缓存 / 兜底路径覆盖（fake engine + 骨架引擎）
+
+| 路径 | 断言 | 结果 |
+| --- | --- | --- |
+| 整屏 det 缓存 | 帧局部框按 `frame_origin` 平移为绝对坐标；`detect` 调用 1 次；缓存条目数正确 | ✔ |
+| 缓存命中 → rec-only | `detect` 仍为 1 次、`recognize` 1 次、`detect_and_recognize` 0 次；文本由 rec 补齐 | ✔ |
+| 过滤边界 | 部分相交（选区不含框中心）也命中；不相交/低置信度框被过滤 | ✔ |
+| 兜底路径 | 无缓存 / 缓存为空框 / 过滤后无命中 → `detect_and_recognize` 恰好 1 次，rec 0 次 | ✔ |
+| 会话失效 | 旧键缓存不被新键命中（新会话走兜底）；`invalidate` 后缓存为空 | ✔ |
+| 取消 / 空框 | 空选区（0 宽）不触发任何推理，返回空 `OcrScan` | ✔ |
+| 骨架占位语义 | scan→缓存→rec-only 后仍返回固定占位文案、`hasText=true`（与历史行为一致） | ✔ |
+
+测试数：`ocr_service` 单测 **19 项**（含 6 项 `det_input_size`、7 项 pipeline）+ 集成测试
+`src-tauri/tests/ocr_pipeline_spike.rs` **9 项**；合计 28 项与本落地相关，全部通过。
+
+### 13.5 复跑
+
+```powershell
+$env:PATH="$env:USERPROFILE\.cargo\bin;$env:PATH"
+# 像素预算 + pipeline 单元/集成测试（无需 app、无需模型）
+cargo test --manifest-path src-tauri/Cargo.toml --lib ocr
+cargo test --manifest-path src-tauri/Cargo.toml --test ocr_pipeline_spike
+# 全量
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+> 注：本节的 P95 数值沿用 §6.3 的 rec-only 实测（596ms）与 §5.2 的 det 实测（双 4K 926ms / 单 4K 1695ms）；
+> 像素预算对单 4K 的时延改善为**按吞吐外推**，真机 Python 复测见 ocr-bench 的复核结果。
+
+### 13.6 真机冒烟（2026-11-05 00:54，真实 debug 应用，仅验证接线不测时延）
+
+```powershell
+node scripts/spikes/applab/applab.mjs start --owner dpi-coords --wait-sec 60
+node scripts/spikes/applab/applab.mjs eval --window main --js "window.__TAURI_INTERNALS__.invoke('capture_freeze')"
+node scripts/spikes/s01/s01_pointer_probe.mjs --vd -1080,-470,3640,1920 --out .verify/spikes/S-02-S-03/ocr_smoke_pointer.json
+node scripts/spikes/applab/applab.mjs stop --owner dpi-coords
+```
+
+- `capture_freeze` 成功并在 150ms/400ms 契约时序发出 `ocr:status`；后台整屏 det + 缓存路径无 panic/无 warn。
+- 跨屏拖选 6 组提交（走 `selection_commit → OcrPipeline::recognize_selection`）：菜单正常出现
+  （`hasMenu=true`），预览为骨架占位文案，`hasText=true` —— 证明新接线（state/capture/selection）在真实应用内可用。
+- 证据：`.verify/spikes/S-02-S-03/ocr_smoke_pointer.json`、`ocr_smoke_pointer-overlay.png`（本机 gitignored）。
+- 说明：本次只验证接线与契约行为，不产生时延数字；时延以 §5/§6 的 Python 基准与 ocr-bench 复核为准。
+
+---
+
+## 14 像素预算复核（2026-11-05，真实 ONNX 实测·task-12）
+
+> 本节为**追加更新**，位于 §13（实施落地）之后。目的：用真实 PP-OCRv4 ONNX 实测复核 item2 的
+> 「OCR 像素预算」口径，为 §13.1 的**外推值**提供实测依据，并给出**推荐预算值**。
+> 口径规则（与 §13.2 `det_input_size` 实现一致）：
+> `scale = min(长边上限 3200 / max(w,h), sqrt(budget_px / (w×h)))`，`scale ≥ 1` 时不放大。
+> 因此：双 4K 7680x2160 → **3200x900（2.88Mpx，仍受长边约束）**；单 4K 3840x2160 → **2309x1299（3.0Mpx）**；
+> 2560x1440 → 2309x1299（3.0Mpx）；1080p 及以下不放大。
+> 环境/引擎/统计口径与 §2–§4 完全一致（PP-OCRv4 ONNX、ORT 1.31.1 CPU EP、intra_op=8、warmup 3 次不计入、
+> `perf_counter` 打点、可比耗时 = 降采样 + det）。
+
+### 14.1 头条用例复核（各 30 次，最终干净窗口）
+
+| 用例 | 帧（物理像素） | det 输入 | P50 | P95 | max | mean | 检测框 | 结论 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **双 4K（主用例）** | 7680x2160 | **3200x900**（2.88Mpx） | **724ms** | **743ms** | 778ms | 726ms | 113 | **DONE**（≤1.2s，余量 457ms；与 §5.2 的 926ms 同量级，本窗口更快） |
+| **单 4K（新口径）** | 3840x2160 | **2309x1299**（3.00Mpx） | **753ms** | **794ms** | 837ms | 756ms | 58 | **DONE**（旧口径同窗口 P95=1682ms，**−53%**） |
+| 单 4K（旧口径对照，10 次） | 3840x2160 | 3200x1800（5.76Mpx） | 1631ms | 1682ms | 1690ms | — | 57 | **FAILED**（>1.2s；与 §5.2 干净值 1695ms 一致） |
+| 主屏 2560x1440（附带） | 2560x1440 | 2309x1299（3.00Mpx） | 752ms | 761ms | 762ms | — | 57 | 达标（旧口径不降采样 979ms，§5.2） |
+
+- 与 §13.1 外推值的关系：§13.1 按吞吐外推「单 4K 约 ~750ms」→ 实测 **P50=753ms**，外推准确；
+  P95=794ms（≤1.2s）。双 4K 实测 P95=743ms（§13.1 引用 §5.2 的 926ms 为前一日窗口值；两轮均达标、行为不变）。
+- 检测框数：单 4K 新口径 58 框 vs 旧口径 57 框（**无损失**，框数代理指标）。
+
+### 14.2 预算扫描（单 4K，各 20 次；取第 2 轮 cargo=0 的干净段）
+
+| 预算 | det 输入 | 像素量 | P50 | P95 | max | 检测框 |
+| --- | --- | --- | --- | --- | --- | --- |
+| **2.5 Mpx** | 2108x1186 | 2.500Mpx | **621ms** | **632ms** | 646ms | **59** |
+| **3.0 Mpx** | 2309x1299 | 2.999Mpx | 765ms | 800ms | 808ms | 58 |
+| **3.5 Mpx** | 2494x1403 | 3.499Mpx | 898ms | 930ms | 957ms | 57 |
+
+- 三档全部 ≤1.2s；框数 59 / 58 / 57 随预算单调但差异仅 ±2（与旧口径 57 相当），**没有数据表明 2.5–3.0Mpx 会丢失小字**（框数为代理指标，非召回率）。
+- 3.0 与 2.5 的差异：多保留 20% 像素（对 rec 质量更稳），P95 多 168ms；3.5 比 3.0 慢约 25% 但框数不再增加。
+
+### 14.3 推荐值
+
+| 档位 | 预算 | 依据 |
+| --- | --- | --- |
+| **默认（推荐）** | **3.0 Mpx** + 长边上限 3200 | 单 4K P95=794ms、双 4K P95=743ms，均 ≤1.2s（余量 406/457ms）；相对旧口径单 4K 从 1682ms → 794ms（−53%）且双 4K 行为不变；比 2.5 多 20% 像素保留小字/rec 质量，比 3.5 快 ~25%，是速度与保真的均衡点；与 §13.2 已实现的 `DET_PIXEL_BUDGET=3.0Mpx` 一致 |
+| **低配 profile（建议预留）** | 2.5 Mpx | P95=632ms；按低配机 0.5–0.7x 吞吐外推约 0.9–1.3s，仍有机会守住 1.2s；框数 59（无代理损失）。3.0 在低配机外推 P95≈1.1–1.6s，有超阈值风险 |
+| 不推荐 | 3.5 Mpx | P95=930ms 虽仍达标，但比 3.0 慢 ~25% 且框数不再增加（57 vs 58），对低配机余量更小 |
+
+### 14.4 测量窗口与污染处理（如实记录）
+
+| 轮次 | 时间（+08:00） | 负载 | 处理 |
+| --- | --- | --- | --- |
+| 第 1 轮 | 00:48:24–00:51:2x | 00:49:01 起 hotkey-probe 的 `cargo test --test provider_probe_spike`（cargo 最多 9 + rustc 8）编译，主屏用例 P95 被拉到 3442ms | **全部作废**；备份 `budget_sweep_contaminated.json` / `budget_run_contaminated.log` |
+| 第 2 轮 | 00:53:38–00:56:18 | 开头 00:53:48–00:54:22 有 1–3 个 cargo 进程（无 rustc），早期用例可能轻微受影响；00:54:45 之后 cargo=0 | 预算扫描（14.2）与主屏段取此轮 cargo=0 段；单 4K 30 次改用第 3 轮 |
+| 第 3 轮 | 00:56:48–00:57:42 | **全程 cargo/rustc/llama-server=0**，CPU 60–77% 为本基准自身推理 | 14.1 两个 30 次头条用例取此轮（`budget_headline_clean.json`） |
+
+- 锁：第 1、2 轮均独占 `.verify/bench.lock`（owner=ocr-bench）；第 3 轮为释放锁后的即时补测（未再建锁，但全程监视器确认无 cargo/rustc，且此时其它成员已收到释放通知、处于写文档状态）。
+- 前后负载快照：`preload_snapshot_phase2.txt`（第 2 轮前：CPU 7%、cargo/rustc/llama-server=0）、
+  `postload_snapshot_phase2.txt`（第 3 轮后：CPU 5%、无重负载）；3 秒粒度监视器：
+  `load_monitor_phase2.csv`、`load_monitor_phase2b.csv`。
+
+### 14.5 数据与复跑
+
+| 产物 | 路径 |
+| --- | --- |
+| 头条用例原始数据（第 3 轮，30 次） | `.verify/spikes/S-02-S-03/results/budget_headline_clean.json`、`budget_headline_clean_raw.csv`、`budget_headline_clean.log` |
+| 全量用例原始数据（第 2 轮） | `.verify/spikes/S-02-S-03/results/budget_sweep.json`、`budget_sweep_raw.csv` |
+| 作废轮次备份 | `.verify/spikes/S-02-S-03/results/budget_sweep_contaminated.json`、`budget_sweep_raw_contaminated.csv`、`budget_run_contaminated.log` |
+| 汇总数据（含 `budget_sweep` 字段） | [docs/spikes/data/s02_s03/summary.json](data/s02_s03/summary.json) |
+| 复跑 | `.verify/venv-ocr/Scripts/python.exe scripts/spikes/s02_s03/bench_ocr.py budget`（自动独占建锁/释放，约 3 分钟；输出含本轮 6 个用例） |

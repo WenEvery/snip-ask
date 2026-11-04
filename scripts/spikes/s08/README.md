@@ -6,7 +6,7 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| `probe_range.ps1` | 对 ModelScope 真实模型文件 URL 发 `Range: bytes=0-1023`（只取 1 KB，不下载整模型），验证 206 + Content-Range；同时探测清单 URL（预期 404）、中段 Range、越界 416、HuggingFace（预期超时） |
+| `probe_range.ps1` | 对 ModelScope 真实模型文件 URL 发 `Range: bytes=0-1023`（只取 1 KB，不下载整模型），验证 206 + Content-Range；同时探测清单 URL（预期 404）、中段 Range、越界 416、HuggingFace（预期超时）。含 phase 2 极小模型 `qwen2.5-0.5b-instruct-q4`（491 400 032 B，task-9 复核）。 |
 
 ### 复跑
 

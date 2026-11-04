@@ -48,6 +48,46 @@
   160 lib + 16 契约 + 12 S-08（2 ignored 真实网络/子进程助手）+ 6 S-01 + 6 S-04）、`pnpm typecheck`、
   `pnpm build:web` 全部通过。
 
+### 技术验证第二轮 · P0 门禁处置落地（2026-11-05）
+
+按用户对首轮 P0 结论的 4 项决策完成落地（逐项记录见 [`docs/spikes/`](docs/spikes/README.md)，实施边界见
+[`docs/实施架构.md`](docs/实施架构.md) §9.1）：
+
+- **S-03 选区 OCR 口径变更并落地**：新增「整屏 det 缓存 → 选区过滤 + rec-only」链路（实测 P95 596ms，目标 800ms）：
+  `ocr_service` 新增 `det_input_size` / `OcrEngine::{detect, recognize, detect_and_recognize}` / `OcrPipeline`
+  （缓存按 `ocr_session_id`、帧局部↔绝对物理坐标平移、缓存缺失/无命中回退 det+rec、新会话失效、空选区零推理），
+  `app/state.rs` + `commands/{capture,selection}.rs` 接线；新增 19 项单测 + 9 项集成测试 + 真机冒烟（6 组跨屏拖选 → 菜单正常）。
+- **S-02 OCR 像素预算落地**：det 输入改为「长边 ≤ `detMaxEdge`（默认 3200）且 宽×高 ≤ 3.0Mpx」双约束、绝不放大
+  （`DET_PIXEL_BUDGET`）。真实 ONNX 复核（干净窗口）：双 4K 7680×2160→3200×900 P95 **743ms**；单 4K→2309×1299
+  P95 **794ms**（旧长边口径 3200×1800 为 1682ms，超 1.2s）；主屏 2560×1440→P95 761ms；低配建议 2.5Mpx（P95 632ms）。
+- **引导页三档 AI 服务（用户决策 item3）**：翻译方式改为 **云端 / 极小模型（本地）/ 普通模型（本地）** 三选一，
+  并显式提示性能与隐私/成本（部分用户为保密/成本选本地）：
+  - 云端：实测（DeepSeek，关闭 thinking）首字 P50 0.61s / P95 0.87s；默认 thinking 首字 P95 4.59s（不达标）；
+  - 极小模型：Qwen2.5-0.5B-Instruct Q4 + 精简提示词，200 字 P95 **3.21s**、常驻 ≈0.55GiB，质量一般（长文建议云端）；
+  - 普通模型：HY-MT1.5-1.8B Q4，实测 P50 11.76s / P95 21.84s（质量优先、纯 CPU 慢）。
+  选择写入 `translate.backend` + `local.model`；模型下载列表按档位聚焦；DeepSeek 供应商说明修正（支持视觉、
+  无联网搜索 API）。
+- **极小模型提示词路由**：新增 `resources/prompts/translate_minimal.md`；`action_router::translate_prompt_key`
+  在「本地 + 极小模型 id」时路由到精简提示词（S-05 实测：0.5B 用产品长提示词会复述原文 10/10）。
+  同时修复既有契约承诺未实现的问题：`prompt_engine` 现会在渲染前**剔除提示词维护注释头**（此前注释会发给模型）。
+- **S-05 云端实测（用户提供 DeepSeek Key）**：`deepseek-flash` 关闭 thinking 首字达标；**默认 thinking FAILED**
+  （reasoning 384–736 token）→ 真实网关接入时**必须显式关闭 thinking**（`llm_gateway` TODO 第 3 条）。
+  总耗时 P95 1.75s 略超 1.5s（建议验收口径明确为「首字」）。
+- **S-06 负向证据**：DeepSeek Key 可覆盖视觉腿（deepseek-flash 识别真实截图成功），但无 Search API（`/search` 全 404）；
+  最小 Key 组合 = DeepSeek + Tavily/Serper，拿到检索 Key 后约 15 分钟可完成验收。
+- **模型清单扩充**：`resources/models.manifest.json` 新增第 4 条 `qwen2.5-0.5b-instruct-q4`（491,400,032 B，
+  sha256 `74a4da8c…`，ModelScope 文件列表 API + Range 206/416 双复核），`params.profile=tiny-local` /
+  `promptProfile=translate-minimal`；opus-mt 仍缺 Ct2 产物（`urls` 空）。
+- **供应商连通性真实化（S-17 预置）**：`provider_test` 在 `skeletonMode=false` 时真实请求 `GET {baseUrl}/models`
+  （Bearer + UA、connect 5s/总 15s），错误映射契约 §8.2（401/403→SA-3002、402→SA-3003、429→SA-3004、超时→SA-3005、
+  DNS/拒绝/5xx→SA-3001、其他 4xx→SA-5001）；15 个 mock 用例 + 真实 DeepSeek 冒烟 200 / 208ms。
+- **安全**：用户提供的 API Key 仅用于运行时环境变量与脱敏冒烟，**未写入仓库/文档/日志**（全仓扫描无泄漏）。
+- **行为变更**：引导三档选择会直接写 `translate.backend`/`local.model`；`provider_test` 真实模式下不再返回占位成功；
+  提示词渲染不再包含维护注释头。
+- **门禁**：`cargo fmt --check`、`cargo clippy --all-targets -- -D warnings`、`cargo test`（**242 passed**：178 lib +
+  16 契约 + 12 S-08（2 ignored）+ 9 OCR pipeline + 15 provider（1 ignored）+ 6 S-01 + 6 S-04）、`pnpm typecheck`、
+  `pnpm build:web` 全部通过。
+
 ### 修复（真实编译与运行验证，2026-11-04）
 
 - **事件名合法化**：Tauri 2 的 `Emitter::emit` 不允许事件名包含 `.`（原 `overlay.ready` 等 14 个事件在真实运行中全部发射失败），统一改为 `域:动作` 形式（`overlay:ready`、`task:delta` …），并同步契约文档、TS/Rust 常量、mock 与契约测试。

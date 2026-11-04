@@ -496,6 +496,42 @@ mod tests {
     }
 
     #[test]
+    fn merge_into_config_maps_three_translate_tiers() {
+        // item3：引导页三档（云端 / 极小模型 / 普通模型）→ config.translate.backend + config.local.model。
+        let write = |backend: TranslateBackend, model_id: Option<&str>| {
+            let mut state = new_state("2026-11-04T00:00:00Z");
+            state.data.translate = Some(TranslateDraft {
+                backend,
+                model_id: model_id.map(str::to_string),
+                cloud_model: if backend == TranslateBackend::Cloud {
+                    "qwen-mt-lite".to_string()
+                } else {
+                    String::new()
+                },
+            });
+            let mut config = Config::default();
+            assert!(merge_into_config(&state, &mut config), "三档选择应写入配置");
+            config
+        };
+
+        // 云端：backend=cloud，modelId=null；复用专用翻译模型名，本地模型设置保持不变。
+        let cloud = write(TranslateBackend::Cloud, None);
+        assert_eq!(cloud.translate.backend, TranslateBackend::Cloud);
+        assert_eq!(cloud.translate.model, "qwen-mt-lite");
+        assert_eq!(cloud.local.model, "hy-mt-1.8b-q4");
+
+        // 极小模型：backend=local，modelId=qwen2.5-0.5b-instruct-q4。
+        let tiny = write(TranslateBackend::Local, Some("qwen2.5-0.5b-instruct-q4"));
+        assert_eq!(tiny.translate.backend, TranslateBackend::Local);
+        assert_eq!(tiny.local.model, "qwen2.5-0.5b-instruct-q4");
+
+        // 普通模型：backend=local，modelId=hy-mt-1.8b-q4。
+        let standard = write(TranslateBackend::Local, Some("hy-mt-1.8b-q4"));
+        assert_eq!(standard.translate.backend, TranslateBackend::Local);
+        assert_eq!(standard.local.model, "hy-mt-1.8b-q4");
+    }
+
+    #[test]
     fn merge_into_config_applies_draft() {
         let mut state = new_state("2026-11-04T00:00:00Z");
         state.data.language = Language::EnUs;

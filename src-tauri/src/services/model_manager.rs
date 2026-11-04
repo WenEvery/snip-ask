@@ -1144,10 +1144,14 @@ mod tests {
         let manager = manager();
         let infos = manager.list();
         assert!(!infos.is_empty());
+        // 清单 4 条（phase 2 增补极小模型；顺序保持既有条目在前、极小模型在末尾）。
+        assert_eq!(infos.len(), 4);
+        assert_eq!(infos[0].id, "hy-mt-1.8b-q4");
         assert!(infos.iter().all(|info| !info.installed));
         assert_eq!(manager.installed_count(), 0);
         assert!(!manager.is_installed("hy-mt-1.8b-q4"));
         assert!(manager.entry("hy-mt-1.8b-q4").is_some());
+        assert!(manager.entry("qwen2.5-0.5b-instruct-q4").is_some());
         assert!(manager.entry("nope").is_none());
     }
 
@@ -1190,10 +1194,66 @@ mod tests {
         // 清单已按 ModelScope 官方文件校正（S-08 §6.1 / Lead 修正）：文件名大小写与官方一致。
         let entry = find_entry(&manifest, "hy-mt-1.8b-q4").unwrap();
         assert_eq!(download_filename(entry), "HY-MT1.5-1.8B-Q4_K_M.gguf");
+        let entry = find_entry(&manifest, "qwen3-4b-q4").unwrap();
+        assert_eq!(download_filename(entry), "Qwen3-4B-Q4_K_M.gguf");
+        // phase 2 新增极小模型（task-9）：ModelScope 文件名小写。
+        let entry = find_entry(&manifest, "qwen2.5-0.5b-instruct-q4").unwrap();
+        assert_eq!(
+            download_filename(entry),
+            "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        );
         // opus-mt 官方仓库暂无 Ct2 产物，清单 urls 置空 → 文件名回退到 `<id>.bin`。
         let entry = find_entry(&manifest, "opus-mt-zh-en").unwrap();
         assert!(entry.urls.is_empty());
         assert_eq!(download_filename(entry), "opus-mt-zh-en.bin");
+    }
+
+    #[test]
+    fn tiny_model_entry_metadata_matches_verified_manifest() {
+        // task-9：极小模型条目是引导页三档选择依赖的数据契约，字段/顺序/URL 均需锁定。
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+        // 追加在末尾，保持既有顺序（models[0] 不变）。
+        assert_eq!(manifest.models.len(), 4);
+        assert_eq!(manifest.models[0].id, "hy-mt-1.8b-q4");
+        assert_eq!(
+            manifest.models.last().map(|entry| entry.id.as_str()),
+            Some("qwen2.5-0.5b-instruct-q4")
+        );
+
+        let tiny = find_entry(&manifest, "qwen2.5-0.5b-instruct-q4")
+            .expect("清单必须包含极小模型 qwen2.5-0.5b-instruct-q4");
+        assert_eq!(tiny.size_bytes, 491_400_032);
+        assert_eq!(
+            tiny.sha256,
+            "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
+        );
+        assert!(
+            !is_placeholder_sha256(&tiny.sha256),
+            "极小模型 sha256 必须是真实值（来自 ModelScope API / X-Linked-ETag）"
+        );
+        assert_eq!(tiny.kind, Some(crate::contract::types::ModelKind::Gguf));
+        assert_eq!(tiny.license, "Apache-2.0");
+        assert_eq!(tiny.min_ram_mb, 1024);
+        assert_eq!(tiny.params["role"], "tiny-local");
+        assert_eq!(tiny.params["quant"], "Q4_K_M");
+        assert_eq!(tiny.params["engine"], "llama.cpp");
+        // 主源固定为已实测 206 + Content-Range 的 ModelScope URL；镜像为 HuggingFace。
+        assert_eq!(tiny.urls.len(), 2);
+        assert!(
+            tiny.urls[0].starts_with(
+                "https://modelscope.cn/models/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/master/"
+            ),
+            "极小模型主源应为 ModelScope：{}",
+            tiny.urls[0]
+        );
+        assert!(
+            tiny.urls[1].starts_with(
+                "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/"
+            ),
+            "极小模型镜像应为 HuggingFace：{}",
+            tiny.urls[1]
+        );
+        assert_eq!(download_filename(tiny), "qwen2.5-0.5b-instruct-q4_k_m.gguf");
     }
 
     #[test]
