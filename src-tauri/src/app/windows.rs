@@ -115,7 +115,6 @@ pub fn show_main(app: &AppHandle) -> AppResult<()> {
         ));
     };
     window.show().map_err(window_error)?;
-    let _ = window.unminimize();
     let _ = window.set_focus();
     Ok(())
 }

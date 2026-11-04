@@ -90,7 +90,7 @@ pub fn spawn(app: AppHandle, request: TaskRequest) -> AppResult<TaskId> {
     // 4) 后台流式执行。
     let background_app = app.clone();
     let background_task = task_id.clone();
-    tauri::async_runtime::spawn(async move {
+    let _ = tauri::async_runtime::spawn(async move {
         run_task(background_app, background_task, request, cancel).await;
     });
 
@@ -141,7 +141,7 @@ async fn run_task(
             if let Some(record) = removed {
                 state.history.record_task(
                     &record,
-                    Some(&outcome.engine),
+                    Some(outcome.engine.as_str()),
                     "done",
                     None,
                     Some(started.elapsed().as_millis() as u64),
@@ -176,12 +176,12 @@ async fn run_task(
             if let Some(record) = removed {
                 state.history.record_task(
                     &record,
-                    Some(&request.routed.engine),
+                    Some(request.routed.engine.as_str()),
                     "error",
                     None,
                     Some(started.elapsed().as_millis() as u64),
                     None,
-                    Some(&error.code),
+                    Some(error.code.as_str()),
                 );
             }
         }
@@ -206,7 +206,7 @@ fn finish_cancelled(
     if let Some(record) = removed {
         state.history.record_task(
             &record,
-            Some(&request.routed.engine),
+            Some(request.routed.engine.as_str()),
             "cancelled",
             None,
             None,

@@ -204,8 +204,13 @@ pub fn merge_into_config(state: &OnboardingState, config: &mut crate::contract::
                 .chars()
                 .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-' || ch == '_');
         if valid_id {
-            match config.providers.iter_mut().find(|provider| provider.id == id) {
-                Some(provider) => {
+            let existing = config
+                .providers
+                .iter()
+                .position(|provider| provider.id == id);
+            match existing {
+                Some(index) => {
+                    let provider = &mut config.providers[index];
                     if !ai.base_url.is_empty() && provider.base_url != ai.base_url {
                         provider.base_url = ai.base_url.clone();
                         changed = true;

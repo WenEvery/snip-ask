@@ -119,7 +119,7 @@ impl ModelManager {
         let app = app.clone();
         let model_id = id.to_string();
         let total = entry.size_bytes.max(1);
-        tauri::async_runtime::spawn(async move {
+        let _ = tauri::async_runtime::spawn(async move {
             manager.run_download(&app, &model_id, total, cancel).await;
         });
         Ok(download_id)

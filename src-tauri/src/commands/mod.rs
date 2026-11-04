@@ -4,6 +4,9 @@
 //! 命令注册在 `src/lib.rs` 的 `tauri::generate_handler![...]` 中一次性完成
 //! （Tauri 2 要求 handler 列表为编译期宏，故不在本模块提供 `handler()` 函数）。
 //!
+//! 本模块同时 `pub use` 全部命令，便于从 `commands::xxx` 直接引用与测试；
+//! `generate_handler!` 仍使用 `commands::<域>::<命令>` 完整路径。
+//!
 //! 命令清单：
 //! 1. `capture_freeze` / 2. `capture_cancel`
 //! 3. `selection_commit` / 4. `selection_reset`
@@ -26,3 +29,14 @@ pub mod selection;
 pub mod system;
 pub mod translate;
 pub mod window;
+
+pub use action::{menu_execute, result_close, task_cancel, task_followup};
+pub use capture::{capture_cancel, capture_freeze};
+pub use config::{config_export, config_get, config_import, config_patch, config_reset};
+pub use models::{models_cancel, models_download, models_list, models_remove};
+pub use onboarding::{onboarding_finish, onboarding_state, onboarding_update};
+pub use provider::provider_test;
+pub use selection::{selection_commit, selection_reset};
+pub use system::{app_quit, app_stats, hotkey_probe, open_external, set_autostart};
+pub use translate::translate_test;
+pub use window::{window_hide, window_show};

@@ -62,7 +62,7 @@ pub async fn selection_commit(
     let items = crate::domain::action::visible_actions(&config, result.has_text);
     let background_app = app.clone();
     let background_result = result.clone();
-    tauri::async_runtime::spawn(async move {
+    let _ = tauri::async_runtime::spawn(async move {
         emit_ocr_status(
             &background_app,
             &OcrStatusPayload {

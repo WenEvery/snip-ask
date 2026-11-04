@@ -87,7 +87,7 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
     // 7) 前置 OCR 状态时序：150ms scanning → 400ms done（契约 §12）。
     let background_app = app.clone();
     let background_session = session.clone();
-    tauri::async_runtime::spawn(async move {
+    let _ = tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_millis(SKELETON_SCANNING_DELAY_MS)).await;
         emit_ocr_status(
             &background_app,

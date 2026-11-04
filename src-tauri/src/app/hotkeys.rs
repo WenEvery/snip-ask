@@ -213,7 +213,7 @@ pub fn on_shortcut(app: &AppHandle, shortcut: &Shortcut, state: ShortcutState) {
     match action {
         HotkeyAction::Capture => {
             let app = app.clone();
-            tauri::async_runtime::spawn(async move {
+            let _ = tauri::async_runtime::spawn(async move {
                 if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
                     tracing::warn!(code = %err.code, message = %err.message, "热键触发框选失败");
                 }
@@ -231,11 +231,11 @@ pub fn on_shortcut(app: &AppHandle, shortcut: &Shortcut, state: ShortcutState) {
             );
         }
         HotkeyAction::TogglePause => {
-            let paused = toggle_pause(app);
+            let _paused = toggle_pause(app);
             emit_tray_action(
                 app,
                 &TrayActionPayload {
-                    id: if paused { "pauseHotkeys" } else { "resumeHotkeys" }.to_string(),
+                    id: HotkeyAction::TogglePause.id().to_string(),
                 },
             );
         }

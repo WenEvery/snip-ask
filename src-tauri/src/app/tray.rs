@@ -73,7 +73,7 @@ pub fn handle_action(app: &AppHandle, id: &str) {
                 },
             );
             let app = app.clone();
-            tauri::async_runtime::spawn(async move {
+            let _ = tauri::async_runtime::spawn(async move {
                 if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
                     tracing::warn!(code = %err.code, message = %err.message, "托盘触发框选失败");
                 }
@@ -102,15 +102,21 @@ pub fn handle_action(app: &AppHandle, id: &str) {
             );
         }
         MENU_TOGGLE_PAUSE => {
-            let paused = crate::app::hotkeys::toggle_pause(app);
+            let _paused = crate::app::hotkeys::toggle_pause(app);
             emit_tray_action(
                 app,
                 &TrayActionPayload {
-                    id: if paused { "pauseHotkeys" } else { "resumeHotkeys" }.to_string(),
+                    id: MENU_TOGGLE_PAUSE.to_string(),
                 },
             );
         }
         MENU_QUIT => {
+            emit_tray_action(
+                app,
+                &TrayActionPayload {
+                    id: MENU_QUIT.to_string(),
+                },
+            );
             if let Err(err) = crate::app::lifecycle::shutdown(app) {
                 tracing::warn!(code = %err.code, "退出前保存配置失败");
             }

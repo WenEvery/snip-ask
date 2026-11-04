@@ -58,19 +58,28 @@ function Invoke-Step {
     )
     Write-Host ""
     Write-Host ("==> {0}：{1} {2}" -f $Name, $FilePath, ($Arguments -join " ")) -ForegroundColor Cyan
+    # pnpm 等工具会把进度/横幅写到 stderr；Windows PowerShell 5.1 在 $ErrorActionPreference=Stop
+    # 下会把原生命令的 stderr 当作 NativeCommandError 抛出，导致「实际成功却判为失败」。
+    # 因此调用期间临时改为 Continue，并把 stderr 合并到标准输出后照常输出。
+    $previousErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $exitCode = 0
     try {
-        & $FilePath @Arguments
+        & $FilePath @Arguments 2>&1 | Out-Host
         $exitCode = $LASTEXITCODE
-        if ($null -ne $exitCode -and $exitCode -ne 0) {
-            Add-Result -Name $Name -Status "FAIL" -Detail ("退出码 {0}" -f $exitCode)
-            return $false
-        }
-        Add-Result -Name $Name -Status "PASS"
-        return $true
     } catch {
         Add-Result -Name $Name -Status "FAIL" -Detail $_.Exception.Message
+        $ErrorActionPreference = $previousErrorAction
+        return $false
+    } finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+    if ($null -ne $exitCode -and $exitCode -ne 0) {
+        Add-Result -Name $Name -Status "FAIL" -Detail ("退出码 {0}" -f $exitCode)
         return $false
     }
+    Add-Result -Name $Name -Status "PASS"
+    return $true
 }
 
 # ---------------------------------------------------------------- 工具链检测

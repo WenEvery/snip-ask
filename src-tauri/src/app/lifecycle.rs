@@ -41,7 +41,7 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
     );
 
     // 3) 状态（内部加载配置 / 引导 / 历史 / 凭据 / 模型清单）
-    let state = AppState::initialize(paths.clone())?;
+    let state = AppState::initialize(paths)?;
     let first_run = !state.onboarding.lock().completed;
     let skeleton_mode = state.is_skeleton();
     if !app.manage(state) {
@@ -79,7 +79,7 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
 
     // 9) 后台更新检查（不阻塞启动）
     let update_app = app.clone();
-    tauri::async_runtime::spawn(async move {
+    let _ = tauri::async_runtime::spawn(async move {
         updater_service::check_once(&update_app).await;
     });
 
