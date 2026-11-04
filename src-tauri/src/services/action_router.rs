@@ -151,7 +151,7 @@ impl ActionRouter {
     }
 }
 
-/// 降级链的可执行动作名（用于 `task.error.fallback` 与前端提示）。
+/// 降级链的可执行动作名（用于 `task:error.fallback` 与前端提示）。
 pub fn fallback_labels(fallback: &[EngineId]) -> Vec<String> {
     fallback.to_vec()
 }

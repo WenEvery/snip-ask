@@ -25,8 +25,8 @@
    `Skeleton*` 变体，与真实实现**同一 trait**，由 `AppState.settings.skeleton_mode` 分支选择。
 2. **行为确定性**：严格按契约 §12 固定时序与输出（例如 OCR 150ms→`scanning`、400ms→`done`；
    流式块 25–40ms；翻译输出 `【骨架模式译文】` + 原文；下载每 100ms 前进 4%）。
-3. **事件流一致**：骨架模式发出与真实实现完全相同的 `overlay.ready` / `ocr.status` /
-   `task.started` / `task.delta` / `task.done` 等事件（`engine = "skeleton"`、`usage` 为固定值），
+3. **事件流一致**：骨架模式发出与真实实现完全相同的 `overlay:ready` / `ocr:status` /
+   `task:started` / `task:delta` / `task:done` 等事件（`engine = "skeleton"`、`usage` 为固定值），
    前端不得依赖真实网络或非确定性时序。
 4. **不伪造真实能力**：骨架模式不访问真实 Credential Manager（内存 map 模拟）、不联网、
    不启动本地引擎；`open_external` 仅打印日志。

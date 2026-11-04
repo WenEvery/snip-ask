@@ -4,7 +4,7 @@
  * - `applyTheme(theme)`：`system` 时监听系统深色偏好，返回清理函数；
  * - `applyAccent(accent)`：写入 `data-accent`，由 tokens.css 覆盖强调色；
  * - `initTheme()`：先用 localStorage 缓存即时应用（避免闪白），再用 `config_get` 同步，
- *   并订阅 `config.changed` 保持多窗口一致。
+ *   并订阅 `config:changed` 保持多窗口一致。
  */
 
 import { COMMANDS, EVENTS } from "../contract/names";
@@ -93,7 +93,7 @@ let initialized = false;
 let currentCleanup: (() => void) | null = null;
 
 /**
- * 初始化主题：缓存即时生效 → `config_get` 同步 → 订阅 `config.changed`。
+ * 初始化主题：缓存即时生效 → `config_get` 同步 → 订阅 `config:changed`。
  * 返回清理函数（取消订阅与媒体查询监听）。
  */
 export async function initTheme(): Promise<() => void> {

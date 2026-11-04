@@ -43,20 +43,20 @@ export type CommandName = (typeof COMMANDS)[keyof typeof COMMANDS];
 
 /** §7 事件表：14 个事件 */
 export const EVENTS = {
-  overlayReady: "overlay.ready",
-  overlaySelection: "overlay.selection",
-  ocrStatus: "ocr.status",
-  menuReady: "menu.ready",
-  taskStarted: "task.started",
-  taskDelta: "task.delta",
-  taskDone: "task.done",
-  taskError: "task.error",
-  downloadProgress: "download.progress",
-  downloadState: "download.state",
-  configChanged: "config.changed",
-  trayAction: "tray.action",
-  engineStatus: "engine.status",
-  updateStatus: "update.status",
+  overlayReady: "overlay:ready",
+  overlaySelection: "overlay:selection",
+  ocrStatus: "ocr:status",
+  menuReady: "menu:ready",
+  taskStarted: "task:started",
+  taskDelta: "task:delta",
+  taskDone: "task:done",
+  taskError: "task:error",
+  downloadProgress: "download:progress",
+  downloadState: "download:state",
+  configChanged: "config:changed",
+  trayAction: "tray:action",
+  engineStatus: "engine:status",
+  updateStatus: "update:status",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];

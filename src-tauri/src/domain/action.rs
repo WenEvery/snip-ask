@@ -156,7 +156,7 @@ pub fn shortcut_for(config: &Config, action: ActionId) -> Option<String> {
     crate::contract::config::normalize_hotkey(raw)
 }
 
-/// 根据配置生成动作菜单（契约 §7 `menu.ready` 的 `items`）。
+/// 根据配置生成动作菜单（契约 §7 `menu:ready` 的 `items`）。
 ///
 /// - `has_text = true` 使用 `actions.menu.text`，否则使用 `actions.menu.image`；
 /// - 保留配置顺序，重复项去重；

@@ -4,7 +4,7 @@
 //! - 支持暂停 / 恢复（托盘菜单 `togglePause`）；
 //! - `probe` 校验格式、规范化并检测与其它配置项冲突。
 //!
-//! TODO(api-check): 校验 `tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut,
+//! 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut,
 //! ShortcutState}` 的导出与 `event.state()` 名字（Tauri 2 插件）。
 
 use tauri::{AppHandle, Manager};

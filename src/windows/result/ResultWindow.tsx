@@ -1,8 +1,8 @@
 /**
- * 结果窗：订阅 task.started / task.delta / task.done / task.error，
+ * 结果窗：订阅 task:started / task:delta / task:done / task:error，
  * 增量渲染流式文本，展示用量与来源，支持复制 / 追问 / 重答 / 取消 / 关闭。
  *
- * 浏览器预览（无 Tauri）：600ms 内未收到 task.started 时自动发起一次
+ * 浏览器预览（无 Tauri）：600ms 内未收到 task:started 时自动发起一次
  * `menu_execute` 走 mock 后端，便于单独预览 `/?window=result`。
  */
 
@@ -125,7 +125,7 @@ export default function ResultWindow() {
     });
   }, []);
 
-  // ── 浏览器 mock 预览：600ms 内没有 task.started 时自动演示一次 ──
+  // ── 浏览器 mock 预览：600ms 内没有 task:started 时自动演示一次 ──
   useEffect(() => {
     if (isTauri()) return;
     const timer = window.setTimeout(() => {

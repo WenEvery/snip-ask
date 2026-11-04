@@ -57,13 +57,21 @@
 
 > 冻结层/选框/放大镜/动作菜单的 overlay 截图未入库（浏览器 mock 的 `?window=overlay` 可直接查看）。
 
+### 真实运行（Release 构建，骨架模式）
+
+以下为 `pnpm build` 产物在 Windows 11（150% 缩放）实机运行时的截图：
+
+| 框选后的动作菜单（真实窗口） | 结果窗（流式输出 + 用量） |
+| --- | --- |
+| ![真实动作菜单](docs/images/real-run-menu.png) | ![真实结果窗](docs/images/real-run-result.png) |
+
 ## 当前状态
 
 | 层次 | 内容 | 状态 |
 | --- | --- | --- |
 | 域逻辑 | 会话状态机、选区/坐标换算、文字存在判定、动作注册表、费用估算（纯逻辑 + 单测） | ✅ 已实现 |
 | IPC 契约 | 29 命令 / 14 事件 / `AppError` 错误码表 / 配置 Schema v3，TS 与 Rust 双端同构 | ✅ 已实现 |
-| 配置中心 | 默认值、深度合并、校验、迁移（v3←v2←v1）、原子写 + `.bak`、`config.changed` 热生效分类 | ✅ 已实现 |
+| 配置中心 | 默认值、深度合并、校验、迁移（v3←v2←v1）、原子写 + `.bak`、`config:changed` 热生效分类 | ✅ 已实现 |
 | 骨架模式 | 捕获/OCR/LLM/搜索/翻译/下载/更新按契约 §12 确定性占位，事件流与真实实现一致 | ✅ 已实现 |
 | 前端窗口 | `main`（设置页 + 6 步首启引导）、`overlay`（冻结层 + 选框 + 放大镜 + 动作菜单）、`result`（流式输出 + 来源 + 追问） | ✅ 已实现 |
 | 工程底座 | 分层目录、内置资源、图标、pnpm 脚本、`scripts/*.ps1`、CI（windows-latest）、ADR | ✅ 已实现 |
@@ -78,6 +86,12 @@
 
 > 骨架模式下所有外部能力都有确定性占位实现：无网络、无密钥、无本地模型也能完整走通
 > 「热键 → 冻结 → 框选 → 菜单 → 流式结果」闭环，便于前后端并行开发与手动验收。
+>
+> **真实编译/运行验证（2026-11-04）**：Rust 1.99.1 + MSVC 14.51 下 `cargo build` / `cargo test`（148 项）/
+> `cargo clippy -D warnings` / `cargo fmt --check` 全部通过；release 应用实机启动并跑通
+> 「`Ctrl+Q` → 框选 → 动作菜单 → 流式结果窗」端到端。注意：直接 `cargo build --release` 不会启用
+> Tauri 的 `custom-protocol` feature（会退化为连接 devUrl），桌面发布请用 `pnpm build`（或
+> `cargo build --release --features custom-protocol`）。
 
 ## 快速开始
 

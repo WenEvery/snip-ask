@@ -2,7 +2,7 @@
  * 浏览器 mock 后端（契约 §12 骨架模式 + §13）。
  *
  * 目标：**无 Rust 环境**也能在浏览器里完整走通
- * 「capture_freeze → overlay.ready → 框选 → menu.ready → menu_execute → task.* 流式」。
+ * 「capture_freeze → overlay:ready → 框选 → menu:ready → menu_execute → task.* 流式」。
  *
  * 行为约定：
  * - 配置持久化：`localStorage["snipask.mock.config"]`（深合并默认值）；密钥只存内存；
@@ -485,7 +485,7 @@ function buildTaskText(action: ActionId, mode: Mode, question?: string): string 
   return SKELETON_ANSWER;
 }
 
-/** 流式任务：task.started 之后每 25–40ms 推一块，共 8 块，最后 task.done */
+/** 流式任务：task:started 之后每 25–40ms 推一块，共 8 块，最后 task:done */
 function startTaskStream(
   taskId: TaskId,
   options: { action: ActionId; mode: Mode; question?: string },

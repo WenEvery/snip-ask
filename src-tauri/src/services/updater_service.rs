@@ -1,4 +1,4 @@
-//! 更新检查（M18 / 契约 §12：不联网，仅发 `update.status(idle)`）。
+//! 更新检查（M18 / 契约 §12：不联网，仅发 `update:status(idle)`）。
 //!
 //! TODO(real): `tauri-plugin-updater` 签名通道、稳定 / 预览通道、下载与回滚。
 

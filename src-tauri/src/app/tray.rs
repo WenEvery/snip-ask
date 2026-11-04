@@ -1,9 +1,9 @@
 //! 系统托盘（M02 / 概要设计 §4.1）。
 //!
 //! 原生 `TrayIcon`（非 Web 实现），菜单：开始框选 / 设置 / 重新运行引导 / 暂停热键 / 退出。
-//! 菜单事件同时：本地处理 `capture`/`openSettings`/`togglePause`/`quit`，并广播 `tray.action`。
+//! 菜单事件同时：本地处理 `capture`/`openSettings`/`togglePause`/`quit`，并广播 `tray:action`。
 //!
-//! TODO(api-check): 校验 `TrayIconBuilder` / `MenuItem::with_id` / `Menu::with_items` 的
+//! 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `TrayIconBuilder` / `MenuItem::with_id` / `Menu::with_items` 的
 //! 实际签名（Tauri 2.x）。
 
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};

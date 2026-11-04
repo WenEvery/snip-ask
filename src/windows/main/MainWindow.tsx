@@ -5,7 +5,7 @@
  * 行为约定：
  * - 启动读 `onboarding_state`：未完成且未跳过 → 进入引导，否则设置页；
  * - 顶栏关闭 = 隐藏窗口（`window_hide`），不退出应用（退出走托盘 / app_quit）；
- * - 订阅 `config.changed` 同步主题/强调色，订阅 `tray.action` 切换路由。
+ * - 订阅 `config:changed` 同步主题/强调色，订阅 `tray:action` 切换路由。
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";

@@ -3,7 +3,7 @@
 //! 前端通过 `listen(name, cb)` 订阅；后端只在 Rust 侧 `AppHandle::emit`，前端不得回发同名事件。
 //! 这里提供 14 个事件的一一对应助手，避免字符串散落各处。
 //!
-//! 另提供 [`Throttle`]：`overlay.selection` ≤ 30Hz、`download.progress` ≤ 200ms。
+//! 另提供 [`Throttle`]：`overlay:selection` ≤ 30Hz、`download:progress` ≤ 200ms。
 
 use std::time::{Duration, Instant};
 
@@ -20,72 +20,75 @@ use crate::contract::events::{
 };
 use crate::contract::types::EngineStatus;
 
-/// `overlay.ready`
+/// `overlay:ready`
 pub fn emit_overlay_ready(app: &AppHandle, payload: &OverlayReadyPayload) {
-    let _ = app.emit(EVENT_OVERLAY_READY, payload);
+    tracing::debug!(target: "snip_ask_lib::trace", "emit overlay:ready session={}", payload.session);
+    if let Err(err) = app.emit(EVENT_OVERLAY_READY, payload) {
+        tracing::warn!(target: "snip_ask_lib::trace", "emit overlay:ready 失败：{err}");
+    }
 }
 
-/// `overlay.selection`
+/// `overlay:selection`
 pub fn emit_overlay_selection(app: &AppHandle, payload: &OverlaySelectionPayload) {
     let _ = app.emit(EVENT_OVERLAY_SELECTION, payload);
 }
 
-/// `ocr.status`
+/// `ocr:status`
 pub fn emit_ocr_status(app: &AppHandle, payload: &OcrStatusPayload) {
     let _ = app.emit(EVENT_OCR_STATUS, payload);
 }
 
-/// `menu.ready`
+/// `menu:ready`
 pub fn emit_menu_ready(app: &AppHandle, payload: &MenuReadyPayload) {
     let _ = app.emit(EVENT_MENU_READY, payload);
 }
 
-/// `task.started`（脚手架扩展事件）
+/// `task:started`（脚手架扩展事件）
 pub fn emit_task_started(app: &AppHandle, payload: &TaskStartedPayload) {
     let _ = app.emit(EVENT_TASK_STARTED, payload);
 }
 
-/// `task.delta`
+/// `task:delta`
 pub fn emit_task_delta(app: &AppHandle, payload: &TaskDeltaPayload) {
     let _ = app.emit(EVENT_TASK_DELTA, payload);
 }
 
-/// `task.done`
+/// `task:done`
 pub fn emit_task_done(app: &AppHandle, payload: &TaskDonePayload) {
     let _ = app.emit(EVENT_TASK_DONE, payload);
 }
 
-/// `task.error`
+/// `task:error`
 pub fn emit_task_error(app: &AppHandle, payload: &TaskErrorPayload) {
     let _ = app.emit(EVENT_TASK_ERROR, payload);
 }
 
-/// `download.progress`
+/// `download:progress`
 pub fn emit_download_progress(app: &AppHandle, payload: &DownloadProgressPayload) {
     let _ = app.emit(EVENT_DOWNLOAD_PROGRESS, payload);
 }
 
-/// `download.state`
+/// `download:state`
 pub fn emit_download_state(app: &AppHandle, payload: &DownloadStatePayload) {
     let _ = app.emit(EVENT_DOWNLOAD_STATE, payload);
 }
 
-/// `config.changed`
+/// `config:changed`
 pub fn emit_config_changed(app: &AppHandle, payload: &ConfigChangedPayload) {
     let _ = app.emit(EVENT_CONFIG_CHANGED, payload);
 }
 
-/// `tray.action`
+/// `tray:action`
 pub fn emit_tray_action(app: &AppHandle, payload: &TrayActionPayload) {
     let _ = app.emit(EVENT_TRAY_ACTION, payload);
 }
 
-/// `engine.status`
+/// `engine:status`
 pub fn emit_engine_status(app: &AppHandle, status: EngineStatus) {
     let _ = app.emit(EVENT_ENGINE_STATUS, EngineStatusPayload { local: status });
 }
 
-/// `update.status`
+/// `update:status`
 pub fn emit_update_status(
     app: &AppHandle,
     state: UpdateState,

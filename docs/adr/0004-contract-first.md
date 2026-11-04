@@ -13,7 +13,7 @@
 的边界，让 UI、Rust 骨架、mock 后端与 CI 同时推进。若先写实现再「顺带」对齐接口，常见问题：
 
 - 前端假设的字段名/大小写与 Rust serde 序列化不一致（`camelCase` vs `snake_case`）；
-- 事件时序（`task.started` 必须先于首个 `task.delta`）无人定义，联调时反复排查；
+- 事件时序（`task:started` 必须先于首个 `task:delta`）无人定义，联调时反复排查；
 - 错误码与降级链散落，前端无法统一 toast/fallback；
 - mock 行为与真实后端漂移，浏览器联调通过但桌面版失败。
 

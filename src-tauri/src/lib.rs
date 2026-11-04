@@ -47,7 +47,7 @@ pub fn run() {
             );
         }))
         // 全局热键插件（M03）；注册逻辑见 `app::hotkeys`，回调在此转发。
-        // TODO(api-check): 校验 `with_handler` 闭包参数类型与 `event.state()` 名字。
+        // 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `with_handler` 闭包参数类型与 `event.state()` 名字。
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
@@ -62,6 +62,14 @@ pub fn run() {
         ))
         // 外部链接打开（M19）；骨架模式只记日志。
         .plugin(tauri_plugin_opener::init())
+        // overlay 的 WebView 首次加载完成时补发 `overlay:ready`：`capture_freeze` 在
+        // 窗口显示后立即广播，冷启动时页面 JS 尚未就绪会丢事件（见 windows 模块注释）。
+        .on_page_load(|webview, _payload| {
+            use tauri::Manager as _;
+            if webview.label() == crate::app::windows::OVERLAY_WINDOW {
+                crate::app::windows::emit_overlay_snapshot(webview.app_handle());
+            }
+        })
         .setup(|app| {
             let mut handle = app.handle().clone();
             match crate::app::lifecycle::setup(&mut handle) {

@@ -79,7 +79,7 @@ pub async fn provider_test(
             match service.set_provider_key(&draft.id, secret).await {
                 Ok(()) => {
                     tracing::info!(provider = %draft.id, "供应商密钥已保存（不回显）");
-                    // 若供应商已在配置中，广播 config.changed 让前端刷新 hasKey / keyMask。
+                    // 若供应商已在配置中，广播 config:changed 让前端刷新 hasKey / keyMask。
                     let config: Config = state.snapshot_config();
                     if config.providers.iter().any(|item| item.id == draft.id) {
                         let view = state.config_view().await;

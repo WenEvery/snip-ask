@@ -5,7 +5,7 @@
  * - 挂载时 `config_get` 拉取 `ConfigView`；
  * - 本地维护 `draft`（可编辑）与 `baseline`（上次后端状态）；
  * - 分组「应用」走 `config_patch`，成功后用返回值同步 draft + baseline；
- * - 订阅 `config.changed`，外部变更（托盘 / 热键 / 自启）即时同步。
+ * - 订阅 `config:changed`，外部变更（托盘 / 热键 / 自启）即时同步。
  */
 
 import { useCallback, useEffect, useState } from "react";

@@ -55,20 +55,20 @@ fn event_names_are_exactly_the_fourteen_contract_names() {
     let unique: BTreeSet<&str> = EXPECTED_EVENTS.iter().copied().collect();
     assert_eq!(unique.len(), 14);
     let expected: BTreeSet<&str> = [
-        "overlay.ready",
-        "overlay.selection",
-        "ocr.status",
-        "menu.ready",
-        "task.started",
-        "task.delta",
-        "task.done",
-        "task.error",
-        "download.progress",
-        "download.state",
-        "config.changed",
-        "tray.action",
-        "engine.status",
-        "update.status",
+        "overlay:ready",
+        "overlay:selection",
+        "ocr:status",
+        "menu:ready",
+        "task:started",
+        "task:delta",
+        "task:done",
+        "task:error",
+        "download:progress",
+        "download:state",
+        "config:changed",
+        "tray:action",
+        "engine:status",
+        "update:status",
     ]
     .into_iter()
     .collect();

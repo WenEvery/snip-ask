@@ -16,7 +16,7 @@ pub async fn config_get(state: State<'_, AppState>) -> AppResult<ConfigView> {
     Ok(state.config_view().await)
 }
 
-/// 命令：深合并 patch → 校验 → 原子持久化 → 广播 `config.changed`。
+/// 命令：深合并 patch → 校验 → 原子持久化 → 广播 `config:changed`。
 #[tauri::command]
 pub async fn config_patch(
     app: AppHandle,

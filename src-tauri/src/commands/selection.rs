@@ -9,7 +9,7 @@ use crate::contract::types::{RectPhys, SelectionResult, SessionId};
 use crate::events::{emit_menu_ready, emit_ocr_status};
 use crate::services::ocr_service;
 
-/// 命令：提交选区 → 返回识别结果；异步触发 `ocr.status(done)` 与 `menu.ready`。
+/// 命令：提交选区 → 返回识别结果；异步触发 `ocr:status(done)` 与 `menu:ready`。
 #[tauri::command]
 pub async fn selection_commit(
     app: AppHandle,
@@ -53,7 +53,7 @@ pub async fn selection_commit(
         store.commit_selection(&session, result.clone())?;
     }
 
-    // 异步：先 ocr.status(done)，再 menu.ready（不阻塞命令返回）。
+    // 异步：先 ocr:status(done)，再 menu:ready（不阻塞命令返回）。
     let items = crate::domain::action::visible_actions(&config, result.has_text);
     let background_app = app.clone();
     let background_result = result.clone();

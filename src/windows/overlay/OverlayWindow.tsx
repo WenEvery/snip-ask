@@ -2,10 +2,10 @@
  * overlay 窗口：冻结层 + 选框 + 放大镜 + 动作菜单（契约 §2 / §5 / §7、实施架构 M06–M07）。
  *
  * 启动流程：
- * - 真实 Tauri：等待后端（热键/托盘）显示窗口并发来 `overlay.ready`；
- * - 浏览器 mock：800ms 内未收到 `overlay.ready` 则自动 `capture_freeze`（便于手动验收）。
+ * - 真实 Tauri：等待后端（热键/托盘）显示窗口并发来 `overlay:ready`；
+ * - 浏览器 mock：800ms 内未收到 `overlay:ready` 则自动 `capture_freeze`（便于手动验收）。
  *
- * 交互：拖拽框选 → `selection_commit` → 等 `menu.ready` → 选择动作 → `menu_execute`。
+ * 交互：拖拽框选 → `selection_commit` → 等 `menu:ready` → 选择动作 → `menu_execute`。
  * ESC 取消、Enter 确认、方向键微调（Shift 10 物理像素）。
  */
 
@@ -110,10 +110,22 @@ export default function OverlayWindow() {
     if (phaseRef.current === "committing") setPhaseSync("menu");
   });
 
-  /* ───────── 启动：浏览器 mock 自动触发一次框选 ───────── */
+  /* ───────── 启动：确保拿到当前冻结会话 ───────── */
 
   useEffect(() => {
-    if (isTauri()) return undefined;
+    if (isTauri()) {
+      // 真实模式：overlay 窗口在 `capture_freeze` 中惰性创建，"广播 overlay:ready" 往往早于
+      // 本页面 WebView 完成加载，冷启动会丢事件。`capture_freeze` 是幂等的（已有会话直接复用
+      // 并无副作用地补发 overlay:ready），因此挂载后按梯度主动拉取，直到收到冻结帧为止。
+      const timers = [150, 500, 1200].map((delay) =>
+        window.setTimeout(() => {
+          if (frozenRef.current || phaseRef.current !== "waiting") return;
+          void ipc.invoke<SessionId>(COMMANDS.captureFreeze).catch(() => undefined);
+        }, delay),
+      );
+      return () => timers.forEach((timer) => window.clearTimeout(timer));
+    }
+    // 浏览器 mock：800ms 内未收到 overlay:ready 则自动触发一次框选
     const timer = window.setTimeout(() => {
       if (frozenRef.current) return;
       void ipc.invoke<SessionId>(COMMANDS.captureFreeze).catch(handleError);

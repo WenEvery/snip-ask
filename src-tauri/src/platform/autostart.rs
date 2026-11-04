@@ -2,7 +2,7 @@
 //!
 //! 安装版走 `tauri-plugin-autostart`；骨架模式只修改内存状态（不写注册表）。
 //!
-//! TODO(api-check): 校验 `tauri_plugin_autostart::ManagerExt::autolaunch()` 的方法名与
+//! 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `tauri_plugin_autostart::ManagerExt::autolaunch()` 的方法名与
 //! `AutoLaunchManager::{enable, disable, is_enabled}` 签名（插件版本见 Cargo.toml `"2"`）。
 
 use std::sync::atomic::{AtomicBool, Ordering};

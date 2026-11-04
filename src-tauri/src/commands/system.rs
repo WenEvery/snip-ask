@@ -15,7 +15,7 @@ pub async fn hotkey_probe(state: State<'_, AppState>, spec: String) -> AppResult
     Ok(crate::app::hotkeys::probe(&config, &spec))
 }
 
-/// 命令：设置开机自启（同时写入 `app.autostart` 并广播 `config.changed`）。
+/// 命令：设置开机自启（同时写入 `app.autostart` 并广播 `config:changed`）。
 #[tauri::command]
 pub async fn set_autostart(
     app: AppHandle,

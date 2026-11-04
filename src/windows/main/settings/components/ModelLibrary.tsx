@@ -1,6 +1,6 @@
 /**
  * 本地翻译模型库：`models_list` 展示清单 + `models_download` 下载，
- * 订阅 `download.progress` / `download.state` 更新进度条、速度与状态，支持取消 / 删除。
+ * 订阅 `download:progress` / `download:state` 更新进度条、速度与状态，支持取消 / 删除。
  */
 
 import { useCallback, useEffect, useState } from "react";

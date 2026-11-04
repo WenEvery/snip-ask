@@ -16,11 +16,56 @@ use crate::platform::capture::{ScreenCapturer, SkeletonCapturer};
 use crate::services::capture_service::{virtual_desktop, CaptureService};
 use crate::services::ocr_service::{SKELETON_DONE_DELAY_MS, SKELETON_SCANNING_DELAY_MS};
 
-/// `capture_freeze`：捕获虚拟桌面 → 创建会话 → 显示 overlay → `overlay.ready`。
+/// `capture_freeze`：捕获虚拟桌面 → 创建会话 → 显示 overlay → `overlay:ready`。
+///
+/// 幂等（契约 §6）：若当前会话已处于冻结/选区阶段，直接复用并无副作用地补发
+/// `overlay:ready`（供 overlay 前端页面加载后主动拉取，解决冷启动事件竞态）。
 ///
 /// 也供托盘 / 热键直接调用（不经过 IPC）。
 pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
     let state = app.state::<AppState>();
+    tracing::debug!(target: "snip_ask_lib::trace", "capture_freeze 入口，当前阶段={:?}", state.session.lock().current_phase());
+
+    // 0) 幂等路径：已有冻结/选区中的会话 → 复用并补发快照，不重建窗口与 OCR。
+    {
+        let snapshot = {
+            let store = state.session.lock();
+            match store.current() {
+                Some(current)
+                    if matches!(
+                        current.phase,
+                        SessionPhase::Freezing | SessionPhase::Selecting
+                    ) =>
+                {
+                    let session = current.id.clone();
+                    let phase = current.phase;
+                    let frame = current.frame.clone();
+                    Some((session, phase, frame))
+                }
+                _ => None,
+            }
+        };
+        if let Some((session, phase, frame)) = snapshot {
+            tracing::debug!(target: "snip_ask_lib::trace", "capture_freeze 幂等复用 session={session} phase={phase:?} 有帧={}", frame.is_some());
+            windows::show_overlay(app)?;
+            if phase == SessionPhase::Selecting {
+                if let Some(frame) = frame {
+                    let desktop = virtual_desktop(app);
+                    emit_overlay_ready(
+                        app,
+                        &OverlayReadyPayload {
+                            session: session.clone(),
+                            virtual_rect: desktop.rect,
+                            dpr: desktop.dpr,
+                            frame,
+                        },
+                    );
+                    tracing::debug!(target: "snip_ask_lib::trace", "capture_freeze 幂等补发 overlay:ready session={session}");
+                }
+            }
+            return Ok(session);
+        }
+    }
 
     // 1) 新会话（自动作废旧会话；旧任务取消）。
     let start = {
@@ -73,7 +118,7 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         return Err(err);
     }
 
-    // 6) overlay.ready
+    // 6) overlay:ready
     emit_overlay_ready(
         app,
         &OverlayReadyPayload {

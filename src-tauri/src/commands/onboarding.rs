@@ -35,7 +35,7 @@ pub async fn onboarding_update(
 /// 命令：完成 / 跳过引导。
 ///
 /// - `skip = true` → `skipped = true, completed = false`（受限模式，不合并草稿）；
-/// - `skip = false` → `completed = true`，把草稿中已填项合并进 `Config` 并广播 `config.changed`。
+/// - `skip = false` → `completed = true`，把草稿中已填项合并进 `Config` 并广播 `config:changed`。
 #[tauri::command]
 pub async fn onboarding_finish(
     app: AppHandle,

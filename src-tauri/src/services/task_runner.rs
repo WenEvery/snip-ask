@@ -1,7 +1,7 @@
 //! 统一流式任务执行器（脚手架新增，M08/M09/M13）。
 //!
-//! 职责：登记任务 → 发 `task.started` → 流式执行（逐个 `task.delta`）→ `task.done` /
-//! `task.error`；支持取消、错误映射、历史落库与配置降级。
+//! 职责：登记任务 → 发 `task:started` → 流式执行（逐个 `task:delta`）→ `task:done` /
+//! `task:error`；支持取消、错误映射、历史落库与配置降级。
 //!
 //! 取消语义：`task_cancel` 置位 `AtomicBool`，网关在流式块之间检查后返回 `SA-1099`；
 //! 执行器识别「已取消」后不再推送该任务的任何事件（契约 §6 第 6 条）。
@@ -75,7 +75,7 @@ pub fn spawn(app: AppHandle, request: TaskRequest) -> AppResult<TaskId> {
         tasks.insert(record);
     }
 
-    // 3) 首个 delta 之前发出 task.started。
+    // 3) 首个 delta 之前发出 task:started。
     emit_task_started(
         &app,
         &TaskStartedPayload {

@@ -16,33 +16,33 @@ pub use super::types::{TaskDonePayload, TaskStartedPayload};
 pub const IPC_CONTRACT_VERSION: u32 = 1;
 
 /// overlay 窗口就绪、可绘制选框。
-pub const EVENT_OVERLAY_READY: &str = "overlay.ready";
+pub const EVENT_OVERLAY_READY: &str = "overlay:ready";
 /// 选区变化（节流 ≤ 30Hz）。
-pub const EVENT_OVERLAY_SELECTION: &str = "overlay.selection";
+pub const EVENT_OVERLAY_SELECTION: &str = "overlay:selection";
 /// 前置 OCR 状态变化。
-pub const EVENT_OCR_STATUS: &str = "ocr.status";
+pub const EVENT_OCR_STATUS: &str = "ocr:status";
 /// 动作菜单数据就绪。
-pub const EVENT_MENU_READY: &str = "menu.ready";
+pub const EVENT_MENU_READY: &str = "menu:ready";
 /// 任务创建后、首个 delta 之前（脚手架扩展事件）。
-pub const EVENT_TASK_STARTED: &str = "task.started";
+pub const EVENT_TASK_STARTED: &str = "task:started";
 /// 流式增量。
-pub const EVENT_TASK_DELTA: &str = "task.delta";
+pub const EVENT_TASK_DELTA: &str = "task:delta";
 /// 任务完成。
-pub const EVENT_TASK_DONE: &str = "task.done";
+pub const EVENT_TASK_DONE: &str = "task:done";
 /// 任务失败。
-pub const EVENT_TASK_ERROR: &str = "task.error";
+pub const EVENT_TASK_ERROR: &str = "task:error";
 /// 下载进度（节流 200ms）。
-pub const EVENT_DOWNLOAD_PROGRESS: &str = "download.progress";
+pub const EVENT_DOWNLOAD_PROGRESS: &str = "download:progress";
 /// 下载状态变化。
-pub const EVENT_DOWNLOAD_STATE: &str = "download.state";
+pub const EVENT_DOWNLOAD_STATE: &str = "download:state";
 /// 配置热生效。
-pub const EVENT_CONFIG_CHANGED: &str = "config.changed";
+pub const EVENT_CONFIG_CHANGED: &str = "config:changed";
 /// 托盘菜单动作。
-pub const EVENT_TRAY_ACTION: &str = "tray.action";
+pub const EVENT_TRAY_ACTION: &str = "tray:action";
 /// 本地推理进程状态。
-pub const EVENT_ENGINE_STATUS: &str = "engine.status";
+pub const EVENT_ENGINE_STATUS: &str = "engine:status";
 /// 更新检查状态。
-pub const EVENT_UPDATE_STATUS: &str = "update.status";
+pub const EVENT_UPDATE_STATUS: &str = "update:status";
 
 /// 全部事件名（顺序与契约 §7 一致），供测试与前端名称表核对。
 pub const ALL_EVENTS: &[&str] = &[
@@ -62,7 +62,7 @@ pub const ALL_EVENTS: &[&str] = &[
     EVENT_UPDATE_STATUS,
 ];
 
-/// `overlay.ready` 载荷。
+/// `overlay:ready` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayReadyPayload {
@@ -76,7 +76,7 @@ pub struct OverlayReadyPayload {
     pub frame: FrozenFrameMeta,
 }
 
-/// `overlay.selection` 载荷。
+/// `overlay:selection` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlaySelectionPayload {
@@ -98,7 +98,7 @@ pub enum OcrStatusState {
     Failed,
 }
 
-/// `ocr.status` 载荷。
+/// `ocr:status` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OcrStatusPayload {
@@ -110,7 +110,7 @@ pub struct OcrStatusPayload {
     pub boxes: Option<Vec<OcrBox>>,
 }
 
-/// `menu.ready` 载荷。
+/// `menu:ready` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MenuReadyPayload {
@@ -124,7 +124,7 @@ pub struct MenuReadyPayload {
     pub preview: String,
 }
 
-/// `task.delta` 载荷。
+/// `task:delta` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskDeltaPayload {
@@ -136,7 +136,7 @@ pub struct TaskDeltaPayload {
     pub chunk: String,
 }
 
-/// `task.error` 载荷。
+/// `task:error` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskErrorPayload {
@@ -152,7 +152,7 @@ pub struct TaskErrorPayload {
     pub fallback: Vec<String>,
 }
 
-/// `download.progress` 载荷。
+/// `download:progress` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadProgressPayload {
@@ -166,7 +166,7 @@ pub struct DownloadProgressPayload {
     pub speed_bps: u64,
 }
 
-/// `download.state` 载荷。
+/// `download:state` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadStatePayload {
@@ -176,7 +176,7 @@ pub struct DownloadStatePayload {
     pub state: DownloadState,
 }
 
-/// `config.changed` 载荷。
+/// `config:changed` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigChangedPayload {
@@ -186,7 +186,7 @@ pub struct ConfigChangedPayload {
     pub changed_keys: Vec<String>,
 }
 
-/// `tray.action` 载荷。
+/// `tray:action` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrayActionPayload {
@@ -194,7 +194,7 @@ pub struct TrayActionPayload {
     pub id: String,
 }
 
-/// `engine.status` 载荷。
+/// `engine:status` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineStatusPayload {
@@ -220,7 +220,7 @@ pub enum UpdateState {
     Error,
 }
 
-/// `update.status` 载荷。
+/// `update:status` 载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateStatusPayload {
@@ -245,20 +245,20 @@ mod tests {
     #[test]
     fn event_names_match_contract() {
         assert_eq!(ALL_EVENTS.len(), 14);
-        assert_eq!(EVENT_OVERLAY_READY, "overlay.ready");
-        assert_eq!(EVENT_OVERLAY_SELECTION, "overlay.selection");
-        assert_eq!(EVENT_OCR_STATUS, "ocr.status");
-        assert_eq!(EVENT_MENU_READY, "menu.ready");
-        assert_eq!(EVENT_TASK_STARTED, "task.started");
-        assert_eq!(EVENT_TASK_DELTA, "task.delta");
-        assert_eq!(EVENT_TASK_DONE, "task.done");
-        assert_eq!(EVENT_TASK_ERROR, "task.error");
-        assert_eq!(EVENT_DOWNLOAD_PROGRESS, "download.progress");
-        assert_eq!(EVENT_DOWNLOAD_STATE, "download.state");
-        assert_eq!(EVENT_CONFIG_CHANGED, "config.changed");
-        assert_eq!(EVENT_TRAY_ACTION, "tray.action");
-        assert_eq!(EVENT_ENGINE_STATUS, "engine.status");
-        assert_eq!(EVENT_UPDATE_STATUS, "update.status");
+        assert_eq!(EVENT_OVERLAY_READY, "overlay:ready");
+        assert_eq!(EVENT_OVERLAY_SELECTION, "overlay:selection");
+        assert_eq!(EVENT_OCR_STATUS, "ocr:status");
+        assert_eq!(EVENT_MENU_READY, "menu:ready");
+        assert_eq!(EVENT_TASK_STARTED, "task:started");
+        assert_eq!(EVENT_TASK_DELTA, "task:delta");
+        assert_eq!(EVENT_TASK_DONE, "task:done");
+        assert_eq!(EVENT_TASK_ERROR, "task:error");
+        assert_eq!(EVENT_DOWNLOAD_PROGRESS, "download:progress");
+        assert_eq!(EVENT_DOWNLOAD_STATE, "download:state");
+        assert_eq!(EVENT_CONFIG_CHANGED, "config:changed");
+        assert_eq!(EVENT_TRAY_ACTION, "tray:action");
+        assert_eq!(EVENT_ENGINE_STATUS, "engine:status");
+        assert_eq!(EVENT_UPDATE_STATUS, "update:status");
         assert_eq!(IPC_CONTRACT_VERSION, 1);
     }
 

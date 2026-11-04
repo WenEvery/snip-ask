@@ -1,7 +1,7 @@
 //! 配置中心（M14）：加载 / 原子写 / 迁移 / 深合并 / 导入导出 / 重置 / 热生效分类。
 //!
 //! 事件发送由命令层完成（实施架构 §4：`AppHandle` 只出现在 `commands`/`app`/`events`），
-//! 本服务只负责状态与文件，返回 `changedKeys` 供命令层广播 `config.changed`。
+//! 本服务只负责状态与文件，返回 `changedKeys` 供命令层广播 `config:changed`。
 //!
 //! 契约 §4.3：配置落盘为原子写（`*.tmp` → rename），保留上一份有效备份 `config.json.bak`。
 

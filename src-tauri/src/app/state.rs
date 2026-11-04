@@ -129,7 +129,7 @@ impl AppState {
         *self.engine.read()
     }
 
-    /// 更新本地引擎状态并广播 `engine.status` 由调用方负责。
+    /// 更新本地引擎状态并广播 `engine:status` 由调用方负责。
     pub fn set_engine_status(&self, status: EngineStatus) {
         *self.engine.write() = status;
     }

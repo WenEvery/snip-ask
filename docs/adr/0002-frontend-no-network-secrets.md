@@ -24,7 +24,7 @@ Tauri 的 IPC 边界提供了一个天然的「唯一能力出口」：WebView �
    请求前取用、用完即弃；`ConfigView` 只返回 `hasKey` 与 `keyMask`（`••••` + 后四位），
    任何命令入参/出参/事件载荷都不得出现明文 Key。
 3. **跨窗口状态来自后端**：业务数据不落 `localStorage`（mock 模式除外），窗口间通过事件
-   或命令返回值同步（如 `config.changed`、`task.delta`）。
+   或命令返回值同步（如 `config:changed`、`task:delta`）。
 4. **统一出口**：超时、重试、错误码映射（`SA-30xx`/`SA-40xx`）、用量计量、日志脱敏集中在
    Rust 网关层，前端只消费 `AppError` 与 `fallback` 列表。
 5. **强约束**：契约 §1.7 与 §11 写死该边界；评审与静态检查（前端代码不得出现 `apiKey` 字样

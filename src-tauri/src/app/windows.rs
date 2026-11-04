@@ -4,14 +4,21 @@
 //! - `overlay` / `result` 惰性创建、复用；overlay 尺寸取主显示器物理尺寸。
 //!
 //! TODO(real): 多显示器虚拟桌面矩形（overlay 需覆盖全部显示器，坐标为负时正确摆放）。
-//! TODO(api-check): 校验 `WebviewWindowBuilder` 的 `transparent` / `skip_taskbar` /
+//! 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `WebviewWindowBuilder` 的 `transparent` / `skip_taskbar` /
 //! `always_on_top` 方法名（Tauri 2.x）。
 
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, LogicalPosition, LogicalSize, Manager, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
+};
 
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
+use crate::contract::events::OverlayReadyPayload;
 use crate::contract::types::WindowLabel;
+use crate::domain::session::SessionPhase;
+use crate::events::emit_overlay_ready;
 use crate::platform::capture::primary_monitor_geometry;
+use crate::services::capture_service::virtual_desktop;
 
 /// 主窗口 label（静态创建）。
 pub const MAIN_WINDOW: &str = "main";
@@ -20,14 +27,32 @@ pub const OVERLAY_WINDOW: &str = "overlay";
 /// 结果窗 label。
 pub const RESULT_WINDOW: &str = "result";
 
+/// 计算 overlay 的窗口几何：虚拟桌面物理像素 → Tauri 逻辑像素（builder 接受逻辑值）。
+///
+/// 注意：`primary_monitor_geometry` 返回的是**物理像素**（契约的 `rectPhys` 口径），
+/// 而 `WebviewWindowBuilder::{inner_size, position}` 接受**逻辑像素**；若直接混用会
+/// 导致窗口尺寸被 DPI 放大（例如 150% 缩放下 2560×1440 → 3840×2160 越界）。
+pub fn overlay_geometry(app: &AppHandle) -> (LogicalPosition<f64>, LogicalSize<f64>) {
+    let desktop = primary_monitor_geometry(app);
+    let scale = if desktop.dpr > 0.0 { desktop.dpr } else { 1.0 };
+    (
+        LogicalPosition::new(desktop.rect.x / scale, desktop.rect.y / scale),
+        LogicalSize::new(
+            (desktop.rect.width / scale).max(1.0),
+            (desktop.rect.height / scale).max(1.0),
+        ),
+    )
+}
+
 /// 确保 overlay 窗口存在（不显示）。
 pub fn ensure_overlay(app: &AppHandle) -> AppResult<WebviewWindow> {
+    let (position, size) = overlay_geometry(app);
     if let Some(window) = app.get_webview_window(OVERLAY_WINDOW) {
+        // 复用窗口：显示器分辨率 / 缩放变化后重新对齐几何。
+        let _ = window.set_position(position);
+        let _ = window.set_size(size);
         return Ok(window);
     }
-    let desktop = primary_monitor_geometry(app);
-    let width = desktop.rect.width.max(1.0);
-    let height = desktop.rect.height.max(1.0);
 
     WebviewWindowBuilder::new(
         app,
@@ -35,8 +60,8 @@ pub fn ensure_overlay(app: &AppHandle) -> AppResult<WebviewWindow> {
         WebviewUrl::App("index.html?window=overlay".into()),
     )
     .title("框选 AI · 选框")
-    .inner_size(width, height)
-    .position(desktop.rect.x, desktop.rect.y)
+    .inner_size(size.width, size.height)
+    .position(position.x, position.y)
     .decorations(false)
     .transparent(true)
     .always_on_top(true)
@@ -47,6 +72,36 @@ pub fn ensure_overlay(app: &AppHandle) -> AppResult<WebviewWindow> {
     .map_err(|err| {
         AppError::new(ErrorCode::OverlayFailed, Some(err.to_string())).with_fallback(vec!["retry"])
     })
+}
+
+/// 在 overlay 的 WebView 完成页面加载后补发 `overlay:ready` 快照。
+///
+/// 背景：`capture_freeze` 在 `show_overlay` 后立即广播 `overlay:ready`，而 overlay 窗口
+/// 首次创建时 WebView 尚未加载完 JS，该事件会丢失（冷启动必现）。`lib.rs` 的
+/// `Builder::on_page_load` 在页面加载完成时调用本函数，从 `AppState` 取当前会话快照补发；
+/// 前端对重复的 `overlay:ready` 做幂等处理即可。
+pub fn emit_overlay_snapshot(app: &AppHandle) {
+    let state = app.state::<crate::app::state::AppState>();
+    let payload = {
+        let store = state.session.lock();
+        let Some(session) = store.current() else {
+            return;
+        };
+        if session.phase != SessionPhase::Selecting {
+            return;
+        }
+        let Some(frame) = session.frame.clone() else {
+            return;
+        };
+        let desktop = virtual_desktop(app);
+        OverlayReadyPayload {
+            session: session.id.clone(),
+            virtual_rect: desktop.rect,
+            dpr: desktop.dpr,
+            frame,
+        }
+    };
+    emit_overlay_ready(app, &payload);
 }
 
 /// 确保结果窗存在（不显示）。

@@ -259,7 +259,7 @@ pub struct SelectionResult {
     pub boxes: Vec<OcrBox>,
 }
 
-/// 动作菜单项（`menu.ready` 载荷元素）。
+/// 动作菜单项（`menu:ready` 载荷元素）。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActionItem {
@@ -355,7 +355,7 @@ pub struct SourceRef {
     pub snippet: Option<String>,
 }
 
-/// `task.started` 事件载荷（脚手架扩展事件，契约 §7）。
+/// `task:started` 事件载荷（脚手架扩展事件，契约 §7）。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskStartedPayload {
@@ -371,7 +371,7 @@ pub struct TaskStartedPayload {
     pub engine: EngineId,
 }
 
-/// `task.done` 事件载荷。
+/// `task:done` 事件载荷。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskDonePayload {

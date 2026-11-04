@@ -3,7 +3,7 @@
 //! - 清单来自内嵌 `resources/models.manifest.json`；
 //! - 安装状态扫描 `<models_dir>/<id>/.installed`；
 //! - 骨架下载：每 100ms 推进 4%，到 100% 后 `verifying → installed`，写入空 `.installed` 标记；
-//!   清单中不存在的 id 直接 `download.state(failed)`。
+//!   清单中不存在的 id 直接 `download:state(failed)`。
 //!
 //! TODO(real): HTTP Range 断点续传 + HuggingFace/ModelScope 镜像回退 + SHA256 校验。
 //! TODO(real): 真实实现不应在 service 内持有 `AppHandle`；当前为骨架期简化。

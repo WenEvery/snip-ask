@@ -133,7 +133,7 @@ pub fn validate_spec(spec: &str) -> AppResult<()> {
 
 /// 转换为 global-shortcut 插件的 `Shortcut`（供注册用）。
 ///
-/// TODO(api-check): 校验 `tauri_plugin_global_shortcut::{Modifiers, Code, Shortcut}`
+/// 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `tauri_plugin_global_shortcut::{Modifiers, Code, Shortcut}`
 /// 的实际导出名与 `Shortcut::new(Option<Modifiers>, Code)` 签名；插件版本见 Cargo.toml `"2"`。
 pub fn to_tauri_shortcut(spec: &str) -> Option<tauri_plugin_global_shortcut::Shortcut> {
     use tauri_plugin_global_shortcut::{Modifiers, Shortcut};

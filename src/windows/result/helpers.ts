@@ -71,7 +71,7 @@ export function normalizeError(error: unknown): ResultError {
   };
 }
 
-/** `task.error` 事件载荷（契约无 detail 字段）→ 错误卡片数据 */
+/** `task:error` 事件载荷（契约无 detail 字段）→ 错误卡片数据 */
 export function fromTaskError(payload: TaskErrorPayload): ResultError {
   return {
     code: payload.code,

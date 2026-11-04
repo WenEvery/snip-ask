@@ -66,7 +66,7 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
     // 7) 本地引擎状态（骨架模式：stopped，不启动进程）
     emit_engine_status(app, EngineStatus::Stopped);
     if !skeleton_mode {
-        // TODO(real): 按 local.* 配置异步启动本地推理进程，并广播 engine.status(starting/ready)。
+        // TODO(real): 按 local.* 配置异步启动本地推理进程，并广播 engine:status(starting/ready)。
         tracing::info!("非骨架模式：本地引擎启动逻辑待接入（TODO(real)）");
     }
 

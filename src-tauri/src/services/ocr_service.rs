@@ -1,6 +1,6 @@
 //! 前置 OCR（M05 / 契约 §12）。
 //!
-//! 骨架模式行为：150ms 后 `ocr.status(scanning)`、400ms 后 `done`；`boxes` 为单条覆盖
+//! 骨架模式行为：150ms 后 `ocr:status(scanning)`、400ms 后 `done`；`boxes` 为单条覆盖
 //! 选区的占位框；`hasText = true`；`preview` 为契约固定文案。
 //!
 //! 本模块提供：
@@ -25,9 +25,9 @@ use crate::contract::types::{OcrBox, RectPhys};
 
 use crate::platform::capture::FrozenFrame;
 
-/// 契约 §12：`ocr.status(scanning)` 的延迟（毫秒）。
+/// 契约 §12：`ocr:status(scanning)` 的延迟（毫秒）。
 pub const SKELETON_SCANNING_DELAY_MS: u64 = 150;
-/// 契约 §12：`ocr.status(done)` 的总延迟（毫秒）。
+/// 契约 §12：`ocr:status(done)` 的总延迟（毫秒）。
 pub const SKELETON_DONE_DELAY_MS: u64 = 400;
 /// 契约 §12：骨架模式占位识别文本。
 pub const SKELETON_PREVIEW: &str = "【骨架模式】本地 OCR 未接入，此为占位识别文本。";

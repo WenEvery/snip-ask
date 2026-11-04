@@ -2,7 +2,7 @@
  * 设置页外壳：左侧分组导航 + 右侧分组内容。
  *
  * 数据流：`useConfigDraft` 拉取 / 维护草稿 → 各分组就地编辑 →
- * 分组「应用」通过 `config_patch` 只提交本组差异 → `config.changed` 回写。
+ * 分组「应用」通过 `config_patch` 只提交本组差异 → `config:changed` 回写。
  */
 
 import { useState } from "react";
