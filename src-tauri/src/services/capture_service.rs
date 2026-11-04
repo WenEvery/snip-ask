@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::contract::errors::AppResult;
 use crate::contract::types::VirtualDesktop;
-use crate::platform::capture::{primary_monitor_geometry, FrozenFrame, ScreenCapturer};
+use crate::platform::capture::{virtual_desktop_geometry, FrozenFrame, ScreenCapturer};
 
 /// 捕获服务。
 pub struct CaptureService {
@@ -24,6 +24,8 @@ impl CaptureService {
 }
 
 /// 当前虚拟桌面几何信息（overlay 尺寸、坐标换算基准）。
+///
+/// S-01：改为**所有显示器物理矩形的最小外接矩形**（含负坐标），不再只取主屏。
 pub fn virtual_desktop(app: &tauri::AppHandle) -> VirtualDesktop {
-    primary_monitor_geometry(app)
+    virtual_desktop_geometry(app)
 }

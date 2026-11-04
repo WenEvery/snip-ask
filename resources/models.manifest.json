@@ -1,19 +1,19 @@
 {
   "version": 1,
   "verified": false,
-  "notes": "脚手架内置模型清单：sha256 暂为 64 个 0 的占位值，verified=false 表示尚未核验真实文件大小与哈希；接入真实下载前必须替换为官方发布的 sha256 并在 CI 中校验。模型文件不随安装包分发，由用户按需下载。",
+  "notes": "模型清单（S-08 于 2026-11-04 按 ModelScope 官方仓库文件列表核对）：hy-mt-1.8b-q4 与 qwen3-4b-q4 的文件名/大小/SHA256 已核实（真实 Range 下载返回 206；见 docs/spikes/S-08-模型下载断点续传与校验.md）。opus-mt-zh-en 对应仓库当前没有 Ct2 产物（仅有 pytorch_model.bin 等），故 urls 置空，待官方发布 ct2-int8 后补齐 URL 与 SHA256。top-level verified=false 表示仍存在未核验条目，不能据此认定全部清单可信。模型文件不随安装包分发，由用户按需下载。",
   "models": [
     {
       "id": "hy-mt-1.8b-q4",
       "name": "HY-MT1.5-1.8B（Q4_K_M）",
       "kind": "gguf",
-      "sizeBytes": 1258291200,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sizeBytes": 1133080512,
+      "sha256": "4383ac0c3c8e476de98ff979c2a3f069f8c4fb385e7860cf2d28da896cc477c7",
       "license": "Tencent Hunyuan Community License",
       "minRamMB": 4096,
       "urls": [
-        "https://huggingface.co/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/main/hy-mt-1.5-1.8b-q4_k_m.gguf",
-        "https://modelscope.cn/models/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/master/hy-mt-1.5-1.8b-q4_k_m.gguf"
+        "https://modelscope.cn/models/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/master/HY-MT1.5-1.8B-Q4_K_M.gguf",
+        "https://huggingface.co/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/main/HY-MT1.5-1.8B-Q4_K_M.gguf"
       ],
       "params": {
         "quant": "Q4_K_M",
@@ -26,13 +26,13 @@
       "id": "qwen3-4b-q4",
       "name": "Qwen3-4B（Q4_K_M）",
       "kind": "gguf",
-      "sizeBytes": 2684354560,
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sizeBytes": 2497280256,
+      "sha256": "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5",
       "license": "Apache-2.0",
       "minRamMB": 8192,
       "urls": [
-        "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/qwen3-4b-q4_k_m.gguf",
-        "https://modelscope.cn/models/Qwen/Qwen3-4B-GGUF/resolve/master/qwen3-4b-q4_k_m.gguf"
+        "https://modelscope.cn/models/Qwen/Qwen3-4B-GGUF/resolve/master/Qwen3-4B-Q4_K_M.gguf",
+        "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf"
       ],
       "params": {
         "quant": "Q4_K_M",
@@ -49,15 +49,13 @@
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "license": "CC-BY-4.0",
       "minRamMB": 2048,
-      "urls": [
-        "https://huggingface.co/Helsinki-NLP/opus-mt-zh-en/resolve/main/ct2-int8.zip",
-        "https://modelscope.cn/models/Helsinki-NLP/opus-mt-zh-en/resolve/master/ct2-int8.zip"
-      ],
+      "urls": [],
       "params": {
         "format": "ctranslate2",
         "direction": "zh-en",
         "quant": "int8",
-        "beamSize": 4
+        "beamSize": 4,
+        "pending": "ModelScope/HuggingFace 的 opus-mt-zh-en 仓库当前无 ct2-int8 产物（仅有 pytorch_model.bin / tf_model.h5 / rust_model.ot），待官方发布后补 urls 与 sha256；在此之前该模型不可下载（S-08 证据）。"
       }
     }
   ]

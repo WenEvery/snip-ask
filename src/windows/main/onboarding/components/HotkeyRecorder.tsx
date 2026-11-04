@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { HotkeyStatus } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
-import { captureHotkey, hotkeyLabel } from "../hotkey";
+import { captureHotkey, hotkeyLabel, hotkeyStatusHint } from "../hotkey";
 import { DEFAULT_CAPTURE_HOTKEY } from "../presets";
 
 export interface HotkeyRecorderProps {
@@ -86,14 +86,7 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
 }
 
 function HotkeyStatusText(props: { status: HotkeyStatus }) {
-  const { status } = props;
-  if (!status.valid) return <span className="ob-hotkey-status is-bad">格式不合法：需修饰键 + 字母/数字</span>;
-  if (!status.available) {
-    return (
-      <span className="ob-hotkey-status is-bad">
-        不可用{status.conflictWith ? `：与「${status.conflictWith}」冲突` : "：已被占用"}
-      </span>
-    );
-  }
-  return <span className="ob-hotkey-status is-ok">可用</span>;
+  // 与设置页共用映射：conflictWith="system" → 被其它程序占用 + 改键建议
+  const hint = hotkeyStatusHint(props.status);
+  return <span className={`ob-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>{hint.text}</span>;
 }

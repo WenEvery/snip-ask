@@ -67,9 +67,47 @@ fn parse_field<T: DeserializeOwned>(data: &Value, field: &str) -> AppResult<Opti
     }
 }
 
+/// 把某一步提交的 `data` 归一化为该步骤的扁平字段对象。
+///
+/// 前端（`OnboardingWizard.buildStepData`）按草稿分节提交：`{ ai }` / `{ translate }` /
+/// `{ modes }` / `{ ui, hotkeys }` / `{ privacy }`；`mock` 后端亦按嵌套深合并。
+/// 旧调用/单测直接提交扁平字段，这里同时兼容两种形状。
+fn normalize_step_payload(step: i32, data: &Value) -> Value {
+    let section = match step {
+        1 => Some("ai"),
+        2 => Some("translate"),
+        3 => Some("modes"),
+        5 => Some("privacy"),
+        _ => None,
+    };
+    if let Some(key) = section {
+        return match data.get(key) {
+            Some(value) => value.clone(),
+            None => data.clone(),
+        };
+    }
+    if step == 4 {
+        let mut flat = data.as_object().cloned().unwrap_or_default();
+        if let Some(ui) = data.get("ui").and_then(Value::as_object) {
+            for (key, value) in ui {
+                flat.insert(key.clone(), value.clone());
+            }
+        }
+        if let Some(capture) = data
+            .get("hotkeys")
+            .and_then(|hotkeys| hotkeys.get("capture"))
+        {
+            flat.insert("capture".to_string(), capture.clone());
+        }
+        return Value::Object(flat);
+    }
+    data.clone()
+}
+
 /// 把某一步提交的 `data` 合并进草稿，并推进/记录 `currentStep`。
 ///
-/// 允许部分字段：缺省字段保持草稿原值。
+/// 允许部分字段：缺省字段保持草稿原值；「未配置」（null）在 AI 服务 / 翻译方式步骤表示
+/// 用户保留未配置状态，不是非法数据。
 pub fn apply_step_data(state: &mut OnboardingState, step: i32, data: Value) -> AppResult<()> {
     if !(STEP_MIN..=STEP_MAX).contains(&step) {
         return Err(AppError::invalid_config(
@@ -77,27 +115,34 @@ pub fn apply_step_data(state: &mut OnboardingState, step: i32, data: Value) -> A
             format!("步骤编号必须在 {STEP_MIN}..={STEP_MAX}"),
         ));
     }
+    let payload = normalize_step_payload(step, &data);
     match step {
         0 => {
-            if let Some(language) = parse_field::<Language>(&data, "language")? {
+            if let Some(language) = parse_field::<Language>(&payload, "language")? {
                 state.data.language = language;
             }
         }
-        1 => {
-            let draft: AiDraft = serde_json::from_value(data).map_err(|err| {
-                AppError::invalid_config("data", format!("AI 服务数据非法：{err}"))
-            })?;
-            state.data.ai = Some(draft);
-        }
-        2 => {
-            let draft: TranslateDraft = serde_json::from_value(data).map_err(|err| {
-                AppError::invalid_config("data", format!("翻译方式数据非法：{err}"))
-            })?;
-            state.data.translate = Some(draft);
-        }
+        1 => match payload {
+            Value::Null => state.data.ai = None,
+            value => {
+                let draft: AiDraft = serde_json::from_value(value).map_err(|err| {
+                    AppError::invalid_config("data", format!("AI 服务数据非法：{err}"))
+                })?;
+                state.data.ai = Some(draft);
+            }
+        },
+        2 => match payload {
+            Value::Null => state.data.translate = None,
+            value => {
+                let draft: TranslateDraft = serde_json::from_value(value).map_err(|err| {
+                    AppError::invalid_config("data", format!("翻译方式数据非法：{err}"))
+                })?;
+                state.data.translate = Some(draft);
+            }
+        },
         3 => {
             // 部分字段：search / imageSearch / translate / answer → Mode
-            let Some(object) = data.as_object() else {
+            let Some(object) = payload.as_object() else {
                 return Err(AppError::invalid_config("data", "AI 模式数据必须是对象"));
             };
             for action in ["search", "imageSearch", "translate", "answer"] {
@@ -113,30 +158,30 @@ pub fn apply_step_data(state: &mut OnboardingState, step: i32, data: Value) -> A
             }
         }
         4 => {
-            if let Some(theme) = parse_field::<Theme>(&data, "theme")? {
+            if let Some(theme) = parse_field::<Theme>(&payload, "theme")? {
                 state.data.ui.theme = theme;
             }
-            if let Some(font_size) = parse_field::<FontSize>(&data, "fontSize")? {
+            if let Some(font_size) = parse_field::<FontSize>(&payload, "fontSize")? {
                 state.data.ui.font_size = font_size;
             }
-            if let Some(autostart) = parse_field::<bool>(&data, "autostart")? {
+            if let Some(autostart) = parse_field::<bool>(&payload, "autostart")? {
                 state.data.ui.autostart = autostart;
             }
-            if let Some(position) = parse_field::<ResultPosition>(&data, "resultPosition")? {
+            if let Some(position) = parse_field::<ResultPosition>(&payload, "resultPosition")? {
                 state.data.ui.result_position = position;
             }
-            if let Some(capture) = parse_field::<String>(&data, "capture")? {
+            if let Some(capture) = parse_field::<String>(&payload, "capture")? {
                 state.data.hotkeys.capture = capture;
             }
         }
         5 => {
-            if let Some(agreed) = parse_field::<bool>(&data, "agreed")? {
+            if let Some(agreed) = parse_field::<bool>(&payload, "agreed")? {
                 state.data.privacy.agreed = agreed;
             }
-            if let Some(allow) = parse_field::<bool>(&data, "allowTextUpload")? {
+            if let Some(allow) = parse_field::<bool>(&payload, "allowTextUpload")? {
                 state.data.privacy.allow_text_upload = allow;
             }
-            if let Some(allow) = parse_field::<bool>(&data, "allowImageUpload")? {
+            if let Some(allow) = parse_field::<bool>(&payload, "allowImageUpload")? {
                 state.data.privacy.allow_image_upload = allow;
             }
         }
@@ -380,6 +425,74 @@ mod tests {
         assert!(!state.data.privacy.allow_image_upload);
 
         assert!(apply_step_data(&mut state, 9, serde_json::json!({})).is_err());
+    }
+
+    #[test]
+    fn apply_step_data_allows_unconfigured_ai_and_translate() {
+        // S-07 实机走查发现的缺陷回归：无网络/无 Key 用户直接点「下一步」时，
+        // 前端提交 { ai: null } / { translate: null } 不应被当作非法数据。
+        let mut state = new_state("2026-11-04T00:00:00Z");
+        apply_step_data(&mut state, 1, serde_json::json!({ "ai": null })).unwrap();
+        assert!(state.data.ai.is_none());
+        apply_step_data(&mut state, 2, serde_json::json!({ "translate": null })).unwrap();
+        assert!(state.data.translate.is_none());
+        // 缺省字段：`{}` 走扁平兼容分支，解析为默认 AiDraft（部分更新语义，不报错）。
+        apply_step_data(&mut state, 1, serde_json::json!({})).unwrap();
+        assert_eq!(state.data.ai.as_ref().unwrap().model, "");
+        // 仍然是非法对象时给出明确错误。
+        assert!(
+            apply_step_data(&mut state, 1, serde_json::json!({ "ai": { "baseUrl": 1 } })).is_err()
+        );
+    }
+
+    #[test]
+    fn apply_step_data_accepts_wizard_nested_payloads() {
+        // 前端 OnboardingWizard.buildStepData 按草稿分节提交（与 mock 后端的深合并一致）。
+        let mut state = new_state("2026-11-04T00:00:00Z");
+        apply_step_data(
+            &mut state,
+            1,
+            serde_json::json!({
+                "ai": { "providerId": "deepseek", "baseUrl": "https://api.deepseek.com", "model": "deepseek-flash", "tested": false }
+            }),
+        )
+        .unwrap();
+        assert_eq!(state.data.ai.as_ref().unwrap().provider_id, "deepseek");
+        apply_step_data(
+            &mut state,
+            2,
+            serde_json::json!({ "translate": { "backend": "local", "modelId": "hy-mt-1.8b-q4", "cloudModel": "" } }),
+        )
+        .unwrap();
+        assert_eq!(
+            state.data.translate.as_ref().unwrap().backend,
+            TranslateBackend::Local
+        );
+        apply_step_data(
+            &mut state,
+            3,
+            serde_json::json!({ "modes": { "search": "deep" } }),
+        )
+        .unwrap();
+        assert_eq!(state.data.modes.get("search"), Some(&Mode::Deep));
+        apply_step_data(
+            &mut state,
+            4,
+            serde_json::json!({ "ui": { "theme": "dark", "fontSize": "lg" }, "hotkeys": { "capture": "alt+space" } }),
+        )
+        .unwrap();
+        assert_eq!(state.data.ui.theme, Theme::Dark);
+        assert_eq!(state.data.ui.font_size, FontSize::Lg);
+        assert_eq!(state.data.hotkeys.capture, "alt+space");
+        apply_step_data(
+            &mut state,
+            5,
+            serde_json::json!({ "privacy": { "agreed": true, "allowTextUpload": true, "allowImageUpload": false } }),
+        )
+        .unwrap();
+        assert!(state.data.privacy.agreed);
+        assert!(state.data.privacy.allow_text_upload);
+        assert!(!state.data.privacy.allow_image_upload);
     }
 
     #[test]

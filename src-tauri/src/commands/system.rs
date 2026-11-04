@@ -8,11 +8,18 @@ use crate::contract::events::ConfigChangedPayload;
 use crate::contract::types::{HotkeyStatus, Stats};
 use crate::events::emit_config_changed;
 
-/// 命令：探测快捷键（格式 / 规范化 / 冲突）。
+/// 命令：探测快捷键（格式 / 规范化 / 配置内冲突 / OS 级占用 `system`）。
+///
+/// OS 级探测复用 `tauri-plugin-global-shortcut` 的 `register` / `unregister`
+/// （插件在 OS 注册失败时返回 `Err`），临时注册成功后立即注销，避免探测本身长期占用热键。
 #[tauri::command]
-pub async fn hotkey_probe(state: State<'_, AppState>, spec: String) -> AppResult<HotkeyStatus> {
+pub async fn hotkey_probe(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    spec: String,
+) -> AppResult<HotkeyStatus> {
     let config = state.snapshot_config();
-    Ok(crate::app::hotkeys::probe(&config, &spec))
+    Ok(crate::app::hotkeys::probe_os(&app, &config, &spec))
 }
 
 /// 命令：设置开机自启（同时写入 `app.autostart` 并广播 `config:changed`）。

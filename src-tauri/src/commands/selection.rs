@@ -54,7 +54,21 @@ pub async fn selection_commit(
     }
 
     // 异步：先 ocr:status(done)，再 menu:ready（不阻塞命令返回）。
-    let items = crate::domain::action::visible_actions(&config, result.has_text);
+    // S-07 受限模式：按运行时能力（云端 Key / 本地模型）决定云动作可用性。
+    // 注意：`config_view()` 会 await 凭据存储，必须放在 session 锁作用域之外。
+    let config_view = state.config_view().await;
+    let cloud_available = config_view
+        .providers
+        .iter()
+        .any(|provider| provider.enabled && provider.has_key);
+    let local_model_available = state.models.list().iter().any(|model| model.installed);
+    let capabilities =
+        crate::domain::action::Capabilities::derive(cloud_available, local_model_available);
+    let items = crate::domain::action::visible_actions_with_capabilities(
+        &config,
+        result.has_text,
+        &capabilities,
+    );
     let background_app = app.clone();
     let background_result = result.clone();
     let _handle = tauri::async_runtime::spawn(async move {

@@ -131,4 +131,15 @@ pub(crate) fn apply_config_side_effects(app: &AppHandle, state: &AppState, chang
     if changed.iter().any(|key| key == "advanced.proxy") {
         tracing::warn!("代理配置变更需重启应用后生效");
     }
+    if changed.iter().any(|key| key == "advanced.skeletonMode") {
+        // S-08：骨架模式切换要同步到模型管理器，决定下载走骨架模拟还是真实 Range 下载。
+        let config = state.snapshot_config();
+        state
+            .models
+            .set_skeleton_mode(config.advanced.skeleton_mode);
+        tracing::info!(
+            skeleton_mode = config.advanced.skeleton_mode,
+            "模型下载实现模式已更新"
+        );
+    }
 }

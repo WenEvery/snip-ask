@@ -13,7 +13,7 @@ use crate::contract::types::SessionId;
 use crate::domain::session::SessionPhase;
 use crate::events::{emit_ocr_status, emit_overlay_ready};
 use crate::platform::capture::{ScreenCapturer, SkeletonCapturer};
-use crate::services::capture_service::{virtual_desktop, CaptureService};
+use crate::services::capture_service::CaptureService;
 use crate::services::ocr_service::{SKELETON_DONE_DELAY_MS, SKELETON_SCANNING_DELAY_MS};
 
 /// `capture_freeze`：捕获虚拟桌面 → 创建会话 → 显示 overlay → `overlay:ready`。
@@ -48,9 +48,11 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         if let Some((session, phase, frame)) = snapshot {
             tracing::debug!(target: "snip_ask_lib::trace", "capture_freeze 幂等复用 session={session} phase={phase:?} 有帧={}", frame.is_some());
             windows::show_overlay(app)?;
+            // S-01：show 后等窗口 DPI 稳定并复核几何，再按 overlay 实际 dpr 下发快照。
+            windows::settle_overlay_geometry(app).await;
             if phase == SessionPhase::Selecting {
                 if let Some(frame) = frame {
-                    let desktop = virtual_desktop(app);
+                    let desktop = windows::overlay_virtual_desktop(app);
                     emit_overlay_ready(
                         app,
                         &OverlayReadyPayload {
@@ -94,8 +96,7 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         }
     };
 
-    // 3) 记录冻结帧 + 进入选区交互。
-    let desktop = virtual_desktop(app);
+    // 3) 记录冻结帧 + 进入选区交互（帧尺寸 = 虚拟桌面外接矩形物理像素，S-01）。
     {
         let mut store = state.session.lock();
         store.attach_frame(&session, frame.to_meta())?;
@@ -112,11 +113,14 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         None,
     );
 
-    // 5) 显示 overlay（惰性创建，尺寸为虚拟桌面物理尺寸）。
+    // 5) 显示 overlay（惰性创建，client 区覆盖整个虚拟桌面物理矩形）。
     if let Err(err) = windows::show_overlay(app) {
         let _ = state.session.lock().cancel(&session);
         return Err(err);
     }
+    // 5.5) S-01：等 Windows 异步 DPI 消息处理完并复核几何；dpr 取 overlay 窗口实际缩放比。
+    windows::settle_overlay_geometry(app).await;
+    let desktop = windows::overlay_virtual_desktop(app);
 
     // 6) overlay:ready
     emit_overlay_ready(

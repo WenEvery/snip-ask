@@ -88,7 +88,8 @@ export function ActionMenu({
       <div className="overlay-menu__actions" role="group" aria-label="动作">
         {menu.items.map((item) => {
           const unavailable = disabled || !item.enabled;
-          const title = item.enabled ? item.label : (item.disabledReason ?? "当前不可用");
+          const reason = item.disabledReason ?? "当前不可用";
+          const title = item.enabled ? item.label : `${item.label}：${reason}`;
           return (
             <button
               key={item.id}
@@ -96,9 +97,37 @@ export function ActionMenu({
               className="overlay-menu__action"
               disabled={unavailable}
               title={title}
+              aria-describedby={unavailable ? `overlay-action-reason-${item.id}` : undefined}
               onClick={() => onAction(item)}
             >
-              <span className="overlay-menu__action-label">{item.label}</span>
+              <span
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 2,
+                  minWidth: 0,
+                  flex: "1 1 auto",
+                }}
+              >
+                <span className="overlay-menu__action-label">{item.label}</span>
+                {unavailable ? (
+                  // 受限模式：禁用原因直接可见（不只放在 tooltip），文案为可操作路径。
+                  <span
+                    id={`overlay-action-reason-${item.id}`}
+                    style={{
+                      display: "block",
+                      fontSize: 11,
+                      lineHeight: 1.35,
+                      opacity: 0.8,
+                      whiteSpace: "normal",
+                      textAlign: "left",
+                    }}
+                  >
+                    {reason}
+                  </span>
+                ) : null}
+              </span>
               <span className="overlay-menu__action-meta">
                 {item.shortcut ? <Kbd>{item.shortcut}</Kbd> : null}
                 <span

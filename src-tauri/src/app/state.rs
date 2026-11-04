@@ -69,6 +69,10 @@ impl AppState {
         let credentials: Arc<dyn CredentialStore> = Arc::new(InMemoryCredentialStore::new());
         let history = HistoryRepo::open(&paths, loaded.config.history.enabled);
         let models = ModelManager::load(&paths)?;
+        // S-08：把配置里的骨架模式注入模型管理器（默认 true = 保持原骨架下载行为；
+        // skeletonMode=false 时才走真实 HTTP Range 下载 + 校验）。
+        let skeleton_mode = loaded.config.advanced.skeleton_mode;
+        models.set_skeleton_mode(skeleton_mode);
 
         Ok(Self {
             config: RwLock::new(loaded.config),
@@ -180,6 +184,8 @@ mod tests {
         let paths = temp_paths();
         let state = AppState::initialize(paths.clone()).unwrap();
         assert!(state.is_skeleton());
+        // S-08：骨架模式开关必须同步注入模型管理器（默认 true）。
+        assert_eq!(state.is_skeleton(), state.models.is_skeleton_mode());
         assert_eq!(state.session_phase(), SessionPhase::Idle);
         assert_eq!(state.active_session_id(), None);
         assert_eq!(state.active_task_count(), 0);

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui";
 import type { HotkeyStatus } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
-import { captureHotkey, hotkeyLabel } from "../hotkey";
+import { captureHotkey, hotkeyLabel, hotkeyStatusHint } from "../hotkey";
 
 export interface HotkeyFieldProps {
   label: string;
@@ -106,20 +106,7 @@ export function HotkeyField(props: HotkeyFieldProps) {
 }
 
 function HotkeyStatusLine(props: { status: HotkeyStatus }) {
-  const { status } = props;
-  if (!status.valid) {
-    return <span className="sa-hotkey-status is-bad">格式不合法：需至少一个修饰键 + 字母/数字</span>;
-  }
-  if (!status.available) {
-    return (
-      <span className="sa-hotkey-status is-bad">
-        不可用{status.conflictWith ? `：与「${status.conflictWith}」冲突` : "：已被系统或其他程序占用"}
-      </span>
-    );
-  }
-  return (
-    <span className="sa-hotkey-status is-ok">
-      可用{status.normalized && status.normalized !== status.spec ? `（规范化为 ${status.normalized}）` : ""}
-    </span>
-  );
+  // conflictWith="system"（被其它程序占用）与配置内热键字段名由同一映射给出可操作文案
+  const hint = hotkeyStatusHint(props.status);
+  return <span className={`sa-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>{hint.text}</span>;
 }

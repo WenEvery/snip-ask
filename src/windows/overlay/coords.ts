@@ -1,6 +1,15 @@
 /**
  * overlay 坐标换算：契约要求**全程物理像素**（以虚拟桌面左上角为原点，可为负）。
  * 窗口内 CSS 像素 = 物理像素 / dpr；overlay 覆盖区域原点是 virtualRect 的左上角。
+ *
+ * S-01（混合 DPI 多屏）不变式 —— 后端 `app::windows` 负责保证，前端只做纯换算：
+ * 1. overlay **client 区**左上角 == `virtualRect` 左上角（不是窗口外框左上角）；
+ * 2. client 区宽高 == `virtualRect` 宽高（物理像素，= 所有显示器外接矩形）；
+ * 3. 下发的 `dpr` == overlay WebView 实际生效的 `devicePixelRatio`（= 窗口 `scale_factor()`）。
+ *
+ * 注意：单个跨屏 overlay 只有一个 WebView 缩放比，因此**不能**按指针所在显示器逐屏改 dpr；
+ * 本机（2560x1440@150% + 1080x1920@100%）实测该统一 dpr 为 1.5，逐屏混用会让副屏坐标
+ * 整体偏移数百物理像素（见 docs/spikes/S-01-*.md）。
  */
 
 import type { RectPhys } from "../../shared/contract/types";

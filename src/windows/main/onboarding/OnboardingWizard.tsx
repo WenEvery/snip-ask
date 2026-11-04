@@ -8,10 +8,17 @@
  */
 
 import { useEffect, useState } from "react";
-import type { OnboardingDraft, OnboardingState } from "@/shared/contract/types";
+import type {
+  ConfigView,
+  ModelInfo,
+  OnboardingDraft,
+  OnboardingState,
+} from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { toUiError } from "./error";
+import type { Capabilities } from "./capabilities";
+import { deriveCapabilities, isRestricted } from "./capabilities";
 import type { StepProps, UiError } from "./types";
 import { STEP_COUNT, STEP_META } from "./types";
 import { WelcomeStep } from "./steps/WelcomeStep";
@@ -20,10 +27,13 @@ import { TranslateStep } from "./steps/TranslateStep";
 import { ModesStep } from "./steps/ModesStep";
 import { AppearanceStep } from "./steps/AppearanceStep";
 import { PrivacyStep } from "./steps/PrivacyStep";
+import { RestrictedNotice } from "./components/RestrictedNotice";
 import "./onboarding.css";
 
 export interface OnboardingWizardProps {
   onFinish: (skip: boolean) => void;
+  /** 「去配置」入口（跳到设置 → AI 服务）；无渲染宿主时可省略。 */
+  onOpenSettings?: () => void;
 }
 
 /** 每步保存到 `onboarding_update.data` 的字段（与契约 §9 OnboardingDraft 对应） */
@@ -65,7 +75,7 @@ function renderStep(step: number, props: StepProps) {
   }
 }
 
-export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
+export default function OnboardingWizard({ onFinish, onOpenSettings }: OnboardingWizardProps) {
   const [draft, setDraft] = useState<OnboardingDraft | null>(null);
   const [step, setStep] = useState(0);
   const [loadError, setLoadError] = useState<UiError | null>(null);
@@ -73,6 +83,8 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const [busy, setBusy] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  // 真实能力快照：用于第 6 步「完成后将进入受限模式」的明确说明。
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +98,20 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       } catch (err) {
         if (cancelled) return;
         setLoadError(toUiError(err));
+      }
+      // 能力快照失败不阻塞引导（引导本身仍可完成）。
+      try {
+        const [view, models] = await Promise.all([
+          ipc.invoke<ConfigView>(COMMANDS.configGet),
+          ipc.invoke<ModelInfo[]>(COMMANDS.modelsList),
+        ]);
+        if (!cancelled) {
+          setCapabilities(
+            deriveCapabilities({ providers: view.providers, models }),
+          );
+        }
+      } catch {
+        /* 忽略：受限说明降级为草稿摘要 */
       }
     };
     void load();
@@ -210,13 +236,29 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         </div>
       ) : null}
 
-      <div className="ob-content">{renderStep(step, stepProps)}</div>
+      <div className="ob-content">
+        {renderStep(step, stepProps)}
+        {isLast && capabilities && isRestricted(capabilities) ? (
+          <RestrictedNotice
+            capabilities={capabilities}
+            skipped={false}
+            onConfigure={onOpenSettings}
+          >
+            <p style={{ margin: "2px 0 0" }}>
+              完成后可随时在「设置 → AI 服务 / 翻译」补齐；补齐后云动作会自动恢复可用。
+            </p>
+          </RestrictedNotice>
+        ) : null}
+      </div>
 
       <footer className="ob-footer">
         <div className="ob-footer-left">
           {confirmSkip ? (
             <span className="ob-inline">
-              <span className="ob-warn-inline">跳过将进入受限模式（仅本地 OCR + 浏览器搜索），确定？</span>
+              <span className="ob-warn-inline">
+                跳过将进入受限模式：本地 OCR、浏览器搜索、复制仍可用；AI
+                搜索 / 解答 / 图片搜索 / 云端翻译不可用（可随时在设置页补齐）。确定？
+              </span>
               <button
                 type="button"
                 className="ob-btn ob-btn-danger"

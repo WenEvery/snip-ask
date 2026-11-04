@@ -28,7 +28,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"
 anyhow = "1"
-tokio = { version = "1", features = ["sync", "time", "macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["sync", "time", "macros", "rt-multi-thread", "fs", "io-util"] }
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
@@ -44,6 +44,7 @@ keyring = { version = "3", features = ["windows-native"] }
 base64 = "0.22"
 dirs = "5"
 once_cell = "1"
+reqwest = { version = "0.13.3", default-features = false, features = ["native-tls", "stream", "http2", "charset", "system-proxy"] }
 
 [profile.release]
 codegen-units = 1

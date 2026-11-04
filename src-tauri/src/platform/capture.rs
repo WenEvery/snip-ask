@@ -47,23 +47,34 @@ pub trait ScreenCapturer: Send + Sync {
     async fn capture_virtual_desktop(&self) -> AppResult<FrozenFrame>;
 }
 
-/// 主显示器几何信息（骨架模式与 overlay 初始尺寸共用）。
+/// 虚拟桌面几何（S-01：多显示器外接矩形 + overlay 尺寸 / 坐标换算基准）。
 ///
-/// TODO(real): 多显示器虚拟桌面矩形（`EnumDisplayMonitors` 外接矩形）。
-pub fn primary_monitor_geometry(app: &tauri::AppHandle) -> VirtualDesktop {
-    match app.primary_monitor() {
-        Ok(Some(monitor)) => {
-            let size = monitor.size();
+/// - `rect`：**所有显示器物理矩形的最小外接矩形**，允许负坐标（副屏在主屏左上时本机为
+///   `(-1080,-470) 3640x1920`）；与 Win32 `GetSystemMetrics(SM_*VIRTUALSCREEN)` 口径一致。
+/// - `dpr`：**预期**窗口缩放比，取覆盖虚拟桌面左上角的显示器的 `scale_factor()`
+///   （Windows 决定跨屏窗口 DPI 的归属屏）。overlay 的最终 dpr 必须以窗口实际
+///   `scale_factor()` 为准（见 `app::windows::overlay_virtual_desktop`），因为单个跨屏
+///   WebView 只有一个 devicePixelRatio。
+///
+/// TODO(real): 真实捕获按该矩形做 BitBlt / WGC，帧尺寸与本矩形口径保持一致。
+pub fn virtual_desktop_geometry(app: &tauri::AppHandle) -> VirtualDesktop {
+    let monitors = app.available_monitors().unwrap_or_default();
+    let rects: Vec<RectPhys> = monitors
+        .iter()
+        .map(|monitor| {
             let position = monitor.position();
-            coords::virtual_desktop(
-                position.x as f64,
-                position.y as f64,
-                size.width as f64,
-                size.height as f64,
-                monitor.scale_factor(),
-            )
-        }
-        _ => VirtualDesktop {
+            let size = monitor.size();
+            RectPhys {
+                x: position.x as f64,
+                y: position.y as f64,
+                width: size.width as f64,
+                height: size.height as f64,
+            }
+        })
+        .collect();
+    let Some(rect) = coords::union_rect(rects) else {
+        // 没有任何显示器（远程会话异常）：回退 1080p，保证 overlay 仍可创建。
+        return VirtualDesktop {
             rect: RectPhys {
                 x: 0.0,
                 y: 0.0,
@@ -71,11 +82,20 @@ pub fn primary_monitor_geometry(app: &tauri::AppHandle) -> VirtualDesktop {
                 height: 1080.0,
             },
             dpr: 1.0,
-        },
-    }
+        };
+    };
+    let anchor = monitors
+        .iter()
+        .find(|monitor| {
+            let position = monitor.position();
+            coords::rect_contains(&rect, position.x as f64, position.y as f64)
+        })
+        .or_else(|| monitors.first());
+    let dpr = anchor.map(|monitor| monitor.scale_factor()).unwrap_or(1.0);
+    coords::virtual_desktop(rect.x, rect.y, rect.width, rect.height, dpr)
 }
 
-/// 骨架捕获器：不调用 Win32，用主显示器物理尺寸合成帧。
+/// 骨架捕获器：不调用 Win32，用虚拟桌面物理尺寸合成帧。
 pub struct SkeletonCapturer {
     app: tauri::AppHandle,
 }
@@ -90,7 +110,7 @@ impl SkeletonCapturer {
 #[async_trait]
 impl ScreenCapturer for SkeletonCapturer {
     async fn capture_virtual_desktop(&self) -> AppResult<FrozenFrame> {
-        let desktop = primary_monitor_geometry(&self.app);
+        let desktop = virtual_desktop_geometry(&self.app);
         let width = desktop.rect.width.max(1.0).round() as u32;
         let height = desktop.rect.height.max(1.0).round() as u32;
         if width == 0 || height == 0 {

@@ -14,6 +14,7 @@ import { COMMANDS, EVENTS } from "../../shared/contract/names";
 import type {
   ConfigChangedPayload,
   ConfigView,
+  ModelInfo,
   OnboardingState,
   TrayActionPayload,
 } from "../../shared/contract/types";
@@ -21,6 +22,9 @@ import { useIpcEvent } from "../../shared/hooks/useIpcEvent";
 import { ipc, isBrowserPreview, toAppError } from "../../shared/ipc";
 import { applyAccent, applyTheme } from "../../shared/theme/theme";
 import OnboardingWizard from "./onboarding/OnboardingWizard";
+import type { Capabilities } from "./onboarding/capabilities";
+import { deriveCapabilities, isRestricted } from "./onboarding/capabilities";
+import { RestrictedNotice } from "./onboarding/components/RestrictedNotice";
 import SettingsPage from "./settings/SettingsPage";
 import "./main.css";
 
@@ -32,12 +36,39 @@ export default function MainWindow() {
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const themeCleanupRef = useRef<(() => void) | null>(null);
+  // S-07 受限模式：真实能力快照 + 引导状态（用于主界面提示与「去配置」入口）。
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
+  const [onboardingFlags, setOnboardingFlags] = useState<{
+    completed: boolean;
+    skipped: boolean;
+  } | null>(null);
+  const [settingsSection, setSettingsSection] = useState<string>("general");
 
   // 路由 `/` 支持 `?section=xxx` 直达设置分组（脚手架可选能力）
   const [initialSection] = useState<string | undefined>(() => {
     if (typeof window === "undefined") return undefined;
     return new URLSearchParams(window.location.search).get("section") ?? undefined;
   });
+
+  // 读取真实能力快照：受限模式提示与「去配置」入口的数据来源。
+  const refreshCapabilities = useCallback(async () => {
+    try {
+      const [view, models, state] = await Promise.all([
+        ipc.invoke<ConfigView>(COMMANDS.configGet),
+        ipc.invoke<ModelInfo[]>(COMMANDS.modelsList),
+        ipc.invoke<OnboardingState>(COMMANDS.onboardingState),
+      ]);
+      setCapabilities(deriveCapabilities({ providers: view.providers, models }));
+      setOnboardingFlags({ completed: state.completed, skipped: state.skipped });
+    } catch {
+      // 能力探测失败时静默降级：不阻塞主界面。
+    }
+  }, []);
+
+  const openConfigure = useCallback(() => {
+    setSettingsSection("ai");
+    setRoute("settings");
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,10 +86,11 @@ export default function MainWindow() {
         setError(toAppError(raw).message);
         setLoading(false);
       });
+    void refreshCapabilities();
     return () => {
       cancelled = true;
     };
-  }, [reloadToken]);
+  }, [reloadToken, refreshCapabilities]);
 
   const applyConfigTheme = useCallback((config: ConfigView) => {
     themeCleanupRef.current?.();
@@ -77,6 +109,8 @@ export default function MainWindow() {
   useIpcEvent<ConfigChangedPayload>(EVENTS.configChanged, (payload) => {
     if (!payload || !payload.config) return;
     applyConfigTheme(payload.config);
+    // 配置变化可能补齐 Key / 模型 / 隐私开关 → 重新评估受限模式。
+    void refreshCapabilities();
   });
 
   useIpcEvent<TrayActionPayload>(EVENTS.trayAction, (payload) => {
@@ -94,9 +128,16 @@ export default function MainWindow() {
     void ipc.invoke(COMMANDS.windowHide, { window: "main" }).catch(() => undefined);
   }, []);
 
-  const handleFinish = useCallback((_skip: boolean) => {
-    setRoute("settings");
-  }, []);
+  const handleFinish = useCallback(
+    (_skip: boolean) => {
+      setRoute("settings");
+      void refreshCapabilities();
+    },
+    [refreshCapabilities],
+  );
+
+  const restricted =
+    capabilities !== null && isRestricted(capabilities) && route === "settings";
 
   return (
     <div className="main-window">
@@ -157,10 +198,25 @@ export default function MainWindow() {
               <p className="main-state__error">初始化失败：{error}</p>
               <Button onClick={() => setReloadToken((token) => token + 1)}>重试</Button>
             </div>
-          ) : route === "onboarding" ? (
-            <OnboardingWizard onFinish={handleFinish} />
           ) : (
-            <SettingsPage initialSection={initialSection} />
+            <>
+              {restricted && capabilities ? (
+                <RestrictedNotice
+                  capabilities={capabilities}
+                  variant="banner"
+                  skipped={onboardingFlags?.skipped ?? false}
+                  onConfigure={openConfigure}
+                />
+              ) : null}
+              {route === "onboarding" ? (
+                <OnboardingWizard onFinish={handleFinish} onOpenSettings={openConfigure} />
+              ) : (
+                <SettingsPage
+                  key={`settings-${settingsSection}`}
+                  initialSection={settingsSection === "general" ? initialSection : settingsSection}
+                />
+              )}
+            </>
           )}
         </main>
       </div>
