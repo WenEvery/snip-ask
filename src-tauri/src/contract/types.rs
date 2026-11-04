@@ -12,9 +12,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::config::{
-    Cap, FontSize, Language, ResultPosition, Theme, TranslateBackend,
-};
+use super::config::{Cap, FontSize, Language, ResultPosition, Theme, TranslateBackend};
 use super::errors::AppError;
 
 /// 会话 ID（UUID v4 小写字符串）。
@@ -476,6 +474,7 @@ pub struct ModelInfo {
     /// 许可标识。
     pub license: String,
     /// 建议内存（MB）。
+    #[serde(rename = "minRamMB")]
     pub min_ram_mb: u32,
     /// 下载地址（主源 + 镜像）。
     pub urls: Vec<String>,
@@ -518,6 +517,7 @@ pub struct ModelManifestEntry {
     /// 许可标识。
     pub license: String,
     /// 建议内存（MB）。
+    #[serde(rename = "minRamMB")]
     pub min_ram_mb: u32,
     /// 下载地址。
     pub urls: Vec<String>,

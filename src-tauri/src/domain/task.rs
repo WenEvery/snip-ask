@@ -73,12 +73,7 @@ pub struct TaskRecord {
 
 impl TaskRecord {
     /// 创建任务记录。
-    pub fn new(
-        id: TaskId,
-        session_id: SessionId,
-        action: ActionId,
-        mode: Mode,
-    ) -> Self {
+    pub fn new(id: TaskId, session_id: SessionId, action: ActionId, mode: Mode) -> Self {
         Self {
             id,
             session_id,
@@ -203,7 +198,10 @@ mod tests {
         let token = task.cancel_token();
         store.insert(task);
         assert_eq!(store.active_count(), 1);
-        assert_eq!(store.session_of(&TaskId::from("t-1")).unwrap(), SessionId::from("s-1"));
+        assert_eq!(
+            store.session_of(&TaskId::from("t-1")).unwrap(),
+            SessionId::from("s-1")
+        );
         assert!(!token.load(Ordering::SeqCst));
 
         assert!(store.cancel(&TaskId::from("t-1")));
@@ -224,7 +222,7 @@ mod tests {
 
         let cancelled = store.cancel_session(&SessionId::from("s-1"));
         assert_eq!(cancelled.len(), 2);
-        assert!(store.get(&TaskId::from("t-3")).unwrap().is_cancelled() == false);
+        assert!(!store.get(&TaskId::from("t-3")).unwrap().is_cancelled());
         assert!(store.get(&TaskId::from("t-1")).unwrap().is_cancelled());
     }
 

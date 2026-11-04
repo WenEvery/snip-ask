@@ -79,7 +79,7 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
 
     // 9) 后台更新检查（不阻塞启动）
     let update_app = app.clone();
-    let _ = tauri::async_runtime::spawn(async move {
+    let _handle = tauri::async_runtime::spawn(async move {
         updater_service::check_once(&update_app).await;
     });
 

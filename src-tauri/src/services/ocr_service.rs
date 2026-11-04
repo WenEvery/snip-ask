@@ -144,7 +144,9 @@ impl OcrCache {
 
     /// 写入整屏检测结果。
     pub fn put(&self, ocr_session_id: &str, boxes: Vec<OcrBox>) {
-        self.entries.lock().insert(ocr_session_id.to_string(), boxes);
+        self.entries
+            .lock()
+            .insert(ocr_session_id.to_string(), boxes);
     }
 
     /// 读取整屏检测结果。

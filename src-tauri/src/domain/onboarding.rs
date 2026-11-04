@@ -10,8 +10,8 @@ use crate::contract::config::{
 };
 use crate::contract::errors::{AppError, AppResult};
 use crate::contract::types::{
-    AiDraft, HotkeysDraft, Mode, OnboardingDraft, OnboardingState, PrivacyDraft,
-    TranslateDraft, UiDraft,
+    AiDraft, HotkeysDraft, Mode, OnboardingDraft, OnboardingState, PrivacyDraft, TranslateDraft,
+    UiDraft,
 };
 
 /// 引导契约版本。
@@ -158,7 +158,10 @@ pub fn finish(state: &mut OnboardingState, skip: bool, now_iso: &str) {
 /// 把草稿中已填项合并进配置（`onboarding_finish({skip:false})`）。
 ///
 /// 只合并「用户明确填过」的字段；返回是否发生了修改。
-pub fn merge_into_config(state: &OnboardingState, config: &mut crate::contract::config::Config) -> bool {
+pub fn merge_into_config(
+    state: &OnboardingState,
+    config: &mut crate::contract::config::Config,
+) -> bool {
     let draft = &state.data;
     let mut changed = false;
 
@@ -385,7 +388,7 @@ mod tests {
         state.data.language = Language::EnUs;
         state.data.ui.theme = Theme::Dark;
         state.data.ui.autostart = true;
-        state.data.hotkeys.capture = "Alt+Space".to_string();
+        state.data.hotkeys.capture = "Alt+Q".to_string();
         state.data.ai = Some(AiDraft {
             provider_id: "deepseek".to_string(),
             base_url: "https://api.deepseek.com".to_string(),
@@ -401,7 +404,7 @@ mod tests {
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.theme, Theme::Dark);
         assert!(config.app.autostart);
-        assert_eq!(config.hotkeys.capture, "Alt+Space");
+        assert_eq!(config.hotkeys.capture, "Alt+Q");
         assert_eq!(config.providers[0].model, "deepseek-chat");
         assert_eq!(config.modes.search, Mode::Deep);
         assert_eq!(config.modes.answer, Mode::Deep);

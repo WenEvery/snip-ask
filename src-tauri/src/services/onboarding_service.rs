@@ -92,7 +92,8 @@ mod tests {
     use crate::contract::config::Language;
 
     fn temp_service() -> OnboardingService {
-        let dir = std::env::temp_dir().join(format!("snip-ask-onboarding-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("snip-ask-onboarding-{}", uuid::Uuid::new_v4()));
         OnboardingService::with_path(dir.join("onboarding.json"))
     }
 
@@ -115,7 +116,7 @@ mod tests {
         let loaded = service.load();
         assert_eq!(loaded.data.language, Language::EnUs);
         assert_eq!(loaded.current_step, 0);
-        assert!(!loaded.data.started_at.is_empty());
+        assert!(!loaded.started_at.is_empty());
 
         if let Some(parent) = service.path().parent() {
             let _ = std::fs::remove_dir_all(parent);

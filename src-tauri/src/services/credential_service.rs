@@ -46,30 +46,22 @@ impl CredentialService {
 
     /// 删除供应商密钥。
     pub async fn delete_provider_key(&self, provider_id: &str) -> AppResult<()> {
-        self.store
-            .delete(&Self::target_for_llm(provider_id))
-            .await
+        self.store.delete(&Self::target_for_llm(provider_id)).await
     }
 
     /// 读取供应商密钥（仅发起请求前调用）。
     pub async fn provider_key(&self, provider_id: &str) -> AppResult<Option<String>> {
-        self.store
-            .get(&Self::target_for_llm(provider_id))
-            .await
+        self.store.get(&Self::target_for_llm(provider_id)).await
     }
 
     /// 供应商密钥掩码；未配置返回 `None`。
     pub async fn provider_key_mask(&self, provider_id: &str) -> AppResult<Option<String>> {
-        self.store
-            .mask(&Self::target_for_llm(provider_id))
-            .await
+        self.store.mask(&Self::target_for_llm(provider_id)).await
     }
 
     /// 是否已配置供应商密钥。
     pub async fn has_provider_key(&self, provider_id: &str) -> AppResult<bool> {
-        self.store
-            .has_key(&Self::target_for_llm(provider_id))
-            .await
+        self.store.has_key(&Self::target_for_llm(provider_id)).await
     }
 }
 
@@ -83,7 +75,11 @@ mod tests {
         let service = CredentialService::new(Arc::new(InMemoryCredentialStore::new()));
         assert!(!service.has_provider_key("deepseek").await.unwrap());
         assert!(service.provider_key("deepseek").await.unwrap().is_none());
-        assert!(service.provider_key_mask("deepseek").await.unwrap().is_none());
+        assert!(service
+            .provider_key_mask("deepseek")
+            .await
+            .unwrap()
+            .is_none());
 
         service
             .set_provider_key("deepseek", "sk-1234567890abcd")
@@ -91,7 +87,11 @@ mod tests {
             .unwrap();
         assert!(service.has_provider_key("deepseek").await.unwrap());
         assert_eq!(
-            service.provider_key_mask("deepseek").await.unwrap().as_deref(),
+            service
+                .provider_key_mask("deepseek")
+                .await
+                .unwrap()
+                .as_deref(),
             Some("••••abcd")
         );
 

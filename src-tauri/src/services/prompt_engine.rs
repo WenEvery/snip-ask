@@ -125,7 +125,13 @@ mod tests {
 
     #[test]
     fn builtin_templates_are_available() {
-        for key in ["text_search", "image_search", "translate", "answer", "followup"] {
+        for key in [
+            "text_search",
+            "image_search",
+            "translate",
+            "answer",
+            "followup",
+        ] {
             let template = builtin_template(key).expect("内置模板必须存在");
             assert!(!template.trim().is_empty());
         }
@@ -185,8 +191,16 @@ mod tests {
         vars.insert("glossary", "");
         vars.insert("question", "为什么？");
         vars.insert("context", "上文");
-        for key in ["text_search", "image_search", "translate", "answer", "followup"] {
-            let rendered = engine.render(key, &vars).unwrap_or_else(|err| panic!("{key}: {err}"));
+        for key in [
+            "text_search",
+            "image_search",
+            "translate",
+            "answer",
+            "followup",
+        ] {
+            let rendered = engine
+                .render(key, &vars)
+                .unwrap_or_else(|err| panic!("{key}: {err}"));
             assert!(!rendered.contains("{text}"));
         }
     }

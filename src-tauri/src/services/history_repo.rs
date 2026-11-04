@@ -91,12 +91,8 @@ impl HistoryRepo {
         if !self.is_enabled() {
             return;
         }
-        let rect_text = rect.map(|rect| {
-            format!(
-                "{},{},{},{}",
-                rect.x, rect.y, rect.width, rect.height
-            )
-        });
+        let rect_text =
+            rect.map(|rect| format!("{},{},{},{}", rect.x, rect.y, rect.width, rect.height));
         let guard = self.conn.lock();
         let Some(conn) = guard.as_ref() else {
             return;
@@ -179,7 +175,11 @@ impl HistoryRepo {
         }
     }
 
-    fn record_usage_with_conn(&self, conn: &Connection, usage: &TokenUsage) -> rusqlite::Result<()> {
+    fn record_usage_with_conn(
+        &self,
+        conn: &Connection,
+        usage: &TokenUsage,
+    ) -> rusqlite::Result<()> {
         conn.execute(
             "INSERT INTO usage_daily (day, tasks, tokens_in, tokens_out, cost_est)
              VALUES (date('now', 'localtime'), 1, ?1, ?2, ?3)
@@ -194,6 +194,7 @@ impl HistoryRepo {
                 usage.cost_estimate
             ],
         )
+        .map(|_| ())
     }
 
     /// 今日用量。
@@ -267,9 +268,8 @@ impl HistoryRepo {
         }
         let guard = self.conn.lock();
         if let Some(conn) = guard.as_ref() {
-            let _ = conn.execute_batch(
-                "DELETE FROM tasks; DELETE FROM sessions; DELETE FROM usage_daily;",
-            );
+            let _ = conn
+                .execute_batch("DELETE FROM tasks; DELETE FROM sessions; DELETE FROM usage_daily;");
         }
     }
 
@@ -299,9 +299,7 @@ impl HistoryRepo {
             Ok(statement) => statement,
             Err(_) => return Vec::new(),
         };
-        let rows = statement.query_map(params![session.as_str()], |row| {
-            row.get::<_, String>(0)
-        });
+        let rows = statement.query_map(params![session.as_str()], |row| row.get::<_, String>(0));
         match rows {
             Ok(rows) => rows.filter_map(|row| row.ok()).map(TaskId::from).collect(),
             Err(_) => Vec::new(),
@@ -348,7 +346,14 @@ mod tests {
             width: 100.0,
             height: 50.0,
         };
-        repo.record_session(&session, 1_700_000_000_000, Some(&rect), true, Some("文本"), Some("notepad.exe"));
+        repo.record_session(
+            &session,
+            1_700_000_000_000,
+            Some(&rect),
+            true,
+            Some("文本"),
+            Some("notepad.exe"),
+        );
         let record = task_record(&session, "t-1");
         repo.record_task(
             &record,
@@ -366,7 +371,10 @@ mod tests {
             None,
         );
         assert_eq!(repo.task_count(), 1);
-        assert_eq!(repo.task_ids_for_session(&session), vec![TaskId::from("t-1")]);
+        assert_eq!(
+            repo.task_ids_for_session(&session),
+            vec![TaskId::from("t-1")]
+        );
 
         let today = repo.stats_today();
         assert_eq!(today.tasks, 1);
@@ -398,8 +406,23 @@ mod tests {
     fn cleanup_and_clear() {
         let repo = repo();
         let session = SessionId::from("s-1");
-        repo.record_session(&session, chrono::Utc::now().timestamp_millis(), None, false, None, None);
-        repo.record_task(&task_record(&session, "t-1"), None, "done", None, None, None, None);
+        repo.record_session(
+            &session,
+            chrono::Utc::now().timestamp_millis(),
+            None,
+            false,
+            None,
+            None,
+        );
+        repo.record_task(
+            &task_record(&session, "t-1"),
+            None,
+            "done",
+            None,
+            None,
+            None,
+            None,
+        );
         repo.cleanup(1000, 90);
         assert_eq!(repo.task_count(), 1);
         repo.clear();

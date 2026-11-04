@@ -83,11 +83,7 @@ impl ActionRouter {
             }),
             ActionId::Translate => match config.translate.backend {
                 TranslateBackend::Cloud => {
-                    let engine = config
-                        .translate
-                        .provider_id
-                        .clone()
-                        .unwrap_or(cloud_engine);
+                    let engine = config.translate.provider_id.clone().unwrap_or(cloud_engine);
                     let mut fallback = vec!["local".to_string()];
                     if let Some(secondary) = secondary_provider {
                         if secondary != engine {
@@ -147,17 +143,8 @@ impl ActionRouter {
     }
 
     /// 追问路由：沿用当前引擎，降级链与解答一致。
-    pub fn resolve_followup(
-        &self,
-        config: &Config,
-        has_text: bool,
-    ) -> AppResult<RoutedAction> {
-        let mut routed = self.resolve(
-            config,
-            ActionId::Answer,
-            config.modes.answer,
-            has_text,
-        )?;
+    pub fn resolve_followup(&self, config: &Config, has_text: bool) -> AppResult<RoutedAction> {
+        let mut routed = self.resolve(config, ActionId::Answer, config.modes.answer, has_text)?;
         routed.kind = TaskKind::Followup;
         routed.prompt_key = "followup".to_string();
         Ok(routed)
@@ -201,7 +188,10 @@ mod tests {
             .resolve(&config, ActionId::Search, Mode::Deep, true)
             .unwrap();
         assert_eq!(routed.engine, "deepseek");
-        assert_eq!(routed.fallback, vec!["browser".to_string(), "copy".to_string()]);
+        assert_eq!(
+            routed.fallback,
+            vec!["browser".to_string(), "copy".to_string()]
+        );
     }
 
     #[test]

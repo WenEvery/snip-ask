@@ -296,11 +296,7 @@ impl Default for MenuPrefs {
                 ActionId::Answer,
                 ActionId::Copy,
             ],
-            image: vec![
-                ActionId::ImageSearch,
-                ActionId::Answer,
-                ActionId::Translate,
-            ],
+            image: vec![ActionId::ImageSearch, ActionId::Answer, ActionId::Translate],
             extra: serde_json::Map::new(),
         }
     }
@@ -395,11 +391,7 @@ pub struct ProviderView {
 
 impl ProviderView {
     /// 由配置项 + 密钥状态构造。
-    pub fn from_provider(
-        provider: &Provider,
-        has_key: bool,
-        key_mask: Option<String>,
-    ) -> Self {
+    pub fn from_provider(provider: &Provider, has_key: bool, key_mask: Option<String>) -> Self {
         Self {
             id: provider.id.clone(),
             name: provider.name.clone(),
@@ -795,10 +787,8 @@ impl ConfigView {
             .iter()
             .enumerate()
             .map(|(index, provider)| {
-                let (has_key, key_mask) = provider_status
-                    .get(index)
-                    .cloned()
-                    .unwrap_or((false, None));
+                let (has_key, key_mask) =
+                    provider_status.get(index).cloned().unwrap_or((false, None));
                 ProviderView::from_provider(provider, has_key, key_mask)
             })
             .collect();
@@ -879,7 +869,7 @@ pub fn normalize_hotkey(spec: &str) -> Option<String> {
             "ctrl" | "control" => "Ctrl",
             "alt" => "Alt",
             "shift" => "Shift",
-            "win" | "super" | "meta" => "Win",
+            "win" => "Win",
             _ => return None,
         };
         if !modifiers.contains(&canonical) {
@@ -981,10 +971,16 @@ pub fn validate(config: &Config) -> AppResult<()> {
 
     let budget = &config.modes.deep_budget;
     if !(0..=5).contains(&budget.search) {
-        return Err(AppError::invalid_config("modes.deepBudget.search", "取值范围 [0,5]"));
+        return Err(AppError::invalid_config(
+            "modes.deepBudget.search",
+            "取值范围 [0,5]",
+        ));
     }
     if !(0..=5).contains(&budget.fetch) {
-        return Err(AppError::invalid_config("modes.deepBudget.fetch", "取值范围 [0,5]"));
+        return Err(AppError::invalid_config(
+            "modes.deepBudget.fetch",
+            "取值范围 [0,5]",
+        ));
     }
     if !(128..=8192).contains(&budget.max_tokens) {
         return Err(AppError::invalid_config(
@@ -995,16 +991,28 @@ pub fn validate(config: &Config) -> AppResult<()> {
 
     let opacity = config.ui.result_window.opacity;
     if !(0.3..=1.0).contains(&opacity) {
-        return Err(AppError::invalid_config("ui.resultWindow.opacity", "取值范围 [0.3,1.0]"));
+        return Err(AppError::invalid_config(
+            "ui.resultWindow.opacity",
+            "取值范围 [0.3,1.0]",
+        ));
     }
     if config.history.max_entries > 100_000 {
-        return Err(AppError::invalid_config("history.maxEntries", "取值范围 [0,100000]"));
+        return Err(AppError::invalid_config(
+            "history.maxEntries",
+            "取值范围 [0,100000]",
+        ));
     }
     if config.history.retention_days > 3650 {
-        return Err(AppError::invalid_config("history.retentionDays", "取值范围 [0,3650]"));
+        return Err(AppError::invalid_config(
+            "history.retentionDays",
+            "取值范围 [0,3650]",
+        ));
     }
     if config.local.port < 1024 {
-        return Err(AppError::invalid_config("local.port", "取值范围 [1024,65535]"));
+        return Err(AppError::invalid_config(
+            "local.port",
+            "取值范围 [1024,65535]",
+        ));
     }
 
     for (menu_name, actions) in [
@@ -1048,10 +1056,16 @@ pub fn validate(config: &Config) -> AppResult<()> {
     }
 
     if config.ocr.engine != "rapidocr" {
-        return Err(AppError::invalid_config("ocr.engine", "当前仅支持 rapidocr"));
+        return Err(AppError::invalid_config(
+            "ocr.engine",
+            "当前仅支持 rapidocr",
+        ));
     }
     if !(0.0..=1.0).contains(&config.ocr.text_threshold) {
-        return Err(AppError::invalid_config("ocr.textThreshold", "取值范围 [0,1]"));
+        return Err(AppError::invalid_config(
+            "ocr.textThreshold",
+            "取值范围 [0,1]",
+        ));
     }
 
     Ok(())
@@ -1069,7 +1083,10 @@ fn merge_value(base: &mut serde_json::Value, patch: serde_json::Value) {
                     // null 表示清除可选值：删除后由默认值补齐（Option → null）。
                     base_map.remove(&key);
                 } else {
-                    merge_value(base_map.entry(key).or_insert(serde_json::Value::Null), value);
+                    merge_value(
+                        base_map.entry(key).or_insert(serde_json::Value::Null),
+                        value,
+                    );
                 }
             }
         }
@@ -1149,9 +1166,8 @@ fn migrate_v1_to_v2(value: &mut serde_json::Value) {
             { "name": "Default", "caps": [], "temperature": 0.2, "maxTokens": 1024, "enabled": true }
         ]
     });
-    fill_defaults(value, &defaults);
-
     // providers[].name 缺省时用 id 兜底，避免出现空展示名。
+    // 必须在 fill_defaults 之前执行，否则默认模板里的 `name: "Default"` 会抢先占位。
     if let Some(providers) = value
         .get_mut("providers")
         .and_then(serde_json::Value::as_array_mut)
@@ -1174,6 +1190,8 @@ fn migrate_v1_to_v2(value: &mut serde_json::Value) {
             }
         }
     }
+
+    fill_defaults(value, &defaults);
 }
 
 fn migrate_v2_to_v3(value: &mut serde_json::Value) {
@@ -1222,8 +1240,9 @@ pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
             serde_json::json!(CONFIG_SCHEMA_VERSION),
         );
     }
-    let config: Config = serde_json::from_value(value)
-        .map_err(|err| AppError::invalid_config("schemaVersion", format!("迁移结果无法解析：{err}")))?;
+    let config: Config = serde_json::from_value(value).map_err(|err| {
+        AppError::invalid_config("schemaVersion", format!("迁移结果无法解析：{err}"))
+    })?;
     validate(&config)?;
     Ok(config)
 }
@@ -1318,7 +1337,12 @@ mod tests {
         assert!(validate(&config).is_err());
 
         let mut config = Config::default();
-        config.actions.default_action = Some(ActionId::ImageSearch);
+        config
+            .actions
+            .menu
+            .text
+            .retain(|action| *action != ActionId::Copy);
+        config.actions.default_action = Some(ActionId::Copy);
         assert!(validate(&config).is_err());
 
         let mut config = Config::default();
@@ -1343,7 +1367,10 @@ mod tests {
         assert_eq!(config.ui.accent, "blue");
         assert!(config.privacy.local_only);
         assert_eq!(
-            config.extra.get("futureFlag").and_then(serde_json::Value::as_i64),
+            config
+                .extra
+                .get("futureFlag")
+                .and_then(serde_json::Value::as_i64),
             Some(42)
         );
     }
@@ -1362,8 +1389,11 @@ mod tests {
     fn merge_patch_null_clears_optional_value() {
         let mut config = Config::default();
         config.search.engine_url_template = Some("https://example.com?q={q}".to_string());
-        merge_patch(&mut config, serde_json::json!({ "search": { "engineUrlTemplate": null } }))
-            .unwrap();
+        merge_patch(
+            &mut config,
+            serde_json::json!({ "search": { "engineUrlTemplate": null } }),
+        )
+        .unwrap();
         assert!(config.search.engine_url_template.is_none());
     }
 
@@ -1373,7 +1403,7 @@ mod tests {
             "schemaVersion": 1,
             "app": { "language": "en-US", "autostart": false, "singleInstance": true },
             "ui": { "theme": "light", "fontSize": "sm", "resultWindow": { "position": "fixed", "opacity": 0.8 } },
-            "hotkeys": { "capture": "Alt+Space" },
+            "hotkeys": { "capture": "Alt+Q" },
             "actions": { "menu": { "text": ["search"], "image": ["imageSearch"] } },
             "providers": [{ "id": "deepseek", "baseUrl": "https://api.deepseek.com", "model": "deepseek-flash" }],
             "modes": { "search": "quick", "imageSearch": "quick", "translate": "quick", "answer": "quick" },
@@ -1391,7 +1421,7 @@ mod tests {
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.result_window.width, 460.0);
         assert!(config.ui.result_window.pin);
-        assert_eq!(config.hotkeys.capture, "Alt+Space");
+        assert_eq!(config.hotkeys.capture, "Alt+Q");
         assert_eq!(config.hotkeys.translate, "");
         assert_eq!(config.providers[0].name, "deepseek");
         assert_eq!(config.providers[0].temperature, 0.2);
@@ -1425,7 +1455,10 @@ mod tests {
     #[test]
     fn hotkey_specs_are_normalized() {
         assert_eq!(normalize_hotkey("ctrl+q").as_deref(), Some("Ctrl+Q"));
-        assert_eq!(normalize_hotkey("SHIFT+ctrl+a").as_deref(), Some("Ctrl+Shift+A"));
+        assert_eq!(
+            normalize_hotkey("SHIFT+ctrl+a").as_deref(),
+            Some("Ctrl+Shift+A")
+        );
         assert_eq!(normalize_hotkey("alt+digit").as_deref(), None);
         assert_eq!(normalize_hotkey("q").as_deref(), None);
         assert_eq!(normalize_hotkey("Ctrl+").as_deref(), None);

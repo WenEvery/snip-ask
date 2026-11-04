@@ -34,9 +34,7 @@ pub fn entry_to_info(
         params: entry.params.clone(),
         installed,
         installed_bytes: installed_bytes.unwrap_or(0),
-        download_state: if installed
-            && download_state == DownloadState::Queued
-        {
+        download_state: if installed && download_state == DownloadState::Queued {
             DownloadState::Installed
         } else {
             download_state
@@ -64,10 +62,7 @@ pub fn merge_installed(
 }
 
 /// 按 id 查清单条目。
-pub fn find_entry<'a>(
-    manifest: &'a ModelManifest,
-    id: &str,
-) -> Option<&'a ModelManifestEntry> {
+pub fn find_entry<'a>(manifest: &'a ModelManifest, id: &str) -> Option<&'a ModelManifestEntry> {
     manifest.models.iter().find(|entry| entry.id == id)
 }
 

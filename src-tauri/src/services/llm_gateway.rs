@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn chunking_is_char_based() {
         let chunks = chunk_string("你好世界abcdef", 3);
-        assert_eq!(chunks, vec!["你好世", "界abc", "def"]);
+        assert_eq!(chunks, vec!["你好世", "界ab", "cde", "f"]);
         assert!(chunk_string("", 4).is_empty());
     }
 
@@ -245,8 +245,10 @@ mod tests {
             "【骨架模式译文】hello"
         );
         assert!(SkeletonLlmGateway::placeholder_text(ActionId::Copy, "abc", Mode::Quick) == "abc");
-        assert!(SkeletonLlmGateway::placeholder_text(ActionId::Answer, "问题", Mode::Deep)
-            .contains("解答占位回答"));
+        assert!(
+            SkeletonLlmGateway::placeholder_text(ActionId::Answer, "问题", Mode::Deep)
+                .contains("解答占位回答")
+        );
         assert_eq!(
             SkeletonLlmGateway::placeholder_sources(ActionId::ImageSearch).len(),
             2

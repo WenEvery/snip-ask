@@ -241,22 +241,30 @@ mod tests {
         };
         // 浏览器搜索 + 复制仍可用。
         let items = visible_actions(&config, true);
-        assert!(items
-            .iter()
-            .find(|item| item.id == ActionId::Search)
-            .unwrap()
-            .enabled);
-        assert!(items
-            .iter()
-            .find(|item| item.id == ActionId::Copy)
-            .unwrap()
-            .enabled);
+        assert!(
+            items
+                .iter()
+                .find(|item| item.id == ActionId::Search)
+                .unwrap()
+                .enabled
+        );
+        assert!(
+            items
+                .iter()
+                .find(|item| item.id == ActionId::Copy)
+                .unwrap()
+                .enabled
+        );
         let translate = items
             .iter()
             .find(|item| item.id == ActionId::Translate)
             .unwrap();
         assert!(!translate.enabled);
-        assert!(translate.disabled_reason.as_deref().unwrap().contains("仅本地"));
+        assert!(translate
+            .disabled_reason
+            .as_deref()
+            .unwrap()
+            .contains("仅本地"));
 
         // AI 搜索模式下搜索也置灰。
         config.search = SearchPrefs {

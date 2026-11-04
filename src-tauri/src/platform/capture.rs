@@ -51,8 +51,6 @@ pub trait ScreenCapturer: Send + Sync {
 ///
 /// TODO(real): 多显示器虚拟桌面矩形（`EnumDisplayMonitors` 外接矩形）。
 pub fn primary_monitor_geometry(app: &tauri::AppHandle) -> VirtualDesktop {
-    use tauri::Manager;
-
     match app.primary_monitor() {
         Ok(Some(monitor)) => {
             let size = monitor.size();

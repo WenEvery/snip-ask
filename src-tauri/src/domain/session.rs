@@ -325,7 +325,7 @@ mod tests {
 
         let start = store.begin_capture();
         assert_eq!(store.current_phase(), SessionPhase::Freezing);
-        let session = start.session;
+        let session = start.session.clone();
         assert!(!start.replaced());
 
         store
@@ -339,7 +339,9 @@ mod tests {
             )
             .unwrap();
         store.set_selecting(&session).unwrap();
-        store.commit_selection(&session, selection(&session)).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
         assert_eq!(store.current_phase(), SessionPhase::Menu);
 
         let task = TaskId::from("task-1");
@@ -388,7 +390,9 @@ mod tests {
         // 重复 set_selecting 非法
         assert_eq!(store.set_selecting(&session).unwrap_err().code, "SA-1099");
 
-        store.commit_selection(&session, selection(&session)).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
         // menu 态不能再提交选区
         assert_eq!(
             store
@@ -414,8 +418,12 @@ mod tests {
         let first = store.begin_capture();
         let session = first.session;
         store.set_selecting(&session).unwrap();
-        store.commit_selection(&session, selection(&session)).unwrap();
-        store.begin_task(&session, TaskId::from("old-task")).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
+        store
+            .begin_task(&session, TaskId::from("old-task"))
+            .unwrap();
 
         let second = store.begin_capture();
         assert!(second.replaced());
@@ -433,7 +441,9 @@ mod tests {
         let start = store.begin_capture();
         let session = start.session;
         store.set_selecting(&session).unwrap();
-        store.commit_selection(&session, selection(&session)).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
         store.reset_selection(&session).unwrap();
         assert_eq!(store.current_phase(), SessionPhase::Selecting);
         assert!(store.current().unwrap().selection.is_none());
@@ -445,7 +455,9 @@ mod tests {
         let start = store.begin_capture();
         let session = start.session;
         store.set_selecting(&session).unwrap();
-        store.commit_selection(&session, selection(&session)).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
         store.begin_task(&session, TaskId::from("t")).unwrap();
         store.task_failed(&session).unwrap();
         assert_eq!(store.current_phase(), SessionPhase::Error);

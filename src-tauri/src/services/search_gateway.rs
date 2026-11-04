@@ -45,11 +45,7 @@ pub struct SkeletonSearcher;
 #[async_trait]
 impl Searcher for SkeletonSearcher {
     async fn search(&self, request: &SearchRequest) -> AppResult<SearchOutcome> {
-        let url = build_search_url(
-            &request.engine,
-            request.template.as_deref(),
-            &request.query,
-        );
+        let url = build_search_url(&request.engine, request.template.as_deref(), &request.query);
         tracing::info!(
             host = %url::Url::parse(&url).ok().and_then(|parsed| parsed.host_str().map(str::to_string)).unwrap_or_default(),
             "骨架模式：不打开浏览器"
@@ -129,15 +125,11 @@ mod tests {
     fn builds_urls_for_known_engines() {
         assert_eq!(
             build_search_url("bing", None, "框选 AI"),
-            format!(
-                "https://www.bing.com/search?q={}",
-                encode_query("框选 AI")
-            )
+            format!("https://www.bing.com/search?q={}", encode_query("框选 AI"))
         );
         assert!(build_search_url("google", None, "rust").starts_with("https://www.google.com/"));
         assert!(build_search_url("baidu", None, "rust").starts_with("https://www.baidu.com/"));
-        assert!(build_search_url("duckduckgo", None, "rust")
-            .starts_with("https://duckduckgo.com/"));
+        assert!(build_search_url("duckduckgo", None, "rust").starts_with("https://duckduckgo.com/"));
         // 未知引擎回落到 bing。
         assert!(build_search_url("unknown", None, "rust").starts_with("https://www.bing.com/"));
     }

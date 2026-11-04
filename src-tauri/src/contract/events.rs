@@ -239,8 +239,8 @@ pub type TaskDone = TaskDonePayload;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::types::{ActionId, ActionTarget, Mode, TokenUsage};
+    use super::*;
 
     #[test]
     fn event_names_match_contract() {

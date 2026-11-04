@@ -81,7 +81,7 @@ pub const ACTIONS: [HotkeyAction; 8] = [
 ];
 
 /// 配置中的热键字段（用于冲突检测）。
-pub fn hotkey_fields<'a>(config: &'a Config) -> [(&'static str, &'a str); 9] {
+pub fn hotkey_fields(config: &Config) -> [(&'static str, &str); 9] {
     [
         ("hotkeys.capture", config.hotkeys.capture.as_str()),
         ("hotkeys.wordGrab", config.hotkeys.word_grab.as_str()),
@@ -94,7 +94,10 @@ pub fn hotkey_fields<'a>(config: &'a Config) -> [(&'static str, &'a str); 9] {
         ("hotkeys.answer", config.hotkeys.answer.as_str()),
         ("hotkeys.toggleMode", config.hotkeys.toggle_mode.as_str()),
         ("hotkeys.togglePause", config.hotkeys.toggle_pause.as_str()),
-        ("hotkeys.openSettings", config.hotkeys.open_settings.as_str()),
+        (
+            "hotkeys.openSettings",
+            config.hotkeys.open_settings.as_str(),
+        ),
     ]
 }
 
@@ -213,7 +216,7 @@ pub fn on_shortcut(app: &AppHandle, shortcut: &Shortcut, state: ShortcutState) {
     match action {
         HotkeyAction::Capture => {
             let app = app.clone();
-            let _ = tauri::async_runtime::spawn(async move {
+            let _handle = tauri::async_runtime::spawn(async move {
                 if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
                     tracing::warn!(code = %err.code, message = %err.message, "热键触发框选失败");
                 }
@@ -288,14 +291,8 @@ mod tests {
     fn actions_map_to_config_fields() {
         let mut config = Config::default();
         config.hotkeys.open_settings = "win+,".to_string();
-        assert_eq!(
-            HotkeyAction::Capture.config_spec(&config),
-            "Ctrl+Q"
-        );
-        assert_eq!(
-            HotkeyAction::OpenSettings.config_spec(&config),
-            "win+,"
-        );
+        assert_eq!(HotkeyAction::Capture.config_spec(&config), "Ctrl+Q");
+        assert_eq!(HotkeyAction::OpenSettings.config_spec(&config), "win+,");
         assert_eq!(ACTIONS.len(), 8);
         assert_eq!(hotkey_fields(&config).len(), 9);
     }

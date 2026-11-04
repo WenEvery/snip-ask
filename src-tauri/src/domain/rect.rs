@@ -209,7 +209,7 @@ mod tests {
                 height: 75.0
             }
         );
-        assert_eq!(physical.from_logical(&logical, 2.0), physical);
+        assert_eq!(RectPhys::from_logical(&logical, 2.0), physical);
 
         // 1.5 倍缩放（混合 DPI）与防御非法 dpr。
         assert_eq!(physical.to_logical(1.5).width, 200.0);

@@ -18,7 +18,7 @@ pub mod ocr_service;
 pub mod onboarding_service;
 pub mod prompt_engine;
 pub mod search_gateway;
-pub mod translator;
 pub mod task_runner;
+pub mod translator;
 pub mod updater_service;
 pub mod usage_meter;

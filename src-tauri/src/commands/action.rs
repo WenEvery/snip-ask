@@ -35,7 +35,9 @@ pub async fn menu_execute(
     let selection = {
         let store = state.session.lock();
         if !store.is_current(&session) {
-            return Err(AppError::invalid_state(format!("会话 {session} 不是当前活动会话")));
+            return Err(AppError::invalid_state(format!(
+                "会话 {session} 不是当前活动会话"
+            )));
         }
         let phase = store.current_phase();
         if phase != SessionPhase::Menu && phase != SessionPhase::ShowingResult {

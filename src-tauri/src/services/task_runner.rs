@@ -90,7 +90,7 @@ pub fn spawn(app: AppHandle, request: TaskRequest) -> AppResult<TaskId> {
     // 4) 后台流式执行。
     let background_app = app.clone();
     let background_task = task_id.clone();
-    let _ = tauri::async_runtime::spawn(async move {
+    let _handle = tauri::async_runtime::spawn(async move {
         run_task(background_app, background_task, request, cancel).await;
     });
 
@@ -104,12 +104,7 @@ pub fn request_cancel(app: &AppHandle, task: &TaskId) -> bool {
     tasks.cancel(task)
 }
 
-async fn run_task(
-    app: AppHandle,
-    task_id: TaskId,
-    request: TaskRequest,
-    cancel: Arc<AtomicBool>,
-) {
+async fn run_task(app: AppHandle, task_id: TaskId, request: TaskRequest, cancel: Arc<AtomicBool>) {
     let started = Instant::now();
     let outcome = execute(&app, &task_id, &request, &cancel).await;
     let state = app.state::<AppState>();
@@ -188,12 +183,7 @@ async fn run_task(
     }
 }
 
-fn finish_cancelled(
-    _app: &AppHandle,
-    state: &AppState,
-    task_id: &TaskId,
-    request: &TaskRequest,
-) {
+fn finish_cancelled(_app: &AppHandle, state: &AppState, task_id: &TaskId, request: &TaskRequest) {
     // 取消后不再推送事件；会话回到结果态以便关闭 / 追问。
     {
         let mut session = state.session.lock();

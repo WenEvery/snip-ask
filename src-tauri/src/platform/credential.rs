@@ -125,7 +125,9 @@ impl CredentialStore for InMemoryCredentialStore {
         if secret.is_empty() {
             self.entries.lock().remove(target);
         } else {
-            self.entries.lock().insert(target.to_string(), secret.to_string());
+            self.entries
+                .lock()
+                .insert(target.to_string(), secret.to_string());
         }
         Ok(())
     }
@@ -221,7 +223,10 @@ mod tests {
             store.get(&target).await.unwrap().as_deref(),
             Some("sk-1234567890abcd")
         );
-        assert_eq!(store.mask(&target).await.unwrap().as_deref(), Some("••••abcd"));
+        assert_eq!(
+            store.mask(&target).await.unwrap().as_deref(),
+            Some("••••abcd")
+        );
 
         store.delete(&target).await.unwrap();
         assert!(!store.has_key(&target).await.unwrap());

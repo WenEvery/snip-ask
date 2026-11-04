@@ -20,21 +20,16 @@ pub async fn selection_commit(
     let config = state.snapshot_config();
     let rect = rect_phys.normalize();
     if rect.is_empty() {
-        return Err(AppError::new(
-            ErrorCode::OcrFailed,
-            Some("选区面积小于 1px²".to_string()),
-        )
-        .with_message("请先框选内容")
-        .with_fallback(vec!["retry"]));
+        return Err(
+            AppError::new(ErrorCode::OcrFailed, Some("选区面积小于 1px²".to_string()))
+                .with_message("请先框选内容")
+                .with_fallback(vec!["retry"]),
+        );
     }
 
     // 骨架模式：单条覆盖选区的占位框；文字存在判定使用真实纯逻辑。
     let scan = ocr_service::placeholder_selection(&rect);
-    let boxes = ocr_service::filter_boxes(
-        &scan.boxes,
-        &rect,
-        config.ocr.text_threshold,
-    );
+    let boxes = ocr_service::filter_boxes(&scan.boxes, &rect, config.ocr.text_threshold);
     let has_text = ocr_service::presence(&boxes, &rect, config.ocr.text_threshold);
     let preview = {
         let merged = ocr_service::merge_text(&boxes);
@@ -62,7 +57,7 @@ pub async fn selection_commit(
     let items = crate::domain::action::visible_actions(&config, result.has_text);
     let background_app = app.clone();
     let background_result = result.clone();
-    let _ = tauri::async_runtime::spawn(async move {
+    let _handle = tauri::async_runtime::spawn(async move {
         emit_ocr_status(
             &background_app,
             &OcrStatusPayload {

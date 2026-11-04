@@ -106,8 +106,9 @@ impl AppPaths {
             &self.models_dir,
         ];
         for dir in dirs {
-            std::fs::create_dir_all(dir)
-                .map_err(|err| AppError::io_failed(format!("创建目录 {} 失败：{err}", dir.display())))?;
+            std::fs::create_dir_all(dir).map_err(|err| {
+                AppError::io_failed(format!("创建目录 {} 失败：{err}", dir.display()))
+            })?;
         }
         Ok(())
     }
@@ -137,7 +138,10 @@ mod tests {
             Path::new("C:/Users/u/AppData/Roaming"),
             Path::new("C:/Users/u/AppData/Local"),
         );
-        assert_eq!(data_root, PathBuf::from("C:/Users/u/AppData/Roaming/SnipAsk"));
+        assert_eq!(
+            data_root,
+            PathBuf::from("C:/Users/u/AppData/Roaming/SnipAsk")
+        );
         assert_eq!(
             local_root,
             PathBuf::from("C:/Users/u/AppData/Local/SnipAsk")

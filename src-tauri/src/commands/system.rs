@@ -10,10 +10,7 @@ use crate::events::emit_config_changed;
 
 /// 命令：探测快捷键（格式 / 规范化 / 冲突）。
 #[tauri::command]
-pub async fn hotkey_probe(
-    state: State<'_, AppState>,
-    spec: String,
-) -> AppResult<HotkeyStatus> {
+pub async fn hotkey_probe(state: State<'_, AppState>, spec: String) -> AppResult<HotkeyStatus> {
     let config = state.snapshot_config();
     Ok(crate::app::hotkeys::probe(&config, &spec))
 }

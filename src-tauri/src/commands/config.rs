@@ -111,11 +111,7 @@ pub async fn config_reset(
 /// - `history.enabled` → 历史仓储开关；
 /// - `local.*` / `translate.backend` → 重启本地引擎（TODO(real)）；
 /// - `advanced.proxy` → 需重启应用（仅标注）。
-pub(crate) fn apply_config_side_effects(
-    app: &AppHandle,
-    state: &AppState,
-    changed: &[String],
-) {
+pub(crate) fn apply_config_side_effects(app: &AppHandle, state: &AppState, changed: &[String]) {
     if changed.iter().any(|key| key.starts_with("hotkeys.")) {
         if let Err(err) = crate::app::hotkeys::refresh(app) {
             tracing::warn!(code = %err.code, "热键重新注册失败");

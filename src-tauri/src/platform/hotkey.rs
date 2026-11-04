@@ -136,7 +136,7 @@ pub fn validate_spec(spec: &str) -> AppResult<()> {
 /// TODO(api-check): 校验 `tauri_plugin_global_shortcut::{Modifiers, Code, Shortcut}`
 /// 的实际导出名与 `Shortcut::new(Option<Modifiers>, Code)` 签名；插件版本见 Cargo.toml `"2"`。
 pub fn to_tauri_shortcut(spec: &str) -> Option<tauri_plugin_global_shortcut::Shortcut> {
-    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut};
+    use tauri_plugin_global_shortcut::{Modifiers, Shortcut};
 
     let parsed = parse_spec(spec).ok()?;
     let mut modifiers = Modifiers::empty();
@@ -227,7 +227,9 @@ mod tests {
 
     #[test]
     fn rejects_illegal_specs() {
-        for bad in ["", "Q", "Ctrl", "Ctrl+", "Ctrl+F1", "Ctrl+QQ", "Ctrl++Q", "Meta+Q"] {
+        for bad in [
+            "", "Q", "Ctrl", "Ctrl+", "Ctrl+F1", "Ctrl+QQ", "Ctrl++Q", "Meta+Q",
+        ] {
             assert!(parse_spec(bad).is_err(), "应当拒绝：{bad}");
         }
         assert!(validate_spec("Ctrl+Q").is_ok());

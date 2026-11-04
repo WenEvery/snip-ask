@@ -20,10 +20,10 @@ use snip_ask_lib::contract::events::{
     EVENT_UPDATE_STATUS, IPC_CONTRACT_VERSION,
 };
 use snip_ask_lib::contract::types::{
-    ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta,
-    HotkeyStatus, Mode, ModelInfo, ModelKind, OnboardingState, ProviderDraft, RectPhys,
-    RunActionOptions, SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload,
-    TaskId, TestResult, TokenUsage, WindowLabel,
+    ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta, HotkeyStatus,
+    Mode, ModelInfo, ModelKind, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
+    SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload, TaskId, TestResult,
+    TokenUsage, WindowLabel,
 };
 
 /// 契约 §7 的 14 个事件名（顺序即契约表顺序）。
@@ -180,7 +180,10 @@ fn config_enums_serialize_with_contract_literals() {
             serde_json::to_value(LocalEngine::LlamaCpp).unwrap(),
             "llama.cpp",
         ),
-        (serde_json::to_value(UpdateChannel::Preview).unwrap(), "preview"),
+        (
+            serde_json::to_value(UpdateChannel::Preview).unwrap(),
+            "preview",
+        ),
         (serde_json::to_value(Cap::Thinking).unwrap(), "thinking"),
     ];
     for (value, expected) in cases {
@@ -197,14 +200,20 @@ fn base_types_use_contract_literals() {
         "imageSearch"
     );
     assert_eq!(serde_json::to_value(ActionTarget::Both).unwrap(), "both");
-    assert_eq!(serde_json::to_value(StreamKind::Reasoning).unwrap(), "reasoning");
+    assert_eq!(
+        serde_json::to_value(StreamKind::Reasoning).unwrap(),
+        "reasoning"
+    );
     assert_eq!(serde_json::to_value(WindowLabel::Result).unwrap(), "result");
     assert_eq!(
         serde_json::to_value(DownloadState::Cancelled).unwrap(),
         "cancelled"
     );
     assert_eq!(serde_json::to_value(EngineStatus::Ready).unwrap(), "ready");
-    assert_eq!(serde_json::to_value(UpdateState::Checking).unwrap(), "checking");
+    assert_eq!(
+        serde_json::to_value(UpdateState::Checking).unwrap(),
+        "checking"
+    );
     assert_eq!(
         serde_json::to_value(OcrStatusState::Scanning).unwrap(),
         "scanning"
@@ -225,9 +234,16 @@ fn app_error_has_six_camel_case_fields() {
         .collect();
     assert_eq!(
         keys,
-        ["code", "message", "detail", "retryable", "fallback", "context"]
-            .into_iter()
-            .collect::<BTreeSet<&str>>()
+        [
+            "code",
+            "message",
+            "detail",
+            "retryable",
+            "fallback",
+            "context"
+        ]
+        .into_iter()
+        .collect::<BTreeSet<&str>>()
     );
     assert_eq!(value["code"], "SA-3002");
     assert_eq!(value["message"], "API Key 无效");
@@ -378,7 +394,10 @@ fn event_payload_shapes() {
         state: OcrStatusState::Done,
         boxes: None,
     };
-    assert_eq!(serde_json::to_value(&ocr).unwrap()["boxes"], serde_json::Value::Null);
+    assert_eq!(
+        serde_json::to_value(&ocr).unwrap()["boxes"],
+        serde_json::Value::Null
+    );
 
     let menu = MenuReadyPayload {
         session: SessionId::from("s-1"),
@@ -386,7 +405,10 @@ fn event_payload_shapes() {
         has_text: true,
         preview: "预览".to_string(),
     };
-    assert_eq!(serde_json::to_value(&menu).unwrap()["hasText"].as_bool(), Some(true));
+    assert_eq!(
+        serde_json::to_value(&menu).unwrap()["hasText"].as_bool(),
+        Some(true)
+    );
 
     let delta = TaskDeltaPayload {
         task: TaskId::from("t-1"),

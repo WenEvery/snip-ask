@@ -205,9 +205,7 @@ impl ConfigCenter {
             None => {
                 std::fs::create_dir_all(&self.paths.export_dir)?;
                 let stamp = chrono::Utc::now().format("%Y%m%d-%H%M%S").to_string();
-                self.paths
-                    .export_dir
-                    .join(format!("config-{stamp}.json"))
+                self.paths.export_dir.join(format!("config-{stamp}.json"))
             }
         };
         if let Some(parent) = target.parent() {
@@ -463,7 +461,11 @@ mod tests {
         let credentials = InMemoryCredentialStore::new();
         let mut config = Config::default();
         let (view, changed) = center
-            .patch(&mut config, serde_json::json!({ "ui": { "theme": "dark" } }), &credentials)
+            .patch(
+                &mut config,
+                serde_json::json!({ "ui": { "theme": "dark" } }),
+                &credentials,
+            )
             .await
             .unwrap();
         assert_eq!(view.ui.theme, Theme::Dark);
@@ -472,7 +474,11 @@ mod tests {
 
         // 非法 patch 不修改状态。
         let err = center
-            .patch(&mut config, serde_json::json!({ "ui": { "theme": 1 } }), &credentials)
+            .patch(
+                &mut config,
+                serde_json::json!({ "ui": { "theme": 1 } }),
+                &credentials,
+            )
             .await
             .unwrap_err();
         assert_eq!(err.code, "SA-5001");
@@ -484,9 +490,7 @@ mod tests {
     #[test]
     fn export_rejects_secrets() {
         let center = center();
-        let error = center
-            .export(&Config::default(), None, true)
-            .unwrap_err();
+        let error = center.export(&Config::default(), None, true).unwrap_err();
         assert_eq!(error.code, "SA-5002");
     }
 }

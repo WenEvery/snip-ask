@@ -24,7 +24,9 @@ use crate::contract::types::{
     DownloadId, DownloadState, ModelInfo, ModelManifest, ModelManifestEntry,
 };
 use crate::domain::ids::new_download_id;
-use crate::domain::models::{entry_to_info, find_entry, installed_count, merge_installed, parse_manifest};
+use crate::domain::models::{
+    entry_to_info, find_entry, installed_count, merge_installed, parse_manifest,
+};
 use crate::platform::paths::AppPaths;
 
 /// 下载进度推进间隔（契约 §12：每 100ms 4%）。
@@ -76,7 +78,11 @@ impl ModelManager {
     /// 已安装模型数。
     pub fn installed_count(&self) -> u32 {
         let installed = self.installed.lock();
-        installed_count(&merge_installed(&self.manifest, &installed, &HashMap::new()))
+        installed_count(&merge_installed(
+            &self.manifest,
+            &installed,
+            &HashMap::new(),
+        ))
     }
 
     /// 模型是否已安装。
@@ -119,19 +125,13 @@ impl ModelManager {
         let app = app.clone();
         let model_id = id.to_string();
         let total = entry.size_bytes.max(1);
-        let _ = tauri::async_runtime::spawn(async move {
+        let _handle = tauri::async_runtime::spawn(async move {
             manager.run_download(&app, &model_id, total, cancel).await;
         });
         Ok(download_id)
     }
 
-    async fn run_download(
-        &self,
-        app: &AppHandle,
-        id: &str,
-        total: u64,
-        cancel: Arc<AtomicBool>,
-    ) {
+    async fn run_download(&self, app: &AppHandle, id: &str, total: u64, cancel: Arc<AtomicBool>) {
         self.set_state(id, DownloadState::Downloading);
         emit_state(app, id, DownloadState::Downloading);
 
@@ -152,8 +152,7 @@ impl ModelManager {
             let loaded = total * percent / 100;
             let elapsed = started.elapsed().as_secs_f64().max(0.001);
             let speed_bps = (loaded as f64 / elapsed) as u64;
-            if last_emit.elapsed() >= Duration::from_millis(PROGRESS_THROTTLE_MS)
-                || percent == 100
+            if last_emit.elapsed() >= Duration::from_millis(PROGRESS_THROTTLE_MS) || percent == 100
             {
                 let _ = app.emit(
                     EVENT_DOWNLOAD_PROGRESS,
@@ -210,8 +209,9 @@ impl ModelManager {
         }
         let dir = self.models_dir.join(id);
         if dir.is_dir() {
-            std::fs::remove_dir_all(&dir)
-                .map_err(|err| AppError::io_failed(format!("删除模型 {} 失败：{err}", dir.display())))?;
+            std::fs::remove_dir_all(&dir).map_err(|err| {
+                AppError::io_failed(format!("删除模型 {} 失败：{err}", dir.display()))
+            })?;
         }
         self.installed.lock().remove(id);
         self.states.lock().remove(id);
@@ -275,7 +275,8 @@ mod tests {
     fn manager() -> ModelManager {
         let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
         ModelManager {
-            models_dir: std::env::temp_dir().join(format!("snip-ask-models-{}", uuid::Uuid::new_v4())),
+            models_dir: std::env::temp_dir()
+                .join(format!("snip-ask-models-{}", uuid::Uuid::new_v4())),
             manifest,
             states: Arc::new(parking_lot::Mutex::new(HashMap::new())),
             installed: Arc::new(parking_lot::Mutex::new(HashMap::new())),

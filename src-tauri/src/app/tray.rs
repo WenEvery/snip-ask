@@ -28,17 +28,22 @@ pub const MENU_QUIT: &str = "quit";
 
 /// 创建托盘图标与菜单。
 pub fn create(app: &AppHandle) -> AppResult<()> {
-    let capture = MenuItem::with_id(app, MENU_CAPTURE, "开始框选", true, None::<&str>)
-        .map_err(menu_error)?;
-    let settings = MenuItem::with_id(app, MENU_SETTINGS, "设置", true, None::<&str>)
-        .map_err(menu_error)?;
-    let rerun = MenuItem::with_id(app, MENU_RERUN_ONBOARDING, "重新运行引导", true, None::<&str>)
-        .map_err(menu_error)?;
+    let capture =
+        MenuItem::with_id(app, MENU_CAPTURE, "开始框选", true, None::<&str>).map_err(menu_error)?;
+    let settings =
+        MenuItem::with_id(app, MENU_SETTINGS, "设置", true, None::<&str>).map_err(menu_error)?;
+    let rerun = MenuItem::with_id(
+        app,
+        MENU_RERUN_ONBOARDING,
+        "重新运行引导",
+        true,
+        None::<&str>,
+    )
+    .map_err(menu_error)?;
     let toggle = MenuItem::with_id(app, MENU_TOGGLE_PAUSE, "暂停热键", true, None::<&str>)
         .map_err(menu_error)?;
     let separator = PredefinedMenuItem::separator(app).map_err(menu_error)?;
-    let quit =
-        MenuItem::with_id(app, MENU_QUIT, "退出", true, None::<&str>).map_err(menu_error)?;
+    let quit = MenuItem::with_id(app, MENU_QUIT, "退出", true, None::<&str>).map_err(menu_error)?;
 
     let menu = Menu::with_items(
         app,
@@ -73,7 +78,7 @@ pub fn handle_action(app: &AppHandle, id: &str) {
                 },
             );
             let app = app.clone();
-            let _ = tauri::async_runtime::spawn(async move {
+            let _handle = tauri::async_runtime::spawn(async move {
                 if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
                     tracing::warn!(code = %err.code, message = %err.message, "托盘触发框选失败");
                 }
@@ -145,9 +150,15 @@ fn sync_pause_text(app: &AppHandle) {
 }
 
 fn menu_error(err: tauri::Error) -> AppError {
-    AppError::new(ErrorCode::OverlayFailed, Some(format!("托盘菜单创建失败：{err}")))
+    AppError::new(
+        ErrorCode::OverlayFailed,
+        Some(format!("托盘菜单创建失败：{err}")),
+    )
 }
 
 fn tray_error(err: tauri::Error) -> AppError {
-    AppError::new(ErrorCode::OverlayFailed, Some(format!("托盘创建失败：{err}")))
+    AppError::new(
+        ErrorCode::OverlayFailed,
+        Some(format!("托盘创建失败：{err}")),
+    )
 }

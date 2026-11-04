@@ -10,8 +10,7 @@
 pub const PROMPT_TEXT_SEARCH: &str = include_str!("../../../resources/prompts/text_search.md");
 
 /// 图片搜索提示词（变量 `{lang}` `{mode}`；要求输出「识别结果/检索词/结论/来源」）。
-pub const PROMPT_IMAGE_SEARCH: &str =
-    include_str!("../../../resources/prompts/image_search.md");
+pub const PROMPT_IMAGE_SEARCH: &str = include_str!("../../../resources/prompts/image_search.md");
 
 /// 翻译提示词（变量 `{text}` `{targetLang}` `{sourceLang}` `{glossary}`；只输出译文）。
 pub const PROMPT_TRANSLATE: &str = include_str!("../../../resources/prompts/translate.md");

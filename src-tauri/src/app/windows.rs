@@ -45,8 +45,7 @@ pub fn ensure_overlay(app: &AppHandle) -> AppResult<WebviewWindow> {
     .visible(false)
     .build()
     .map_err(|err| {
-        AppError::new(ErrorCode::OverlayFailed, Some(err.to_string()))
-            .with_fallback(vec!["retry"])
+        AppError::new(ErrorCode::OverlayFailed, Some(err.to_string())).with_fallback(vec!["retry"])
     })
 }
 
@@ -71,8 +70,7 @@ pub fn ensure_result(app: &AppHandle) -> AppResult<WebviewWindow> {
     .visible(false)
     .build()
     .map_err(|err| {
-        AppError::new(ErrorCode::OverlayFailed, Some(err.to_string()))
-            .with_fallback(vec!["retry"])
+        AppError::new(ErrorCode::OverlayFailed, Some(err.to_string())).with_fallback(vec!["retry"])
     })
 }
 
