@@ -73,8 +73,13 @@
 - **S-05 云端实测（用户提供 DeepSeek Key）**：`deepseek-flash` 关闭 thinking 首字达标；**默认 thinking FAILED**
   （reasoning 384–736 token）→ 真实网关接入时**必须显式关闭 thinking**（`llm_gateway` TODO 第 3 条）。
   总耗时 P95 1.75s 略超 1.5s（建议验收口径明确为「首字」）。
-- **S-06 负向证据**：DeepSeek Key 可覆盖视觉腿（deepseek-flash 识别真实截图成功），但无 Search API（`/search` 全 404）；
-  最小 Key 组合 = DeepSeek + Tavily/Serper，拿到检索 Key 后约 15 分钟可完成验收。
+- **S-06 解阻并完成真实验收（2026-11-05 续）**：用户提供 DeepSeek 官方 **Search/Fetch 工具 API**
+  （`POST /v1/tools/search`、`POST /v1/tools/fetch`，与 Chat 同一 Bearer 鉴权）后，基准脚本补齐真实检索/抓取分支并跑
+  完整图片搜索四阶段流水线（视觉识别 → 检索词 → 真实 Search → 摘要；deep 模式并发 Fetch 2 条）：
+  quick **P50 5.28s / P95 6.01s ≤ 10s**；deep **P50 6.83s / P95 8.29s ≤ 25s**，各 20 次、0 流水线失败。
+  Search 单独 P95 413ms、Fetch 稳定源 P95 3.2s；长尾主因是检索结果失效 URL（建议 Fetch 5–8s 超时、404 不重试并回退
+  Search 摘要）。**S-06 由 BLOCKED 改为 DONE**；产品网关接入仍需补 Search/Fetch 客户端、`thinking` 关闭开关与费用计量
+  （已写入实施架构 TODO #3 与 §9.1）。
 - **模型清单扩充**：`resources/models.manifest.json` 新增第 4 条 `qwen2.5-0.5b-instruct-q4`（491,400,032 B，
   sha256 `74a4da8c…`，ModelScope 文件列表 API + Range 206/416 双复核），`params.profile=tiny-local` /
   `promptProfile=translate-minimal`；opus-mt 仍缺 Ct2 产物（`urls` 空）。

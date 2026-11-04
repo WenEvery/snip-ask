@@ -10,8 +10,9 @@
 | --- | --- | --- |
 | `bench_translate.py` | S-05 云端：200 字中文样例 → OpenAI 兼容 `chat/completions`，20 次 P50/P95/max + 首字节/TTFT/总耗时/token 用量/失败率 | 需 `SNIPASK_BENCH_*`（URL/模型/Key）；`--stream` 记录 TTFT |
 | `bench_local_translate.mjs` | S-05 本地：启动 `llama-server` + 1.8B/0.5B GGUF，200 字样例，记录冷加载、P50/P95/max、服务端 prefill/decode/tok-s、进程 WorkingSet | 需 `llama-server.exe` + GGUF |
-| `bench_image_search.py` | S-06：①视觉识别 → ②生成检索词 → ③Search → ④摘要，quick/deep 两档；`--allow-mock-search` 可做视觉真实/检索 mock 的 PARTIAL 估算 | 需 vision Key + 检索 API Key |
-| `probe_s06_negative.py` | S-06 能力探测：DeepSeek 是否支持视觉（image content）与 Search 端点，原样落盘真实响应 | 需 DeepSeek Key |
+| `bench_image_search.py` | S-06：①视觉识别 → ②生成检索词 → ③Search → ④摘要，quick/deep 两档；`--search-provider deepseek` 用官方 Search，deep 另含并发 Fetch；`--allow-mock-search` 仅做部分估算 | 需 DeepSeek Key（vision + Search/Fetch 同一 Key） |
+| `bench_deepseek_tools.py` | S-06 参考：DeepSeek Search/Fetch 单独时延（各 20 次，含 429/5xx 重试与 404 处理） | 需 DeepSeek Key |
+| `probe_s06_negative.py` | phase-1 历史能力探测（视觉是否可用 / 旧 `/search` 是否 404），保留为历史证据 | 需 DeepSeek Key |
 | `run_local_bench.ps1` | 本地 1.8B 正式测量运行器：安静窗口 → 线程调优 → 正式 10 次 → 长度敏感性 → 无残留确认 | 同 `bench_local_translate.mjs` |
 | `benchlock.ps1` / `build_data_summary.py` | CPU 独占锁；原始数据聚合到 `docs/spikes/data/s05_s06/` | — |
 
@@ -33,9 +34,10 @@
   30 字 P95 0.42s，质量一般但可用）；`few-shot` 对 200 字有害（只输出示例）。**Qwen2.5-1.5B Q4 + 极简指令**：
   200 字 P95 6.72s、25.7 tok/s、常驻 1.67–1.70 GiB、冷加载 1.44s，质量更好。极小档推荐
   **0.5B + 极简提示词**（质量优先用 1.5B），两者都不能配产品 `translate.md`。
-- **S-06 图片搜索**：验收仍 **BLOCKED**；DeepSeek 单 Key 的 `deepseek-flash` **支持图片输入且能识别真实截图**，
-  但 `/search` 等端点全部 **404**（无 Search API）→ 只缺 1 个搜索 API Key。视觉真实/检索 mock 的 PARTIAL 估算：
-  quick P50 4.74s / P95 5.26s，deep P50 5.15s / P95 5.68s（非验收结论）。
+- **S-06 图片搜索：DONE**（真实 DeepSeek Search/Fetch 已解阻）：quick 端到端 **P95 6,006.64ms ≤10s**、
+  deep **P95 8,290.75ms ≤25s**（各 20 次，0 失败）；阶段 P50：quick vision 2.52s + search 0.28s + summary 2.47s；
+  deep vision 2.50s + search(3×10) 0.94s + fetch(2 并发) 0.15s + summary 3.16s。Search 单独 P50 292ms/P95 413ms；
+  Fetch（稳定 URL）P50 84ms/P95 3.20s。deep 长尾 max 23.1s（失效 URL 8s×2 重试），仍 <25s；生产建议 Fetch 5–8s 超时、失败回退摘要。
 
 ## 2. S-05 云端（填 Key 后一键复跑）
 
@@ -94,33 +96,33 @@ node scripts/spikes/s05_s06/bench_local_translate.mjs --threads 6 --runs 20 --wa
 可覆盖。**不要用模型卡推荐的 temperature=0.7 复跑对比**：本次实测 0.7 会出现重复输出、
 耗时翻倍，与产品默认配置不一致。
 
-## 4. S-06 图片搜索（只差 1 个搜索 Key，15 分钟复跑）
+## 4. S-06 图片搜索（真实 DeepSeek Search/Fetch，已 DONE）
 
-**已实测**：DeepSeek `deepseek-flash` 支持 OpenAI 兼容图片消息，能识别真实截图 → 视觉腿可用（DeepSeek Key 已有）；
-但 DeepSeek 没有任何 Search API（`/search` 等全部 404）→ **只缺 1 个搜索 API Key**。
+**实测结论**：quick P95 **6,006.64ms**、deep P95 **8,290.75ms**（阈值 10s / 25s，各 20 次 0 失败）。
+视觉用 `deepseek-flash`（thinking disabled）；检索用官方 `POST /v1/tools/search`；deep 额外并发 `POST /v1/tools/fetch` 2 条正文。
 
 ```powershell
-# 视觉腿：复用 DeepSeek Key（运行时环境变量）
-$env:SNIPASK_BENCH_VISION_BASE_URL = "https://api.deepseek.com"
-$env:SNIPASK_BENCH_VISION_MODEL    = "deepseek-flash"
-$env:SNIPASK_BENCH_VISION_API_KEY  = "<DeepSeek Key>"
-$env:SNIPASK_BENCH_VISION_EXTRA_JSON = '{"thinking":{"type":"disabled"}}'   # 可选，降低视觉腿延时
-# 检索腿：只缺这个（Tavily / Serper）
-$env:SNIPASK_BENCH_SEARCH_PROVIDER = "tavily"
-$env:SNIPASK_BENCH_SEARCH_API_KEY  = "<搜索 API Key>"
-python scripts/spikes/s05_s06/bench_image_search.py --modes quick,deep --runs 20
+$env:SNIPASK_BENCH_API_KEY           = "<DeepSeek Key>"       # 仅运行时环境变量
+$env:SNIPASK_BENCH_VISION_BASE_URL   = "https://api.deepseek.com"
+$env:SNIPASK_BENCH_VISION_MODEL      = "deepseek-flash"
+$env:SNIPASK_BENCH_VISION_API_KEY    = "<DeepSeek Key>"
+$env:SNIPASK_BENCH_VISION_EXTRA_JSON = '{"thinking":{"type":"disabled"}}'
+$env:SNIPASK_BENCH_SEARCH_PROVIDER   = "deepseek"
+$env:SNIPASK_BENCH_FETCH_PROVIDER    = "deepseek"
+
+# 完整四阶段流水线：quick/deep 各 warmup 2 + 20 次
+python scripts/spikes/s05_s06/bench_image_search.py --modes quick,deep --runs 20 --warmup 2 --deep-fetch 2
+# Search/Fetch 单独时延（各 20 次）
+python scripts/spikes/s05_s06/bench_deepseek_tools.py --runs-search 20 --runs-fetch 20 --count 5
 ```
 
-- 阈值：quick P95 ≤ 10s、deep P95 ≤ 25s；`--runs` 为每档次数。
-- 检索服务为 `none`（默认）时脚本打印 BLOCKED：纯 mock Search 不满足「1 次真实 Search」的验收口径。
-- 部分真实估算：`--allow-mock-search`（视觉/摘要真实、Search mock），结果标注 `PARTIAL_REAL_VISION_MOCK_SEARCH`，
-  **不得作为验收结论**；本轮 PARTIAL：quick P50 4.74s / deep P50 5.15s。
-- 无 Key 时先跑框架自检（数据为 MOCK，不得作为 DONE 依据）：
+- 阈值：quick P95 ≤10s、deep P95 ≤25s；`--runs` 为每档次数；`--search-count` 默认 quick 5 / deep 10。
+- 生产建议：Fetch 单次 timeout 5–8s、失败回退 Search 摘要、跳过 404；deep 结果 30 条（3×10）tokens ~6.5k，可去重压缩。
+- 其他检索服务（tavily/serper）与 `--allow-mock-search`（PARTIAL）保留作对比/自检，**mock 不作验收**。
+- 无 Key 时框架自检（MOCK，不得作为 DONE 依据）：
 
 ```powershell
 python scripts/spikes/s05_s06/bench_image_search.py --mock-self-check --runs 3
-# DeepSeek 能力探测（视觉是否可用 / Search 是否 404），响应原样落盘
-python scripts/spikes/s05_s06/probe_s06_negative.py
 ```
 
 ## 5. CPU 独占纪律与复现注意

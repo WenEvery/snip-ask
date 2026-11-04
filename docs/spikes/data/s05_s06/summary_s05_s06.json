@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T01:12:08.545018+08:00",
+  "generated_at": "2026-11-05T01:44:13.636312+08:00",
   "repo_commit": "a9b352ed45855cd872b72223b914f57bc711781e",
   "environment": {
     "os": "Windows 11 专业版 Build 26200",
@@ -706,132 +706,342 @@
     }
   },
   "s06": {
-    "verdict": "BLOCKED（验收口径）",
-    "capability_probe": {
-      "models": [
-        {
-          "id": "deepseek-flash",
-          "input_modalities": [
-            "text",
-            "image"
-          ],
-          "output_modalities": [
-            "text"
-          ],
-          "context_window": 1048576,
-          "effort": {
-            "supported_levels": [
-              "low",
-              "high",
-              "max"
-            ],
-            "default_level": "high"
-          },
-          "api_capabilities": {
-            "anthropic_messages": {
-              "system_prompt_update": "in-history",
-              "tool_update": "addition-only"
-            }
-          }
-        },
-        {
-          "id": "deepseek-v4-pro",
-          "input_modalities": [
-            "text"
-          ],
-          "output_modalities": [
-            "text"
-          ],
-          "context_window": 1048576,
-          "effort": {
-            "supported_levels": [
-              "low",
-              "high",
-              "max"
-            ],
-            "default_level": "high"
-          },
-          "api_capabilities": {
-            "anthropic_messages": {
-              "system_prompt_update": "leading-only",
-              "tool_update": "leading-only"
-            }
-          }
-        }
+    "verdict": "DONE",
+    "config": {
+      "base_url_masked": "https://api.deepseek.com:443",
+      "model": "deepseek-flash",
+      "search_provider": "deepseek",
+      "vision_extra_param_keys": [
+        "thinking"
       ],
-      "vision_supported": true,
-      "search_endpoint_found": false,
-      "probes": {
-        "GET /models": {
-          "status": 200,
-          "reply": null
+      "lang": "zh-CN",
+      "modes": [
+        "quick",
+        "deep"
+      ],
+      "runs": 20,
+      "warmup": 2,
+      "timeout_sec": 60.0,
+      "image": {
+        "path": "docs\\images\\settings-ai.png",
+        "size_bytes": 80150,
+        "sha256": "b262ec151115171f3ea458bd5ef012189354d3d1bea75c449c323c73eb17528b",
+        "png_width": 980,
+        "png_height": 720,
+        "data_url_chars": 106890
+      },
+      "search_count": {
+        "quick": 5,
+        "deep": 10
+      },
+      "deep_fetch": 2,
+      "fetch_provider": "deepseek",
+      "phases": "①视觉识别 ②生成检索词 ③Search ④摘要（deep 另含 Fetch 正文）",
+      "prompt_derivation": "resources/prompts/image_search.md 正文按阶段拆分（阶段①识别+检索词；阶段④结论+来源）"
+    },
+    "modes": {
+      "quick": {
+        "verdict": "DONE",
+        "threshold_ms": 10000.0,
+        "measured_runs": 20,
+        "failures": 0,
+        "failure_rate": 0.0,
+        "total_ms": {
+          "count": 20,
+          "mean_ms": 5371.38,
+          "p50_ms": 5282.74,
+          "p95_ms": 6006.64,
+          "max_ms": 6167.8,
+          "min_ms": 4752.63
         },
-        "vision: POST /chat/completions (image content, model=deepseek-flash)": {
-          "status": 200,
-          "reply": "框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。"
+        "stages_ms": {
+          "vision": {
+            "count": 20,
+            "mean_ms": 2534.62,
+            "p50_ms": 2520.78,
+            "p95_ms": 2909.23,
+            "max_ms": 2923.11,
+            "min_ms": 2158.61
+          },
+          "query_gen": {
+            "count": 20,
+            "mean_ms": 0.04,
+            "p50_ms": 0.04,
+            "p95_ms": 0.07,
+            "max_ms": 0.13,
+            "min_ms": 0.03
+          },
+          "search": {
+            "count": 20,
+            "mean_ms": 282.28,
+            "p50_ms": 278.47,
+            "p95_ms": 344.96,
+            "max_ms": 358.36,
+            "min_ms": 238.28
+          },
+          "fetch": {},
+          "summary": {
+            "count": 20,
+            "mean_ms": 2553.8,
+            "p50_ms": 2465.49,
+            "p95_ms": 3173.85,
+            "max_ms": 3239.48,
+            "min_ms": 1767.37
+          }
         },
-        "vision: POST /chat/completions (image content, model=deepseek-v4-pro)": {
-          "status": 200,
-          "reply": "无法查看图片，请重新上传或提供文字内容。"
+        "search_stats": {
+          "runs_with_search": 20,
+          "avg_results": 5.0,
+          "empty_result_runs": 0,
+          "avg_http_ms": 282.13
         },
-        "search: POST /search": {
-          "status": 404,
-          "reply": null
+        "fetch_stats": {
+          "runs_with_fetch": 0,
+          "avg_requested": null,
+          "avg_success": null,
+          "runs_with_all_fetch_failed": 0
         },
-        "search: GET /search": {
-          "status": 404,
-          "reply": null
+        "tokens_per_run": {
+          "count": 20,
+          "mean_ms": 2871.55,
+          "p50_ms": 2844.5,
+          "p95_ms": 3076.65,
+          "max_ms": 3165,
+          "min_ms": 2691
+        }
+      },
+      "deep": {
+        "verdict": "DONE",
+        "threshold_ms": 25000.0,
+        "measured_runs": 20,
+        "failures": 0,
+        "failure_rate": 0.0,
+        "total_ms": {
+          "count": 20,
+          "mean_ms": 7566.14,
+          "p50_ms": 6825.67,
+          "p95_ms": 8290.75,
+          "max_ms": 23148.14,
+          "min_ms": 5479.43
         },
-        "search: POST /v1/search": {
-          "status": 404,
-          "reply": null
+        "stages_ms": {
+          "vision": {
+            "count": 20,
+            "mean_ms": 2506.64,
+            "p50_ms": 2503.32,
+            "p95_ms": 2807.25,
+            "max_ms": 2833.64,
+            "min_ms": 2222.26
+          },
+          "query_gen": {
+            "count": 20,
+            "mean_ms": 0.04,
+            "p50_ms": 0.04,
+            "p95_ms": 0.04,
+            "max_ms": 0.04,
+            "min_ms": 0.03
+          },
+          "search": {
+            "count": 20,
+            "mean_ms": 957.32,
+            "p50_ms": 937.41,
+            "p95_ms": 1092.2,
+            "max_ms": 1117.26,
+            "min_ms": 886.75
+          },
+          "fetch": {
+            "count": 19,
+            "mean_ms": 168.11,
+            "p50_ms": 146.28,
+            "p95_ms": 263.55,
+            "max_ms": 410.35,
+            "min_ms": 99.52
+          },
+          "summary": {
+            "count": 20,
+            "mean_ms": 3112.12,
+            "p50_ms": 3164.22,
+            "p95_ms": 3629.89,
+            "max_ms": 3843.92,
+            "min_ms": 2058.17
+          }
         },
-        "search: POST /search/completions": {
-          "status": 404,
-          "reply": null
+        "search_stats": {
+          "runs_with_search": 20,
+          "avg_results": 30.0,
+          "empty_result_runs": 0,
+          "avg_http_ms": 318.85
+        },
+        "fetch_stats": {
+          "runs_with_fetch": 20,
+          "avg_requested": 2.0,
+          "avg_success": 1.9,
+          "runs_with_all_fetch_failed": 1
+        },
+        "tokens_per_run": {
+          "count": 20,
+          "mean_ms": 6488.2,
+          "p50_ms": 6544.0,
+          "p95_ms": 6658.5,
+          "max_ms": 6896,
+          "min_ms": 6040
         }
       }
     },
-    "partial_measurement": {
-      "note": "视觉/摘要为真实 DeepSeek 调用，Search 为 mock；PARTIAL_REAL_VISION_MOCK_SEARCH，不得作为验收结论",
-      "modes": {
-        "quick": {
-          "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
-          "total_ms": {
-            "count": 5,
-            "mean_ms": 4772.54,
-            "p50_ms": 4736.76,
-            "p95_ms": 5261.48,
-            "max_ms": 5376.97,
-            "min_ms": 4417.69
+    "tools_standalone": {
+      "search": {
+        "count": 20,
+        "mean_ms": 322.23,
+        "p50_ms": 292.01,
+        "p95_ms": 413.34,
+        "max_ms": 698.47,
+        "min_ms": 257.95
+      },
+      "search_failures": 0,
+      "search_empty_results": 0,
+      "fetch": {
+        "count": 20,
+        "mean_ms": 435.99,
+        "p50_ms": 83.94,
+        "p95_ms": 3196.66,
+        "max_ms": 3719.32,
+        "min_ms": 69.59
+      },
+      "fetch_failures": 0,
+      "fetch_success_with_content": 20,
+      "status_codes": {
+        "200": 40
+      },
+      "note": "Search count=5 / Fetch 使用真实检索结果 URL；QPS Search 100、Fetch 25。"
+    },
+    "historical_phase1": {
+      "verdict": "BLOCKED（2026-11-04 旧结论，已被 2026-11 官方 Search/Fetch API 取代）",
+      "note": "phase-1 仅探测到 /search 等旧路径 404，未发现 /v1/tools/search；保留为历史证据。",
+      "capability_probe": {
+        "models": [
+          {
+            "id": "deepseek-flash",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "context_window": 1048576,
+            "effort": {
+              "supported_levels": [
+                "low",
+                "high",
+                "max"
+              ],
+              "default_level": "high"
+            },
+            "api_capabilities": {
+              "anthropic_messages": {
+                "system_prompt_update": "in-history",
+                "tool_update": "addition-only"
+              }
+            }
           },
-          "stages_ms": {
-            "vision": 2740.44,
-            "query_gen": 0.08,
-            "search": 20.54,
-            "summary": 2099.34
+          {
+            "id": "deepseek-v4-pro",
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "context_window": 1048576,
+            "effort": {
+              "supported_levels": [
+                "low",
+                "high",
+                "max"
+              ],
+              "default_level": "high"
+            },
+            "api_capabilities": {
+              "anthropic_messages": {
+                "system_prompt_update": "leading-only",
+                "tool_update": "leading-only"
+              }
+            }
           }
-        },
-        "deep": {
-          "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
-          "total_ms": {
-            "count": 5,
-            "mean_ms": 5229.86,
-            "p50_ms": 5153.08,
-            "p95_ms": 5682.9,
-            "max_ms": 5753.02,
-            "min_ms": 4761.11
+        ],
+        "vision_supported": true,
+        "search_endpoint_found": false,
+        "probes": {
+          "GET /models": {
+            "status": 200,
+            "reply": null
           },
-          "stages_ms": {
-            "vision": 2712.48,
-            "query_gen": 0.04,
-            "search": 61.15,
-            "summary": 2444.65
+          "vision: POST /chat/completions (image content, model=deepseek-flash)": {
+            "status": 200,
+            "reply": "框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。"
+          },
+          "vision: POST /chat/completions (image content, model=deepseek-v4-pro)": {
+            "status": 200,
+            "reply": "无法查看图片，请重新上传或提供文字内容。"
+          },
+          "search: POST /search": {
+            "status": 404,
+            "reply": null
+          },
+          "search: GET /search": {
+            "status": 404,
+            "reply": null
+          },
+          "search: POST /v1/search": {
+            "status": 404,
+            "reply": null
+          },
+          "search: POST /search/completions": {
+            "status": 404,
+            "reply": null
+          }
+        }
+      },
+      "partial_measurement": {
+        "note": "视觉/摘要真实、Search 为 mock；PARTIAL_REAL_VISION_MOCK_SEARCH，不作验收结论",
+        "modes": {
+          "quick": {
+            "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+            "total_ms": {
+              "count": 5,
+              "mean_ms": 4772.54,
+              "p50_ms": 4736.76,
+              "p95_ms": 5261.48,
+              "max_ms": 5376.97,
+              "min_ms": 4417.69
+            },
+            "stages_ms": {
+              "vision": 2740.44,
+              "query_gen": 0.08,
+              "search": 20.54,
+              "summary": 2099.34
+            }
+          },
+          "deep": {
+            "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+            "total_ms": {
+              "count": 5,
+              "mean_ms": 5229.86,
+              "p50_ms": 5153.08,
+              "p95_ms": 5682.9,
+              "max_ms": 5753.02,
+              "min_ms": 4761.11
+            },
+            "stages_ms": {
+              "vision": 2712.48,
+              "query_gen": 0.04,
+              "search": 61.15,
+              "summary": 2444.65
+            }
           }
         }
       }
     },
-    "minimum_keys": "DeepSeek Key（已有，作 vision）+ 1 个搜索 API Key（Tavily/Serper）",
     "thresholds_ms": {
       "quick": 10000,
       "deep": 25000

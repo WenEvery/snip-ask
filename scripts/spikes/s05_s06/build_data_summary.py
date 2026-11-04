@@ -81,7 +81,9 @@ def main() -> None:
     tiny_p = latest("local_translate_tiny_qwen05b_*.json")
     probe_p = latest("deepseek_capability_probe_*.json")
     partial_p = latest("image_search_partial_deepseek_*.json")
-    for p in (cloud_default_p, cloud_nothink_p, tiny_p, probe_p, partial_p):
+    real_p = latest("image_search_real_deepseek_*.json")
+    tools_p = latest("deepseek_tools_bench_*.json")
+    for p in (cloud_default_p, cloud_nothink_p, tiny_p, probe_p, partial_p, real_p, tools_p):
         if p:
             shutil.copy2(p, DATA / p.name)
     for f in sorted(RAW.glob("image_search_mock_*.json")):
@@ -99,6 +101,17 @@ def main() -> None:
     tiny = load(tiny_p) if tiny_p else {}
     probe = load(probe_p) if probe_p else {}
     partial = load(partial_p) if partial_p else {}
+    real = load(real_p) if real_p else {}
+    tools = load(tools_p) if tools_p else {}
+    modes_real = real.get("modes") or {}
+    if modes_real:
+        s06_verdict = (
+            "DONE"
+            if all(m.get("verdict") == "DONE" for m in modes_real.values())
+            else "FAILED"
+        )
+    else:
+        s06_verdict = "BLOCKED"
     formal = load(RAW / "local_translate_formal_20261105-000321.json")
     sens = load(RAW / "local_translate_sens100_20261105-000321.json")
     contaminated = load(RAW / "local_translate_20261104-235408.json")
@@ -248,28 +261,57 @@ def main() -> None:
             },
         },
         "s06": {
-            "verdict": "BLOCKED（验收口径）",
-            "capability_probe": {
-                "models": probe.get("models"),
-                "vision_supported": (probe.get("conclusion") or {}).get("vision_supported"),
-                "search_endpoint_found": (probe.get("conclusion") or {}).get("search_endpoint_found"),
-                "probes": s06_probes,
+            "verdict": s06_verdict,
+            "config": real.get("config"),
+            "modes": {
+                mode: {
+                    "verdict": data.get("verdict"),
+                    "threshold_ms": data.get("threshold_ms"),
+                    "measured_runs": data.get("measured_runs"),
+                    "failures": data.get("failures"),
+                    "failure_rate": data.get("failure_rate"),
+                    "total_ms": data.get("total_ms"),
+                    "stages_ms": data.get("stages_ms"),
+                    "search_stats": data.get("search_stats"),
+                    "fetch_stats": data.get("fetch_stats"),
+                    "tokens_per_run": data.get("tokens_per_run"),
+                }
+                for mode, data in (real.get("modes") or {}).items()
             },
-            "partial_measurement": {
-                "note": "视觉/摘要为真实 DeepSeek 调用，Search 为 mock；PARTIAL_REAL_VISION_MOCK_SEARCH，不得作为验收结论",
-                "modes": {
-                    mode: {
-                        "verdict": data.get("verdict"),
-                        "total_ms": (data.get("total_ms") or {}),
-                        "stages_ms": {
-                            k: (v.get("p50_ms") if v else None)
-                            for k, v in (data.get("stages_ms") or {}).items()
-                        },
-                    }
-                    for mode, data in (partial.get("modes") or {}).items()
+            "tools_standalone": {
+                "search": (tools.get("search") or {}).get("latency_ms"),
+                "search_failures": (tools.get("search") or {}).get("failures"),
+                "search_empty_results": (tools.get("search") or {}).get("empty_results"),
+                "fetch": (tools.get("fetch") or {}).get("latency_ms"),
+                "fetch_failures": (tools.get("fetch") or {}).get("failures"),
+                "fetch_success_with_content": (tools.get("fetch") or {}).get("success_with_content"),
+                "status_codes": tools.get("status_codes"),
+                "note": "Search count=5 / Fetch 使用真实检索结果 URL；QPS Search 100、Fetch 25。",
+            },
+            "historical_phase1": {
+                "verdict": "BLOCKED（2026-11-04 旧结论，已被 2026-11 官方 Search/Fetch API 取代）",
+                "note": "phase-1 仅探测到 /search 等旧路径 404，未发现 /v1/tools/search；保留为历史证据。",
+                "capability_probe": {
+                    "models": probe.get("models"),
+                    "vision_supported": (probe.get("conclusion") or {}).get("vision_supported"),
+                    "search_endpoint_found": (probe.get("conclusion") or {}).get("search_endpoint_found"),
+                    "probes": s06_probes,
+                },
+                "partial_measurement": {
+                    "note": "视觉/摘要真实、Search 为 mock；PARTIAL_REAL_VISION_MOCK_SEARCH，不作验收结论",
+                    "modes": {
+                        mode: {
+                            "verdict": data.get("verdict"),
+                            "total_ms": data.get("total_ms"),
+                            "stages_ms": {
+                                k: (v.get("p50_ms") if v else None)
+                                for k, v in (data.get("stages_ms") or {}).items()
+                            },
+                        }
+                        for mode, data in (partial.get("modes") or {}).items()
+                    },
                 },
             },
-            "minimum_keys": "DeepSeek Key（已有，作 vision）+ 1 个搜索 API Key（Tavily/Serper）",
             "thresholds_ms": {"quick": 10000, "deep": 25000},
         },
     }
@@ -352,8 +394,8 @@ def main() -> None:
         "- 云端：DeepSeek `deepseek-flash`，stream=true；默认 thinking 与关闭 thinking 两组均记录 TTFT/总耗时。\n"
         "- 本地 1.8B：正式 10 次线程 16；污染期数据保留为对照。\n"
         "- 极小模型 Qwen2.5-0.5B：正式 10 次线程 16，记录 tok/s、内存、冷加载与输出样例。\n"
-        "- S-06：DeepSeek 单 Key 视觉可用（真实截图识别成功）但无 Search API（404），验收仍 BLOCKED；"
-        "PARTIAL 测量只用于估算视觉腿时延。\n",
+        "- S-06：真实 DeepSeek 视觉 + 官方 Search/Fetch 跑通 quick/deep 各 20 次（`image_search_real_deepseek_*.json`），"
+        "Search/Fetch 单独时延见 `deepseek_tools_bench_*.json`；phase-1「无 Search API」负向证据保留为历史。\n",
         encoding="utf-8",
     )
     print(f"wrote {out}")

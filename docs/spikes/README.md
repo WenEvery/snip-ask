@@ -24,12 +24,12 @@
 | S-03 | 选区 OCR，100 次 P95 ≤ 800ms | 原 det+rec 口径 P95 **968ms**（未达标，保留为对照）；按实施架构改为「整屏 det 缓存 → 选区过滤 + rec-only」P95 **596ms** 达标并**已落地**（`OcrPipeline`，28 项测试 + 真机冒烟）；真实 ONNX 引擎仍 `TODO(real)` | **DONE（口径变更）** | [S-02-S-03-OCR时延基准.md](S-02-S-03-OCR时延基准.md) §13 |
 | S-04 | 注册成功率 100%；冲突 100% 可操作提示；暂停后热键完全释放 | probe 20/20 available（P50 2.3ms）；辅助进程同键注册 20/20 被拒（Win32 1409）；OS 冲突检出 20/20 + 设置页可操作文案（截图）；暂停后辅助进程注册成功（释放）、恢复后重新注册；probe 无泄漏 20/20 | **DONE** | [S-04-CtrlQ全局热键注册与冲突检测.md](S-04-CtrlQ全局热键注册与冲突检测.md) |
 | S-05 | 云端 200 字 ≤ 1.5s；本地 ≤ 8s | 云端（DeepSeek `deepseek-flash`，20 次）：**thinking 关闭** 首字 **P50 0.61s / P95 0.87s 达标**，总耗时 P95 1.75s 略超；**默认 thinking** 首字 P95 4.59s 不达标（网关必须显式关闭思考）。本地**极小档**（Qwen2.5-0.5B Q4 + 精简提示词）P50 3.09s / **P95 3.21s**、常驻 0.55GiB 达标；**普通档** HY-MT1.5-1.8B CPU P50 11.76s / P95 21.84s 不满足 8s → 按用户决策改为**可选质量档并显式提示** | **DONE（云端首字 + 极小档）/ FAILED（1.8B 普通档基准）** | [S-05-翻译链路时延.md](S-05-翻译链路时延.md) |
-| S-06 | 图片搜索快速 ≤ 10s；深度 ≤ 25s | **仅缺检索 Key**：DeepSeek 视觉腿已验证可用（deepseek-flash 识别真实截图成功），但 `/search` 全 404；PARTIAL（视觉真实/检索 mock，非验收）quick P95 5.26s / deep P95 5.68s；最小 Key 组合 = DeepSeek + Tavily/Serper | **BLOCKED（仅缺检索 Key）** | [S-06-图片搜索端到端时延.md](S-06-图片搜索端到端时延.md) |
+| S-06 | 图片搜索快速 ≤ 10s；深度 ≤ 25s | **真实链路 DONE**（DeepSeek `deepseek-flash` 视觉 + 官方 `/v1/tools/search` + `/v1/tools/fetch`）：quick **P50 5.28s / P95 6.01s**（≤10s）、deep **P50 6.83s / P95 8.29s**（≤25s，含并发 Fetch），各 20 次 0 流水线失败；Search 单独 P95 413ms、Fetch 稳定源 P95 3.2s；长尾来自失效 URL（建议 Fetch 5–8s 超时 + 404 回退 Search 摘要） | **DONE** | [S-06-图片搜索端到端时延.md](S-06-图片搜索端到端时延.md) |
 | S-07 | 无网络/无 Key 可完成 6 步引导并进入受限模式 | 首次启动 6 步引导可完成/可跳过；受限模式门禁生效（浏览器搜索/复制/本地 OCR 可用，云动作 disabled + 可操作原因）；**引导第 3 步落地三档 AI 服务**（云端/极小模型/普通模型 + 实测性能与隐私/成本提示，20/20 断言）；断网（不可达 baseUrl + 空 Key）错误可操作、不崩溃 | **DONE** | [S-07-首启引导无网络无Key与受限模式.md](S-07-首启引导无网络无Key与受限模式.md) |
 | S-08 | 断点续传/中断恢复 100%；SHA256+大小校验；镜像回退；进度正确 | 随机断点 20 次中断恢复 **20/20**；**真实杀进程**后续传成功；SHA256/大小不符删除重下；404/拒绝自动切镜像；真实 ModelScope Range **206 + Content-Range**（reqwest 0.348s）；phase 2 新增第 4 条极小模型清单（491,400,032 B，206/416 复核） | **DONE** | [S-08-模型下载断点续传与校验.md](S-08-模型下载断点续传与校验.md) |
 
-**最终结论：P0 8 项中 8 项达成（S-03/S-05 经用户确认的口径/档位调整后达标）；S-06 仅缺检索 Key（视觉腿已可用），
-拿到 Key 后约 15 分钟可完成验收。** 另有 S-17（P1）预置能力落地：[provider_test 真实连通性](S-17-provider连通性测试落地.md)。
+**最终结论：P0 8 项全部达成（S-03/S-05 经用户确认的口径/档位调整后达标；S-06 已用 DeepSeek 官方 Search/Fetch 工具 API 完成真实验收：
+quick P95 6.01s / deep P95 8.29s）。** 另有 S-17（P1）预置能力落地：[provider_test 真实连通性](S-17-provider连通性测试落地.md)。
 
 ## 2 必须带回技术方案的结论（Go/No-Go 关注点）
 
@@ -43,7 +43,11 @@
    普通档 1.8B 质量优先但纯 CPU P95 21.84s。**1.8B 的 8s 目标在纯 CPU 上不可达**，产品以「可选档 + 提示」呈现。
 4. **S-05 云端总耗时（P95 1.75s）仍略超 1.5s 阈值**；首字口径达标。若坚持「总耗时 ≤1.5s」，需更快的模型/短输出/流式呈现，
    否则建议把验收口径明确为「首字 ≤1.5s」（与 README §验收与性能目标「快速模式首字 ≤1.5s」一致）。
-5. **S-06 只缺检索 Key**：DeepSeek Key 可覆盖视觉腿；Search 需 Tavily/Serper 等（脚本已支持）。
+5. **S-06 已解除 BLOCKED**：DeepSeek 单 Key 覆盖 chat/vision + 官方 **Search/Fetch 工具 API**
+   （`POST /v1/tools/search`、`POST /v1/tools/fetch`），真实图片搜索链路 quick P95 6.01s、deep P95 8.29s（各 20 次 0 失败）。
+   生产注意事项：视觉与摘要均应传 `thinking:{"type":"disabled"}`；Fetch 建议 5–8s 超时、404 不重试并回退 Search 摘要
+   （长尾主要来自检索结果的失效 URL：任意 URL 抓取时 8/20 404、P95 17.9s）。Search/Fetch 按成功请求计费（5 元/千次），
+   QPS 分别 100 / 25。
 6. **本地极小模型必须配精简提示词**：0.5B 用产品 `translate.md` 会复述原文（10/10），
    换 `resources/prompts/translate_minimal.md` 后可正常翻译（提示词路由已按模型 id 实现）。
 7. **模型清单已修正并扩充**：4 条（hy-mt / qwen3 / opus-mt 待产物 / qwen2.5-0.5b 极小模型），前 3 条 size+sha256 已核验。
@@ -79,3 +83,8 @@
    选择写入 `translate.backend` + `local.model`；新增极小模型清单条目与下载聚焦；DeepSeek 供应商说明修正（支持视觉、无 Search API）。
 4. **S-05 云端实测（用户提供 DeepSeek Key）**：见 §1 S-05 与 `S-05-翻译链路时延.md`；**网关接入时必须显式关闭 thinking**。
    同时落地 S-17 预置能力：`provider_test` 真实连通性（`S-17-provider连通性测试落地.md`）。
+5. **S-06 解阻与真实验收（2026-11-05）**：用户提供官方 [Search/Fetch 文档](https://api-docs.deepseek.com/zh-cn/guides/search)
+   （`POST /v1/tools/search`、`POST /v1/tools/fetch`，同 Bearer 鉴权）。基准脚本新增真实 Search/Fetch 分支并跑完整
+   图片搜索四阶段流水线：quick P50 5.28s / P95 6.01s（≤10s）；deep P50 6.83s / P95 8.29s（≤25s，含并发 Fetch），
+   各 20 次 0 流水线失败。产品实现仍为 `TODO(real)`：网关需补 Search/Fetch 客户端（错误码 408/429/5xx 退避、
+   404 不重试、费用计量）与 `thinking` 关闭开关。

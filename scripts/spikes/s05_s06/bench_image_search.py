@@ -44,10 +44,14 @@ import statistics
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlsplit
+
+import requests
+import threading
 
 SCRIPT_VERSION = "1.0.0"
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -105,6 +109,9 @@ def build_phase_b_prompt(recognized: str, queries: List[str], search_items: List
         snippet = (item.get("snippet") or "").strip()
         if snippet:
             lines.append(f"   摘要：{snippet[:300]}")
+        fetched = (item.get("fetched_content") or "").strip()
+        if fetched:
+            lines.append(f"   正文节选：{fetched[:1200]}")
     lines += [
         "",
         "【要求】",
@@ -287,6 +294,126 @@ class SerperSearchProvider(SearchProvider):
         return items, {"provider": "serper", "http_ms": res["total_ms"], "query": query}
 
 
+class DeepSeekToolsProvider(SearchProvider):
+    """DeepSeek 官方 Search / Fetch 工具 API（2026-11 上线）。
+
+    Search: POST {base}/v1/tools/search  {"query","count"(1-50),"need_content"}
+    Fetch : POST {base}/v1/tools/fetch   {"url"}
+    Bearer 鉴权；QPS：Search 100 / Fetch 25；错误码 400/401/402/403/404/408/413/429/500/504。
+    对 429/5xx/网络超时按生产策略退避重试 ≤2 次并记录 attempts。
+    """
+
+    name = "deepseek"
+
+    RETRY_STATUS = {408, 429, 500, 502, 503, 504}
+
+    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", timeout: float = 30.0):
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.api_key = api_key
+        self._local = threading.local()
+        self.search_count = 5
+        # deep 模式 Fetch 为时延敏感路径：单次上限 8s、重试 1 次，失败回退检索摘要
+        self.fetch_timeout = 8.0
+
+    def _session(self) -> requests.Session:
+        """每个线程独立 Session（requests.Session 非线程安全；并发 Fetch 必须隔离）。"""
+        session = getattr(self._local, "session", None)
+        if session is None:
+            session = requests.Session()
+            session.headers.update(
+                {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "snipask-bench-image-search/1.1",
+                }
+            )
+            self._local.session = session
+        return session
+
+    def _post(self, path: str, payload: Dict[str, Any], timeout: float, retries: int = 2):
+        attempts = 0
+        last: Tuple[Optional[int], float, Any] = (None, 0.0, "no attempt")
+        for attempt in range(retries + 1):
+            attempts = attempt + 1
+            t0 = time.perf_counter()
+            try:
+                resp = self._session().post(
+                    f"{self.base_url}{path}", json=payload, timeout=timeout
+                )
+                latency = (time.perf_counter() - t0) * 1000.0
+                try:
+                    body = resp.json()
+                except ValueError:
+                    body = resp.text[:2000]
+                last = (resp.status_code, latency, body)
+                if resp.status_code == 200 or resp.status_code not in self.RETRY_STATUS:
+                    return last[0], round(last[1], 2), last[2], attempts
+            except requests.RequestException as err:  # 网络/超时
+                latency = (time.perf_counter() - t0) * 1000.0
+                last = (None, latency, f"{type(err).__name__}: {err}")
+            if attempt < retries:
+                time.sleep(0.5 * (2**attempt))
+        return last[0], round(last[1], 2), last[2], attempts
+
+    def search(self, query: str, timeout: float) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        status, latency, body, attempts = self._post(
+            "/v1/tools/search",
+            {"query": query, "count": self.search_count, "need_content": False},
+            timeout,
+        )
+        if status != 200:
+            raise RuntimeError(f"DeepSeek Search HTTP {status}: {str(body)[:300]}")
+        items = []
+        for r in (body.get("results") or [])[: self.search_count]:
+            items.append(
+                {
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "snippet": r.get("snippet", ""),
+                    "summary": r.get("summary", ""),
+                    "content": r.get("content", ""),
+                    "date": r.get("date"),
+                    "authority": r.get("authority"),
+                    "rerank_score": r.get("rerank_score"),
+                }
+            )
+        return items, {
+            "provider": "deepseek",
+            "query": query,
+            "http_ms": latency,
+            "attempts": attempts,
+            "result_count": len(items),
+            "empty": len(items) == 0,
+            "status": status,
+        }
+
+    def fetch(self, url: str, timeout: float) -> Dict[str, Any]:
+        # deep 模式时延敏感：单次上限 fetch_timeout（默认 8s）、重试 1 次；失败回退检索摘要
+        eff_timeout = min(timeout, self.fetch_timeout)
+        status, latency, body, attempts = self._post(
+            "/v1/tools/fetch", {"url": url}, eff_timeout, retries=1
+        )
+        ok = status == 200 and isinstance(body, dict) and bool(body.get("content"))
+        return {
+            "url": url,
+            "status": status,
+            "latency_ms": latency,
+            "attempts": attempts,
+            "ok": ok,
+            "title": body.get("title") if isinstance(body, dict) else None,
+            "content": (body.get("content") or "") if isinstance(body, dict) else "",
+            "error": None if ok else str(body)[:300],
+        }
+
+    def fetch_many(self, urls: List[str], timeout: float, workers: int = 2) -> List[Dict[str, Any]]:
+        """并发抓取（生产 deep 模式 2–3 条，限制并发以控时延/避免触发 QPS 25）。"""
+        if not urls:
+            return []
+        with ThreadPoolExecutor(max_workers=max(1, min(workers, len(urls)))) as pool:
+            return list(pool.map(lambda u: self.fetch(u, timeout), urls))
+
+
 # --------------------------------------------------------------------------- #
 # mock 模型输出（仅框架自检）
 # --------------------------------------------------------------------------- #
@@ -344,6 +471,9 @@ def run_pipeline_once(
     timeout: float,
     template: str,
     extra: Optional[Dict[str, Any]] = None,
+    search_count: int = 0,
+    fetch_count: int = 0,
+    fetch_provider: Optional[DeepSeekToolsProvider] = None,
 ) -> Dict[str, Any]:
     record: Dict[str, Any] = {"mode": mode, "mock": mock, "ok": False, "stages": {}}
     t_pipeline0 = time.perf_counter()
@@ -404,6 +534,8 @@ def run_pipeline_once(
     t_search0 = time.perf_counter()
     results: List[Dict[str, Any]] = []
     search_meta: List[Dict[str, Any]] = []
+    if search_count and hasattr(search, "search_count"):
+        search.search_count = search_count
     try:
         for q in queries:
             items, meta = search.search(q, timeout)
@@ -428,6 +560,42 @@ def run_pipeline_once(
     record["search_results"] = [
         {"title": r.get("title", ""), "url": r.get("url", "")} for r in results[:6]
     ]
+
+    # ---- ③b Fetch（deep：对真实检索结果抓取正文 2–3 条，并发以控时延） ----
+    if fetch_count > 0 and fetch_provider is not None:
+        t_fetch0 = time.perf_counter()
+        urls = [r.get("url") for r in results if r.get("url")][:fetch_count]
+        try:
+            fetched = fetch_provider.fetch_many(urls, timeout, workers=min(2, fetch_count))
+            by_url = {f["url"]: f for f in fetched}
+            for item in results:
+                f = by_url.get(item.get("url"))
+                if f and f.get("ok"):
+                    item["fetched_content"] = (f.get("content") or "")[:2000]
+            ok_count = sum(1 for f in fetched if f.get("ok"))
+            record["stages"]["fetch"] = {
+                "ok": ok_count > 0,
+                "total_ms": round((time.perf_counter() - t_fetch0) * 1000.0, 2),
+                "requested": len(urls),
+                "success": ok_count,
+                "detail": [
+                    {
+                        "url": f["url"],
+                        "status": f["status"],
+                        "latency_ms": f["latency_ms"],
+                        "attempts": f["attempts"],
+                        "content_chars": len(f.get("content") or ""),
+                        "ok": bool(f.get("ok")),
+                    }
+                    for f in fetched
+                ],
+            }
+        except Exception as err:  # noqa: BLE001
+            record["stages"]["fetch"] = {
+                "ok": False,
+                "total_ms": round((time.perf_counter() - t_fetch0) * 1000.0, 2),
+                "error": f"{type(err).__name__}: {err}",
+            }
 
     # ---- ④ 摘要 ----
     phase_b = build_phase_b_prompt(recognized, queries, results, lang)
@@ -576,8 +744,23 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--base-url", default=vision_base)
     ap.add_argument("--model", default=vision_model)
     ap.add_argument("--api-key", default=vision_key)
-    ap.add_argument("--search-provider", default=search_provider, choices=["none", "tavily", "serper"])
+    ap.add_argument(
+        "--search-provider",
+        default=search_provider,
+        choices=["none", "tavily", "serper", "deepseek"],
+        help="deepseek = 官方 /v1/tools/search（真实检索）",
+    )
+    ap.add_argument(
+        "--fetch-provider",
+        default=os.environ.get("SNIPASK_BENCH_FETCH_PROVIDER", "deepseek"),
+        choices=["none", "deepseek"],
+        help="deepseek = 官方 /v1/tools/fetch（deep 模式抓取正文）",
+    )
     ap.add_argument("--search-api-key", default=search_key)
+    ap.add_argument(
+        "--search-count", type=int, default=0, help="Search 返回条数；0 = quick 5 / deep 10"
+    )
+    ap.add_argument("--deep-fetch", type=int, default=2, help="deep 模式 Fetch 条数（2–3）")
     ap.add_argument("--image", default=str(DEFAULT_IMAGE))
     ap.add_argument("--lang", default="zh-CN")
     ap.add_argument("--modes", default="quick,deep", help="quick / deep / quick,deep")
@@ -619,7 +802,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             missing.append("SNIPASK_BENCH_VISION_MODEL")
         if not args.api_key:
             missing.append("SNIPASK_BENCH_VISION_API_KEY")
-        if args.search_provider != "none" and not args.search_api_key:
+        if args.search_provider in ("tavily", "serper") and not args.search_api_key:
             missing.append("SNIPASK_BENCH_SEARCH_API_KEY")
         if missing:
             print("BLOCKED：未提供真实视觉/检索凭据，无法测量 S-06 端到端时延。")
@@ -658,6 +841,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             search = TavilySearchProvider(args.search_api_key)
         elif args.search_provider == "serper":
             search = SerperSearchProvider(args.search_api_key)
+        elif args.search_provider == "deepseek":
+            search = DeepSeekToolsProvider(
+                args.search_api_key or args.api_key, args.base_url, args.timeout
+            )
         elif args.allow_mock_search:
             # 部分真实：视觉/摘要真实调用，Search 用 mock（不满足验收口径，结果标注 PARTIAL）
             search = MockSearchProvider()
@@ -674,6 +861,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             return EXIT_BLOCKED
         runs, warmup = args.runs, args.warmup
 
+    fetch_provider: Optional[DeepSeekToolsProvider] = None
+    if not mock and not partial and args.fetch_provider == "deepseek":
+        fetch_provider = (
+            search
+            if isinstance(search, DeepSeekToolsProvider)
+            else DeepSeekToolsProvider(
+                args.search_api_key or args.api_key, args.base_url, args.timeout
+            )
+        )
+
     result: Dict[str, Any] = {
         "meta": collect_meta(mock, partial),
         "config": {
@@ -687,7 +884,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             "warmup": warmup,
             "timeout_sec": args.timeout,
             "image": image_info(image_path),
-            "phases": "①视觉识别 ②生成检索词 ③Search ④摘要",
+            "search_count": {"quick": args.search_count or 5, "deep": args.search_count or 10},
+            "deep_fetch": args.deep_fetch if fetch_provider is not None else 0,
+            "fetch_provider": "deepseek" if fetch_provider is not None else "none",
+            "phases": "①视觉识别 ②生成检索词 ③Search ④摘要（deep 另含 Fetch 正文）",
             "prompt_derivation": "resources/prompts/image_search.md 正文按阶段拆分（阶段①识别+检索词；阶段④结论+来源）",
         },
         "modes": {},
@@ -696,6 +896,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     exit_code = EXIT_OK
     for mode in modes:
         template_mode = load_image_search_template(args.lang, mode)
+        mode_search_count = args.search_count or (5 if mode == "quick" else 10)
+        mode_fetch_count = args.deep_fetch if (mode == "deep" and fetch_provider is not None) else 0
         records: List[Dict[str, Any]] = []
         for i in range(warmup):
             rec = run_pipeline_once(
@@ -703,6 +905,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 vision_model=args.model or "mock-vision", vision_key=args.api_key or "mock-key",
                 search=search, lang=args.lang, mock=mock, timeout=args.timeout,
                 template=template_mode, extra=vision_extra,
+                search_count=mode_search_count, fetch_count=mode_fetch_count,
+                fetch_provider=fetch_provider,
             )
             rec["warmup"] = True
             records.append(rec)
@@ -712,6 +916,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 vision_model=args.model or "mock-vision", vision_key=args.api_key or "mock-key",
                 search=search, lang=args.lang, mock=mock, timeout=args.timeout,
                 template=template_mode, extra=vision_extra,
+                search_count=mode_search_count, fetch_count=mode_fetch_count,
+                fetch_provider=fetch_provider,
             )
             rec["warmup"] = False
             records.append(rec)
@@ -720,7 +926,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         failures = [r for r in records if not r.get("warmup") and not r.get("ok")]
         total = [r["total_ms"] for r in measured]
         stage_vals: Dict[str, List[float]] = {}
-        for stage in ("vision", "query_gen", "search", "summary"):
+        for stage in ("vision", "query_gen", "search", "fetch", "summary"):
             stage_vals[stage] = [
                 r["stages"][stage]["total_ms"]
                 for r in measured
@@ -736,6 +942,24 @@ def main(argv: Optional[List[str]] = None) -> int:
             verdict = "PARTIAL_REAL_VISION_MOCK_SEARCH" if measured else "PARTIAL_FAILED"
         else:
             verdict = "DONE" if (measured and p95 <= threshold) else ("BLOCKED" if not measured else "FAILED")
+        search_stages = [
+            r["stages"]["search"]
+            for r in measured
+            if (r.get("stages") or {}).get("search", {}).get("ok")
+        ]
+        fetch_stages = [
+            r["stages"]["fetch"]
+            for r in measured
+            if (r.get("stages") or {}).get("fetch")
+        ]
+        tokens_per_run = []
+        for r in measured:
+            total_tokens = 0
+            for st in ("vision", "summary"):
+                total_tokens += ((r["stages"].get(st) or {}).get("usage") or {}).get(
+                    "total_tokens", 0
+                )
+            tokens_per_run.append(total_tokens)
         result["modes"][mode] = {
             "threshold_ms": threshold,
             "measured_runs": len(measured),
@@ -743,6 +967,41 @@ def main(argv: Optional[List[str]] = None) -> int:
             "failure_rate": round(len(failures) / runs, 4) if runs else None,
             "total_ms": summarize(total),
             "stages_ms": {k: summarize(v) for k, v in stage_vals.items()},
+            "search_stats": {
+                "runs_with_search": len(search_stages),
+                "avg_results": round(
+                    statistics.fmean(
+                        [s.get("results", 0) for s in search_stages]
+                    ), 2
+                ) if search_stages else None,
+                "empty_result_runs": sum(
+                    1 for s in search_stages if s.get("results", 0) == 0
+                ),
+                "avg_http_ms": round(
+                    statistics.fmean(
+                        [
+                            d.get("http_ms", 0)
+                            for s in search_stages
+                            for d in (s.get("detail") or [])
+                            if d.get("http_ms") is not None
+                        ]
+                    ),
+                    2,
+                ) if search_stages else None,
+            },
+            "fetch_stats": {
+                "runs_with_fetch": len(fetch_stages),
+                "avg_requested": round(
+                    statistics.fmean([f.get("requested", 0) for f in fetch_stages]), 2
+                ) if fetch_stages else None,
+                "avg_success": round(
+                    statistics.fmean([f.get("success", 0) for f in fetch_stages]), 2
+                ) if fetch_stages else None,
+                "runs_with_all_fetch_failed": sum(
+                    1 for f in fetch_stages if f.get("success", 0) == 0
+                ),
+            },
+            "tokens_per_run": summarize(tokens_per_run),
             "verdict": verdict,
             "records": records,
         }
@@ -753,11 +1012,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         if total:
             st = result["modes"][mode]["total_ms"]
             print(f"端到端：P50 {st['p50_ms']}ms | P95 {st['p95_ms']}ms | max {st['max_ms']}ms (n={st['count']})")
-            for stage in ("vision", "query_gen", "search", "summary"):
+            for stage in ("vision", "query_gen", "search", "fetch", "summary"):
                 s = result["modes"][mode]["stages_ms"].get(stage) or {}
                 if s.get("count"):
                     print(f"  {stage:9s} P50 {s['p50_ms']}ms | P95 {s['p95_ms']}ms | max {s['max_ms']}ms")
-            print(f"失败率：{result['modes'][mode]['failure_rate']}  判定：{verdict}")
+            mres = result["modes"][mode]
+            print(
+                f"  search: 平均 {mres['search_stats']['avg_results']} 条/次，"
+                f"空结果 {mres['search_stats']['empty_result_runs']} 次"
+            )
+            if mres["fetch_stats"]["runs_with_fetch"]:
+                print(
+                    f"  fetch : 平均成功 {mres['fetch_stats']['avg_success']}/"
+                    f"{mres['fetch_stats']['avg_requested']} 条/次"
+                )
+            print(f"  tokens/次：{mres['tokens_per_run'].get('p50_ms')}")
+            print(f"失败率：{mres['failure_rate']}  判定：{verdict}")
         else:
             print(f"无成功样本，判定 BLOCKED。失败 {len(failures)}/{runs}")
             if failures:

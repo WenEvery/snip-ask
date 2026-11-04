@@ -1,0 +1,441 @@
+{
+  "tool": "bench_deepseek_tools.py",
+  "generated_at": "2026-11-05T01:38:00.292944+08:00",
+  "base_url": "https://api.deepseek.com",
+  "api_key_provided": true,
+  "search": {
+    "count": 5,
+    "runs": 20,
+    "records": [
+      {
+        "run": "search-1",
+        "query": "DeepSeek V4 模型 发布",
+        "status": 200,
+        "latency_ms": 398.33,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-2",
+        "query": "AI 屏幕翻译 截图 工具",
+        "status": 200,
+        "latency_ms": 307.35,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-3",
+        "query": "Qwen2.5 模型 中文 翻译 质量",
+        "status": 200,
+        "latency_ms": 262.63,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-4",
+        "query": "截图 问答 工具 推荐",
+        "status": 200,
+        "latency_ms": 281.26,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-5",
+        "query": "大模型 本地推理 性能 对比",
+        "status": 200,
+        "latency_ms": 316.33,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-6",
+        "query": "DeepSeek V4 模型 发布",
+        "status": 200,
+        "latency_ms": 289.38,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-7",
+        "query": "AI 屏幕翻译 截图 工具",
+        "status": 200,
+        "latency_ms": 313.28,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-8",
+        "query": "Qwen2.5 模型 中文 翻译 质量",
+        "status": 200,
+        "latency_ms": 262.95,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-9",
+        "query": "截图 问答 工具 推荐",
+        "status": 200,
+        "latency_ms": 278.69,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-10",
+        "query": "大模型 本地推理 性能 对比",
+        "status": 200,
+        "latency_ms": 272.47,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-11",
+        "query": "DeepSeek V4 模型 发布",
+        "status": 200,
+        "latency_ms": 281.54,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-12",
+        "query": "AI 屏幕翻译 截图 工具",
+        "status": 200,
+        "latency_ms": 287.73,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-13",
+        "query": "Qwen2.5 模型 中文 翻译 质量",
+        "status": 200,
+        "latency_ms": 381.34,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-14",
+        "query": "截图 问答 工具 推荐",
+        "status": 200,
+        "latency_ms": 698.47,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-15",
+        "query": "大模型 本地推理 性能 对比",
+        "status": 200,
+        "latency_ms": 300.32,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-16",
+        "query": "DeepSeek V4 模型 发布",
+        "status": 200,
+        "latency_ms": 294.64,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-17",
+        "query": "AI 屏幕翻译 截图 工具",
+        "status": 200,
+        "latency_ms": 378.97,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-18",
+        "query": "Qwen2.5 模型 中文 翻译 质量",
+        "status": 200,
+        "latency_ms": 312.17,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-19",
+        "query": "截图 问答 工具 推荐",
+        "status": 200,
+        "latency_ms": 257.95,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      },
+      {
+        "run": "search-20",
+        "query": "大模型 本地推理 性能 对比",
+        "status": 200,
+        "latency_ms": 268.82,
+        "attempts": 1,
+        "result_count": 5,
+        "empty": false,
+        "error": null
+      }
+    ],
+    "latency_ms": {
+      "count": 20,
+      "mean_ms": 322.23,
+      "p50_ms": 292.01,
+      "p95_ms": 413.34,
+      "max_ms": 698.47,
+      "min_ms": 257.95
+    },
+    "failures": 0,
+    "empty_results": 0
+  },
+  "fetch": {
+    "runs": 20,
+    "records": [
+      {
+        "run": "fetch-1",
+        "url": "https://api-docs.deepseek.com/zh-cn/guides/search",
+        "status": 200,
+        "latency_ms": 3169.15,
+        "attempts": 1,
+        "title": "网页搜索与抓取",
+        "content_chars": 5623,
+        "error": null
+      },
+      {
+        "run": "fetch-2",
+        "url": "https://api-docs.deepseek.com/zh-cn/",
+        "status": 200,
+        "latency_ms": 72.71,
+        "attempts": 1,
+        "title": "首次调用 API | DeepSeek API Docs",
+        "content_chars": 2572,
+        "error": null
+      },
+      {
+        "run": "fetch-3",
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+        "status": 200,
+        "latency_ms": 84.28,
+        "attempts": 1,
+        "title": "模型 & 价格 | DeepSeek API Docs",
+        "content_chars": 1442,
+        "error": null
+      },
+      {
+        "run": "fetch-4",
+        "url": "https://api-docs.deepseek.com/quick_start/your_first_api_call",
+        "status": 200,
+        "latency_ms": 3719.32,
+        "attempts": 1,
+        "title": "Your First API Call | DeepSeek API Docs",
+        "content_chars": 3391,
+        "error": null
+      },
+      {
+        "run": "fetch-5",
+        "url": "https://api-docs.deepseek.com/zh-cn/guides/search",
+        "status": 200,
+        "latency_ms": 108.09,
+        "attempts": 1,
+        "title": "网页搜索与抓取",
+        "content_chars": 5623,
+        "error": null
+      },
+      {
+        "run": "fetch-6",
+        "url": "https://api-docs.deepseek.com/zh-cn/",
+        "status": 200,
+        "latency_ms": 146.24,
+        "attempts": 1,
+        "title": "首次调用 API | DeepSeek API Docs",
+        "content_chars": 2572,
+        "error": null
+      },
+      {
+        "run": "fetch-7",
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+        "status": 200,
+        "latency_ms": 169.6,
+        "attempts": 1,
+        "title": "模型 & 价格 | DeepSeek API Docs",
+        "content_chars": 1442,
+        "error": null
+      },
+      {
+        "run": "fetch-8",
+        "url": "https://api-docs.deepseek.com/quick_start/your_first_api_call",
+        "status": 200,
+        "latency_ms": 107.3,
+        "attempts": 1,
+        "title": "Your First API Call | DeepSeek API Docs",
+        "content_chars": 3391,
+        "error": null
+      },
+      {
+        "run": "fetch-9",
+        "url": "https://api-docs.deepseek.com/zh-cn/guides/search",
+        "status": 200,
+        "latency_ms": 221.73,
+        "attempts": 1,
+        "title": "网页搜索与抓取",
+        "content_chars": 5623,
+        "error": null
+      },
+      {
+        "run": "fetch-10",
+        "url": "https://api-docs.deepseek.com/zh-cn/",
+        "status": 200,
+        "latency_ms": 72.77,
+        "attempts": 1,
+        "title": "首次调用 API | DeepSeek API Docs",
+        "content_chars": 2572,
+        "error": null
+      },
+      {
+        "run": "fetch-11",
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+        "status": 200,
+        "latency_ms": 72.5,
+        "attempts": 1,
+        "title": "模型 & 价格 | DeepSeek API Docs",
+        "content_chars": 1442,
+        "error": null
+      },
+      {
+        "run": "fetch-12",
+        "url": "https://api-docs.deepseek.com/quick_start/your_first_api_call",
+        "status": 200,
+        "latency_ms": 90.09,
+        "attempts": 1,
+        "title": "Your First API Call | DeepSeek API Docs",
+        "content_chars": 3391,
+        "error": null
+      },
+      {
+        "run": "fetch-13",
+        "url": "https://api-docs.deepseek.com/zh-cn/guides/search",
+        "status": 200,
+        "latency_ms": 72.88,
+        "attempts": 1,
+        "title": "网页搜索与抓取",
+        "content_chars": 5623,
+        "error": null
+      },
+      {
+        "run": "fetch-14",
+        "url": "https://api-docs.deepseek.com/zh-cn/",
+        "status": 200,
+        "latency_ms": 83.6,
+        "attempts": 1,
+        "title": "首次调用 API | DeepSeek API Docs",
+        "content_chars": 2572,
+        "error": null
+      },
+      {
+        "run": "fetch-15",
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+        "status": 200,
+        "latency_ms": 74.25,
+        "attempts": 1,
+        "title": "模型 & 价格 | DeepSeek API Docs",
+        "content_chars": 1442,
+        "error": null
+      },
+      {
+        "run": "fetch-16",
+        "url": "https://api-docs.deepseek.com/quick_start/your_first_api_call",
+        "status": 200,
+        "latency_ms": 75.86,
+        "attempts": 1,
+        "title": "Your First API Call | DeepSeek API Docs",
+        "content_chars": 3391,
+        "error": null
+      },
+      {
+        "run": "fetch-17",
+        "url": "https://api-docs.deepseek.com/zh-cn/guides/search",
+        "status": 200,
+        "latency_ms": 159.09,
+        "attempts": 1,
+        "title": "网页搜索与抓取",
+        "content_chars": 5623,
+        "error": null
+      },
+      {
+        "run": "fetch-18",
+        "url": "https://api-docs.deepseek.com/zh-cn/",
+        "status": 200,
+        "latency_ms": 78.19,
+        "attempts": 1,
+        "title": "首次调用 API | DeepSeek API Docs",
+        "content_chars": 2572,
+        "error": null
+      },
+      {
+        "run": "fetch-19",
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+        "status": 200,
+        "latency_ms": 72.53,
+        "attempts": 1,
+        "title": "模型 & 价格 | DeepSeek API Docs",
+        "content_chars": 1442,
+        "error": null
+      },
+      {
+        "run": "fetch-20",
+        "url": "https://api-docs.deepseek.com/quick_start/your_first_api_call",
+        "status": 200,
+        "latency_ms": 69.59,
+        "attempts": 1,
+        "title": "Your First API Call | DeepSeek API Docs",
+        "content_chars": 3391,
+        "error": null
+      }
+    ],
+    "latency_ms": {
+      "count": 20,
+      "mean_ms": 435.99,
+      "p50_ms": 83.94,
+      "p95_ms": 3196.66,
+      "max_ms": 3719.32,
+      "min_ms": 69.59
+    },
+    "failures": 0,
+    "success_with_content": 20
+  },
+  "inspect": null,
+  "status_codes": {
+    "200": 40
+  }
+}

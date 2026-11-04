@@ -1,6 +1,6 @@
 # S-05 / S-06 原始数据与汇总
 
-生成时间：2026-11-05T01:12:08.545018+08:00
+生成时间：2026-11-05T01:44:13.636312+08:00
 
 本目录文件由 `scripts/spikes/s05_s06/build_data_summary.py` 从 `.verify/spikes/S-05-S-06/raw/` 复制/聚合，均为真实测量输出。
 
@@ -16,6 +16,7 @@
 - `dashscope_empty_key_body.json`
 - `deepseek_capability_probe_20261105-005322.json`
 - `deepseek_empty_key_body.json`
+- `deepseek_tools_bench_20261105-013758.json`
 - `download.log`
 - `download_qwen15b.log`
 - `download_tiny.log`
@@ -24,6 +25,7 @@
 - `image_search_mock_20261104-235243.json`
 - `image_search_mock_20261104-235528.json`
 - `image_search_partial_deepseek_20261105-005527.json`
+- `image_search_real_deepseek_20261105-013758.json`
 - `local_translate_20261104-235408.json`
 - `local_translate_20261104-235614.json`
 - `local_translate_formal_20261105-000321.json`
@@ -47,4 +49,4 @@
 - 云端：DeepSeek `deepseek-flash`，stream=true；默认 thinking 与关闭 thinking 两组均记录 TTFT/总耗时。
 - 本地 1.8B：正式 10 次线程 16；污染期数据保留为对照。
 - 极小模型 Qwen2.5-0.5B：正式 10 次线程 16，记录 tok/s、内存、冷加载与输出样例。
-- S-06：DeepSeek 单 Key 视觉可用（真实截图识别成功）但无 Search API（404），验收仍 BLOCKED；PARTIAL 测量只用于估算视觉腿时延。
+- S-06：真实 DeepSeek 视觉 + 官方 Search/Fetch 跑通 quick/deep 各 20 次（`image_search_real_deepseek_*.json`），Search/Fetch 单独时延见 `deepseek_tools_bench_*.json`；phase-1「无 Search API」负向证据保留为历史。

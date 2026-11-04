@@ -235,9 +235,10 @@ S-01 混合 DPI 多屏坐标（跨屏误差 0.01px）、S-02 整屏 OCR det（�
 S-04 全局热键与冲突、S-07 离线受限模式 + **引导页三档 AI 服务**、S-08 模型下载断点续传与校验 = **DONE**；
 S-03 已按决策落地「整屏 det 缓存 → 选区 rec-only」（P95 596ms，原 det+rec 口径 968ms 保留为对照）；
 S-05 云端（DeepSeek，关闭 thinking）首字 P95 0.87s、本地**极小档** P95 3.21s = **DONE**，本地 1.8B「普通档」CPU P95 21.84s
-不满足 8s → 按用户决策作为**可选质量档并显式提示**；S-06 仅缺检索 Key（DeepSeek 视觉腿已可用，mock 检索下 quick P95 5.26s）。
+不满足 8s → 按用户决策作为**可选质量档并显式提示**；S-06 图片搜索 = **DONE**（DeepSeek 视觉 + 官方 Search/Fetch 工具 API，
+快速 P95 6.01s / 深度 P95 8.29s，各 20 次 0 失败）。
 逐项记录与原始数据索引见 [`docs/spikes/`](docs/spikes/README.md)，复跑脚本见 [`scripts/spikes/`](scripts/spikes/README.md)。
-剩余决策项：S-05 云端**总耗时**口径（P95 1.75s vs ≤1.5s，首字已达标）建议明确为「首字」；S-06 需检索 Key。
+剩余决策项：S-05 云端**总耗时**口径（P95 1.75s vs ≤1.5s，首字已达标）建议明确为「首字」。
 
 ## 许可与隐私
 
