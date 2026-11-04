@@ -1,0 +1,181 @@
+{
+  "meta": {
+    "script": "bench_local_translate.mjs",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-04T17:07:29.276Z",
+    "mode": "REAL_LOCAL_LLAMA_CPP",
+    "host": {
+      "os": "win32 10.0.26200",
+      "cpu_model": "12th Gen Intel(R) Core(TM) i7-12650H",
+      "logical_cpus": 16,
+      "total_mem_gb": null,
+      "free_mem_gb_before": 8.16,
+      "node": "v24.14.1"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "threshold_ms": 8000,
+    "sample_len_chars": 200,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+    "prompt_variant": "minimal",
+    "prompt_file": "resources/prompts/translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "prompt_chars": 220,
+    "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+    "exe_version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+    "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "model_sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "model_size_bytes": 491400032,
+    "server_args": {
+      "ctx": 4096,
+      "threads": 16,
+      "port": 39281,
+      "host": "127.0.0.1",
+      "gpu_layers": 0,
+      "max_tokens": 1024
+    },
+    "sampling": {
+      "temperature": 0.2,
+      "top_p": 0.95,
+      "top_k": 0,
+      "repeat_penalty": 1,
+      "max_tokens": 1024,
+      "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+    },
+    "health_ready_ms": 812.52,
+    "memory_after_load": {
+      "workingSet": 545587200,
+      "privateMemory": 236240896,
+      "peakWorkingSet": 545587200,
+      "cpuSeconds": 3.265625
+    },
+    "memory_after_runs": {
+      "workingSet": 564465664,
+      "privateMemory": 240676864,
+      "peakWorkingSet": 564465664,
+      "cpuSeconds": 127.546875
+    },
+    "idle_unload": {
+      "testable": false,
+      "reason": "idleUnloadSec=600 是 SnipAsk 应用层策略；llama-server 本身没有空闲卸载机制，本机未运行应用，无法观测「600s 空闲后卸载」行为，仅记录模型常驻内存与进程未退出。"
+    },
+    "server_log_tail": "0.00.004.475 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set\n0.00.004.476 W srv  llama_server: this can be a security risk (cross-origin attacks)\n0.00.004.476 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655\n0.00.004.476 W srv  llama_server: -----------------\n0.00.012.790 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf'\n0.00.523.033 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden\n0.00.732.883 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'\n0.00.742.486 I srv  llama_server: model loaded\n0.00.742.492 I srv  llama_server: listening on http://127.0.0.1:39281\n0.01.207.077 I slot get_availabl: id  3 | task -1 | selected slot by LRU, t_last = -1\n0.01.207.117 I slot launch_slot_: id  3 | task 0 | processing task, is_child = 0\n0.04.420.057 I slot print_timing: id  3 | task 0 | prompt eval time =     420.55 ms /   166 tokens (    2.53 ms per token,   394.72 tokens per second)\n0.04.420.069 I slot print_timing: id  3 | task 0 |        eval time =    2792.36 ms /   155 tokens (   18.02 ms per token,    55.51 tokens per second)\n0.04.420.070 I slot print_timing: id  3 | task 0 |       total time =    3212.91 ms /   321 tokens\n0.04.420.074 I slot print_timing: id  3 | task 0 |    graphs reused =        153\n0.04.420.143 I slot      release: id  3 | task 0 | stop processing: n_tokens = 320, truncated = 0\n0.04.432.305 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.519\n0.04.432.582 I slot launch_slot_: id  3 | task 156 | processing task, is_child = 0\n0.07.357.621 I slot print_timing: id  3 | task 156 | prompt eval time =     414.85 ms /   166 tokens (    2.50 ms per token,   400.14 tokens per second)\n0.07.357.629 I slot print_timing: id  3 | task 156 |        eval time =    2510.14 ms /   140 tokens (   17.93 ms per token,    55.77 tokens per second)\n0.07.357.630 I slot print_timing: id  3 | task 156 |       total time =    2925.00 ms /   306 tokens\n0.07.357.633 I slot print_timing: id  3 | task 156 |    graphs reused =        290\n0.07.357.669 I\nslot      release: id  3 | task 156 | stop processing: n_tokens = 305, truncated = 0\n0.07.367.150 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.544\n0.07.367.406 I slot launch_slot_: id  3 | task 297 | processing task, is_child = 0\n0.10.449.330 I slot print_timing: id  3 | task 297 | prompt eval time =     420.22 ms /   166 tokens (    2.53 ms per token,   395.03 tokens per second)\n0.10.449.340 I slot print_timing: id  3 | task 297 |        eval time =    2661.67 ms /   146 tokens (   18.23 ms per token,    54.85 tokens per second)\n0.10.449.341 I slot print_timing: id  3 | task 297 |       total time =    3081.88 ms /   312 tokens\n0.10.449.342 I slot print_timing: id  3 | task 297 |    graphs reused =        433",
+    "shutdown": {
+      "alreadyExited": false,
+      "exit": {
+        "code": null,
+        "sig": "SIGTERM"
+      }
+    }
+  },
+  "records": [
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "total_ms": 3222.47,
+      "ttfb_ms": 3222.25,
+      "server_prompt_ms": 420.547,
+      "server_predicted_ms": 2792.358,
+      "tok_per_sec": 55.50864180022762,
+      "prompt_tokens": 166,
+      "completion_tokens": 155,
+      "output_chars": 733,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "The AI is a screen selection tool for taking words and screenshots: press Ctrl+Q to select the box, box the text or image, and release the mouse to open the action menu. You can translate the selected text, extract the text, search for the content of the image, or ask AI questions. All actions are displayed in the result window. The results are supported by copying, re-executing, and asking. The c",
+      "output_sha256": "78b3f1e3f4eafbeb15e54841a74a17931b1f7c9c453d9ac62244921b543f32c3",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "total_ms": 2936.52,
+      "ttfb_ms": 2936.35,
+      "server_prompt_ms": 414.853,
+      "server_predicted_ms": 2510.144,
+      "tok_per_sec": 55.773692664643946,
+      "prompt_tokens": 166,
+      "completion_tokens": 140,
+      "output_chars": 670,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "AI is a screen selection, screenshot, and question-answer tool: press Ctrl+Q to trigger selection, select the text or image on the screen, release the mouse to open the action menu. You can translate the selected segment, extract text, search for image content, or ask AI questions. All actions are displayed in the result window, and the results can be copied, re-executed, or asked. Cloud models ne",
+      "output_sha256": "5579b681606398ba192c5473865acdc74d6ac52a4747fa12c83aeae11f78d8b2",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "total_ms": 3091.83,
+      "ttfb_ms": 3091.62,
+      "server_prompt_ms": 420.217,
+      "server_predicted_ms": 2661.667,
+      "tok_per_sec": 54.85284222256203,
+      "prompt_tokens": 166,
+      "completion_tokens": 146,
+      "output_chars": 704,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "Box Select is a screen selection, screenshot, and question-answer tool: press Ctrl+Q to select the box, box the screen text or image, and release the mouse to open the action menu. You can translate the selected text, extract the text, search for image content, or ask AI questions. All actions are displayed in the result window, and the results are supported for copying, re-execution, and asking. ",
+      "output_sha256": "4fdb3f4c68c931af5e7c92d26b4a37a748354c75be62c05956ea46056b3f40de",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 3,
+    "failures": 0,
+    "failure_rate": 0,
+    "total_ms": {
+      "count": 3,
+      "mean_ms": 3083.61,
+      "p50_ms": 3091.83,
+      "p95_ms": 3209.41,
+      "max_ms": 3222.47,
+      "min_ms": 2936.52
+    },
+    "ttfb_ms": {
+      "count": 3,
+      "mean_ms": 3083.41,
+      "p50_ms": 3091.62,
+      "p95_ms": 3209.19,
+      "max_ms": 3222.25,
+      "min_ms": 2936.35
+    },
+    "server_prompt_ms": {
+      "count": 3,
+      "mean_ms": 418.54,
+      "p50_ms": 420.22,
+      "p95_ms": 420.51,
+      "max_ms": 420.55,
+      "min_ms": 414.85
+    },
+    "server_predicted_ms": {
+      "count": 3,
+      "mean_ms": 2654.72,
+      "p50_ms": 2661.67,
+      "p95_ms": 2779.29,
+      "max_ms": 2792.36,
+      "min_ms": 2510.14
+    },
+    "tok_per_sec": {
+      "count": 3,
+      "mean_ms": 55.38,
+      "p50_ms": 55.51,
+      "p95_ms": 55.75,
+      "max_ms": 55.77,
+      "min_ms": 54.85
+    },
+    "completion_tokens": {
+      "count": 3,
+      "mean_ms": 147,
+      "p50_ms": 146,
+      "p95_ms": 154.1,
+      "max_ms": 155,
+      "min_ms": 140
+    },
+    "first_failure": null
+  },
+  "verdict": "DONE"
+}

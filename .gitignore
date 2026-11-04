@@ -52,6 +52,8 @@ __pycache__/
 
 # ---- 本机数据（便携版 / 调试产生，不属于仓库内容）----
 data/
+# 例外：技术验证汇总数据（docs/spikes/data/ 为文档引用的小体量汇总 JSON，随仓库提供）
+!docs/spikes/data/
 portable.flag
 *.db
 *.db-journal

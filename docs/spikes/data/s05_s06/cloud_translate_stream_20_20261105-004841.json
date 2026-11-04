@@ -1,0 +1,696 @@
+{
+  "meta": {
+    "script": "bench_translate.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T00:50:13.061204+08:00",
+    "mode": "REAL",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "prompt_file": "resources\\prompts\\translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "sample_len_chars": 200,
+    "threshold_ms": 1500.0,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86"
+  },
+  "config": {
+    "base_url_masked": "https://api.deepseek.com:443/chat/completions",
+    "model": "deepseek-flash",
+    "stream": true,
+    "runs": 20,
+    "warmup": 2,
+    "timeout_sec": 60.0,
+    "target_lang": "en",
+    "source_lang": "zh-CHS",
+    "temperature": 0.0,
+    "prompt_chars": 762,
+    "extra_params": [],
+    "api_key_provided": true,
+    "calibers": {
+      "ttft_threshold_ms": 1500.0,
+      "total_threshold_ms": 1500.0,
+      "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。"
+    }
+  },
+  "records": [
+    {
+      "run": "warmup-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 120.7,
+      "send_ms": 0.18,
+      "first_byte_ms": 166.61,
+      "total_ms": 2995.19,
+      "first_token_ms": 2341.74,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 515,
+        "total_tokens": 1007,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 370
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 722,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "948859844efda65d60a0aac1f63e0117d0ec7e98e5f53d455f208a9511dca668",
+      "warmup": true
+    },
+    {
+      "run": "warmup-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 82.26,
+      "send_ms": 0.11,
+      "first_byte_ms": 109.88,
+      "total_ms": 4546.72,
+      "first_token_ms": 3954.43,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 746,
+        "total_tokens": 1238,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 602
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 718,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "c3c675b23b7c9fd1261a20c37b2925cc00fdd46e23fdd39b2ba4a8f5e2d0b8bc",
+      "warmup": true
+    },
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 80.24,
+      "send_ms": 0.29,
+      "first_byte_ms": 121.27,
+      "total_ms": 3878.44,
+      "first_token_ms": 3299.76,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 704,
+        "total_tokens": 1196,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 553
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 737,
+      "output_sample": "框选 AI is an on-screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text o",
+      "output_sha256": "616e50c1a07106177f91504420a0aa05404f85eabcbea4e3b24a553d4ac51be7",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 101.87,
+      "send_ms": 0.41,
+      "first_byte_ms": 124.47,
+      "total_ms": 3338.03,
+      "first_token_ms": 2679.52,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 525,
+        "total_tokens": 1017,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 384
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 706,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, select text or image",
+      "output_sha256": "3a050fad8c7987c4d1fca05861fe73c6dc1fd59038ba0704e0ec77b4783dfcf5",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 153.58,
+      "send_ms": 0.3,
+      "first_byte_ms": 131.23,
+      "total_ms": 3239.99,
+      "first_token_ms": 2707.16,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 549,
+        "total_tokens": 1041,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 400
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 732,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, enclose the text or ",
+      "output_sha256": "1852e20605bc22b5be324ed30cad7298fb9da968bf755d1d7af4527d0b8aef56",
+      "warmup": false
+    },
+    {
+      "run": "run-4",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 97.37,
+      "send_ms": 0.4,
+      "first_byte_ms": 115.22,
+      "total_ms": 4185.5,
+      "first_token_ms": 3656.45,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 716,
+        "total_tokens": 1208,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 567
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 732,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "bb47637d9b2fda935a7ed74e72bd7c320d1f66788d46f74a0d479f5d40ef9916",
+      "warmup": false
+    },
+    {
+      "run": "run-5",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 80.38,
+      "send_ms": 0.17,
+      "first_byte_ms": 89.25,
+      "total_ms": 4085.43,
+      "first_token_ms": 3461.74,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 725,
+        "total_tokens": 1217,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 574
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 736,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or imag",
+      "output_sha256": "c94f9419d35eaca9f154fe30ffde5cc60f21854fa26f26c8a4e033077dcd3d14",
+      "warmup": false
+    },
+    {
+      "run": "run-6",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 35.65,
+      "send_ms": 0.44,
+      "first_byte_ms": 75.28,
+      "total_ms": 4021.56,
+      "first_token_ms": 3469.35,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 721,
+        "total_tokens": 1213,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 571
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 730,
+      "output_sample": "框选 AI is an on-screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text o",
+      "output_sha256": "d6eb292c4bdc0294e52cde8fe02c3529d1a81d64f7fc698f8b6a7a4ee5e05fe1",
+      "warmup": false
+    },
+    {
+      "run": "run-7",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 55.17,
+      "send_ms": 0.31,
+      "first_byte_ms": 68.27,
+      "total_ms": 5211.59,
+      "first_token_ms": 4632.21,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 829,
+        "total_tokens": 1321,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 683
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 721,
+      "output_sample": "框选 AI is a screen word selection and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or ",
+      "output_sha256": "1e00e9c8bccb1703c1d183d3895224b3e4b4aa78b187e8906649bc1f6db6e656",
+      "warmup": false
+    },
+    {
+      "run": "run-8",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 34.45,
+      "send_ms": 0.17,
+      "first_byte_ms": 85.64,
+      "total_ms": 4376.51,
+      "first_token_ms": 3805.58,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 772,
+        "total_tokens": 1264,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 623
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 730,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "9f5a197312229587942e1102475214a9ef7f8cbf87714dc8162cb31fe3acc41e",
+      "warmup": false
+    },
+    {
+      "run": "run-9",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 41.65,
+      "send_ms": 0.31,
+      "first_byte_ms": 62.58,
+      "total_ms": 4319.42,
+      "first_token_ms": 3782.38,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 768,
+        "total_tokens": 1260,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 622
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 716,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: Press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "ec3b601956b17ba95919779e399f3717f9d87f9bd6ae07fa0c10d821f091ef0c",
+      "warmup": false
+    },
+    {
+      "run": "run-10",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 39.09,
+      "send_ms": 0.51,
+      "first_byte_ms": 81.6,
+      "total_ms": 3653.69,
+      "first_token_ms": 3117.89,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 604,
+        "total_tokens": 1096,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 454
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 723,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "222c18e658f504d8d3ecc77058f39ac60f4a6ebce652afcaa6c829e4fee457e3",
+      "warmup": false
+    },
+    {
+      "run": "run-11",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 46.52,
+      "send_ms": 0.45,
+      "first_byte_ms": 87.21,
+      "total_ms": 3305.63,
+      "first_token_ms": 2759.93,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 592,
+        "total_tokens": 1084,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 445
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 707,
+      "output_sample": "框选 AI is an on-screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or ",
+      "output_sha256": "abf7095c6a84f92f6664643a10ca78b1b07b3012127fa435b2b32c26f2fccc42",
+      "warmup": false
+    },
+    {
+      "run": "run-12",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 37.91,
+      "send_ms": 0.13,
+      "first_byte_ms": 59.52,
+      "total_ms": 4551.54,
+      "first_token_ms": 3980.65,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 763,
+        "total_tokens": 1255,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 616
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 721,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "54bf783c3390a9e09dfc8b2c4a21890af3dd790732c70cb1dac42da4f65243f2",
+      "warmup": false
+    },
+    {
+      "run": "run-13",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 42.73,
+      "send_ms": 0.73,
+      "first_byte_ms": 125.21,
+      "total_ms": 3522.54,
+      "first_token_ms": 2963.26,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 595,
+        "total_tokens": 1087,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 446
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 733,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "8561f3bd971ebc6cd6605e2b341a180d7788564c2c61543a2dc9acbe5eb2447f",
+      "warmup": false
+    },
+    {
+      "run": "run-14",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 106.98,
+      "send_ms": 0.45,
+      "first_byte_ms": 80.18,
+      "total_ms": 5143.06,
+      "first_token_ms": 4589.3,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 887,
+        "total_tokens": 1379,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 736
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 740,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "bc75134930e6ce12042b3f42fec7e789652349f3e8c82f9635dddfe2f55b3c32",
+      "warmup": false
+    },
+    {
+      "run": "run-15",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 38.35,
+      "send_ms": 0.17,
+      "first_byte_ms": 73.66,
+      "total_ms": 4267.73,
+      "first_token_ms": 3721.75,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 677,
+        "total_tokens": 1169,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 526
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 739,
+      "output_sample": "框选 AI is an on-screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text o",
+      "output_sha256": "854acadc33bf390c2059dd5c29ee564955e76f65b8cbd70e7dae4f7e0ef53b40",
+      "warmup": false
+    },
+    {
+      "run": "run-16",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 40.27,
+      "send_ms": 0.14,
+      "first_byte_ms": 69.93,
+      "total_ms": 4227.87,
+      "first_token_ms": 3677.92,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 650,
+        "total_tokens": 1142,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 501
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 734,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "d0cdf5cb67e8e7b8b2f6e749dde550c4390ca1f9ab68df7eea9b3cce45838bcb",
+      "warmup": false
+    },
+    {
+      "run": "run-17",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 76.49,
+      "send_ms": 0.33,
+      "first_byte_ms": 74.79,
+      "total_ms": 3454.82,
+      "first_token_ms": 2915.22,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 581,
+        "total_tokens": 1073,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 432
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 724,
+      "output_sample": "框选 AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "310d7cf2a33ad5421e9529078dfa25b16a583918691e0b19e39793011299a3ea",
+      "warmup": false
+    },
+    {
+      "run": "run-18",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 46.95,
+      "send_ms": 0.31,
+      "first_byte_ms": 81.88,
+      "total_ms": 4350.67,
+      "first_token_ms": 3722.94,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 753,
+        "total_tokens": 1245,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 608
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 715,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "f2d3f5640df5293799d518d0ea8b4d9cd64760a16c3651a9899dcfda7ba25104",
+      "warmup": false
+    },
+    {
+      "run": "run-19",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 136.7,
+      "send_ms": 0.14,
+      "first_byte_ms": 163.21,
+      "total_ms": 3992.94,
+      "first_token_ms": 3471.79,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 708,
+        "total_tokens": 1200,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 558
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 744,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "0c652787508c8e2f88181f7f67d04ced5b0912e5c329063a3b592f29782d33ba",
+      "warmup": false
+    },
+    {
+      "run": "run-20",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 97.77,
+      "send_ms": 0.26,
+      "first_byte_ms": 123.12,
+      "total_ms": 3867.09,
+      "first_token_ms": 3323.21,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 644,
+        "total_tokens": 1136,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 496
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 720,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "f0e6ef46aaadc8c90c1d9a583b3e43820c6ce92f5db82858927afbb64b142e50",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 20,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "http_status_distribution": {
+      "200": 22
+    },
+    "total_ms": {
+      "count": 20,
+      "mean_ms": 4049.7,
+      "p50_ms": 4053.49,
+      "p95_ms": 5146.49,
+      "max_ms": 5211.59,
+      "min_ms": 3239.99
+    },
+    "first_byte_ms": {
+      "count": 20,
+      "mean_ms": 94.68,
+      "p50_ms": 83.76,
+      "p95_ms": 132.83,
+      "max_ms": 163.21,
+      "min_ms": 59.52
+    },
+    "first_token_ms": {
+      "count": 20,
+      "mean_ms": 3486.9,
+      "p50_ms": 3470.57,
+      "p95_ms": 4591.45,
+      "max_ms": 4632.21,
+      "min_ms": 2679.52
+    },
+    "verdicts": {
+      "ttft": "FAILED",
+      "total": "FAILED"
+    },
+    "usage_total_tokens_all_runs": 23603,
+    "first_failure": null
+  }
+}

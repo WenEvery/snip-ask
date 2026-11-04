@@ -1,0 +1,135 @@
+{
+  "probe": "S-06 负向证据：DeepSeek 单 Key 是否支持视觉与 Search",
+  "generated_at": "2026-11-05T00:53:16.304201+08:00",
+  "base_url": "https://api.deepseek.com",
+  "image": {
+    "path": "docs\\images\\settings-ai.png",
+    "size_bytes": 80150
+  },
+  "api_key_provided": true,
+  "probes": [
+    {
+      "name": "GET /models",
+      "status": 200,
+      "body": "{\"object\":\"list\",\"data\":[{\"id\":\"deepseek-flash\",\"object\":\"model\",\"owned_by\":\"deepseek\",\"name\":\"DeepSeek-V4.1-Flash\",\"context_window\":1048576,\"max_output_tokens\":393216,\"input_modalities\":[\"text\",\"image\"],\"output_modalities\":[\"text\"],\"effort\":{\"supported_levels\":[\"low\",\"high\",\"max\"],\"default_level\":\"high\"},\"api_capabilities\":{\"anthropic_messages\":{\"system_prompt_update\":\"in-history\",\"tool_update\":\"addition-only\"}}},{\"id\":\"deepseek-v4-pro\",\"object\":\"model\",\"owned_by\":\"deepseek\",\"name\":\"DeepSeek-V4-Pro\",\"context_window\":1048576,\"max_output_tokens\":393216,\"input_modalities\":[\"text\"],\"output_modalities\":[\"text\"],\"effort\":{\"supported_levels\":[\"low\",\"high\",\"max\"],\"default_level\":\"high\"},\"api_capabilities\":{\"anthropic_messages\":{\"system_prompt_update\":\"leading-only\",\"tool_update\":\"leading-only\"}}}]}"
+    },
+    {
+      "name": "vision: POST /chat/completions (image content, model=deepseek-flash)",
+      "model": "deepseek-flash",
+      "status": 200,
+      "body": "{\"id\":\"8981a901-9b9f-43de-acee-3941f2868bf2\",\"object\":\"chat.completion\",\"created\":1793811194,\"model\":\"deepseek-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。\",\"reasoning_content\":\"1.  **分析用户请求**：用户要求用30字以内描述截图的文字和界面内容。\\n2.  **检查图像**：\\n    *   窗口标题：框选AI - 浏览器预览·骨架模式。\\n    *   左侧边栏：设置，首次启动。\\n    *   主区域：设置 -> AI服务。\\n    *   内容：AI服务配置，供应商列表（DeepSeek被选中），API配置（Base URL，模型名deepseek-flash，API Key），启用开关，测试连接按钮。\\n    *   底部：保存按钮（应用AI服务）。\\n3.  **综合描述**：\\n    *   这是一张软件设置界面的截图。\\n    *   具体到AI服务配置页面。\\n    *   正在配置DeepSeek供应商的API信息。\\n4.  **精炼至30字以内**：\\n    *   “框选AI软件设置界面，正在配置DeepSeek的API服务与密钥。” -> 23字。\\n    *   符合字数限制，概括了文字（软件名、DeepSeek、API）和界面（设置界面）。\\n5.  **最终选择**：精简版本。“框选AI软件设置界面，正在配置DeepSeek的API服务与密钥。” (23字) 或稍作润色：“框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。” (25字) 或更简洁：“框选AI设置界面，展示AI服务与DeepSeek的API配置。” (23字)。\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":496,\"completion_tokens\":340,\"total_tokens\":836,\"prompt_tokens_details\":{\"cached_tokens\":256},\"completion_tokens_details\":{\"reasoning_tokens\":320},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":240},\"system_fingerprint\":\"bc19ba97cbe016479903222bb1578db6\"}",
+      "reply": "框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。",
+      "reasoning_content": "1.  **分析用户请求**：用户要求用30字以内描述截图的文字和界面内容。\n2.  **检查图像**：\n    *   窗口标题：框选AI - 浏览器预览·骨架模式。\n    *   左侧边栏：设置，首次启动。\n    *   主区域：设置 -> AI服务。\n    *   内容：AI服务配置，供应商列表（DeepSeek被选中），API配置（Base URL，模型名deepseek-flash，API Key），启用开关，测试连接按钮。\n    *   底部：保存按钮（应用AI服务）。\n3.  **综合描述**：\n    *   这是一张软件设置界面的截图。\n    *   具体到AI服务配置页面。\n    *   正在配置DeepSeek供应商的API信息。\n4.  **精炼至30字以内**：\n    *   “框选AI软件设置界面，正在配置DeepSeek的API服务与密钥。” -",
+      "usage": {
+        "prompt_tokens": 496,
+        "completion_tokens": 340,
+        "total_tokens": 836,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 320
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 240
+      }
+    },
+    {
+      "name": "vision: POST /chat/completions (image content, model=deepseek-v4-pro)",
+      "model": "deepseek-v4-pro",
+      "status": 200,
+      "body": "{\"id\":\"eefa5648-5203-4ae0-93ed-5706cdea57e1\",\"object\":\"chat.completion\",\"created\":1793811196,\"model\":\"deepseek-v4-pro\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"无法查看图片，请重新上传或提供文字内容。\",\"reasoning_content\":\"我们需要回答用户中文请求：“描述这张截图的文字和界面内容，30 字以内。”但图片不支持/不可见。需要处理：无法看到截图。需要说明无法描述，因为图片未显示/不支持。但要简洁？用户要求30字以内描述截图。我们作为助手看不到图片。可能应该回复无法访问图片。需要中文，30字以内。可以：“无法查看图片，请重新上传或提供文字内容。” 字数少。需要确保不超过30字。这符合。\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":102,\"completion_tokens\":117,\"total_tokens\":219,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":104},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":102},\"system_fingerprint\":\"a307abda487cd1b463329ccb945ce396\"}",
+      "reply": "无法查看图片，请重新上传或提供文字内容。",
+      "reasoning_content": "我们需要回答用户中文请求：“描述这张截图的文字和界面内容，30 字以内。”但图片不支持/不可见。需要处理：无法看到截图。需要说明无法描述，因为图片未显示/不支持。但要简洁？用户要求30字以内描述截图。我们作为助手看不到图片。可能应该回复无法访问图片。需要中文，30字以内。可以：“无法查看图片，请重新上传或提供文字内容。” 字数少。需要确保不超过30字。这符合。",
+      "usage": {
+        "prompt_tokens": 102,
+        "completion_tokens": 117,
+        "total_tokens": 219,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 104
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 102
+      }
+    },
+    {
+      "name": "search: POST /search",
+      "status": 404,
+      "body": ""
+    },
+    {
+      "name": "search: GET /search",
+      "status": 404,
+      "body": ""
+    },
+    {
+      "name": "search: POST /v1/search",
+      "status": 404,
+      "body": ""
+    },
+    {
+      "name": "search: POST /search/completions",
+      "status": 404,
+      "body": ""
+    }
+  ],
+  "models": [
+    {
+      "id": "deepseek-flash",
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ],
+      "context_window": 1048576,
+      "effort": {
+        "supported_levels": [
+          "low",
+          "high",
+          "max"
+        ],
+        "default_level": "high"
+      },
+      "api_capabilities": {
+        "anthropic_messages": {
+          "system_prompt_update": "in-history",
+          "tool_update": "addition-only"
+        }
+      }
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "text"
+      ],
+      "context_window": 1048576,
+      "effort": {
+        "supported_levels": [
+          "low",
+          "high",
+          "max"
+        ],
+        "default_level": "high"
+      },
+      "api_capabilities": {
+        "anthropic_messages": {
+          "system_prompt_update": "leading-only",
+          "tool_update": "leading-only"
+        }
+      }
+    }
+  ],
+  "conclusion": {
+    "vision_supported": true,
+    "search_endpoint_found": false,
+    "note": "结论以真实 HTTP 响应为准；视觉 200 表示 Chat API 接受图片输入，但不等于具备产品所需「识别 + 检索 + 来源」链路；Search 端点全部非 200 则图片搜索链路仍缺检索腿。"
+  }
+}

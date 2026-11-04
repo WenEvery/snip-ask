@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "script": "bench_local_translate.mjs",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-04T16:08:17.551Z",
+    "mode": "REAL_LOCAL_LLAMA_CPP",
+    "host": {
+      "os": "win32 10.0.26200",
+      "cpu_model": "12th Gen Intel(R) Core(TM) i7-12650H",
+      "logical_cpus": 16,
+      "total_mem_gb": null,
+      "free_mem_gb_before": 7.4,
+      "node": "v24.14.1"
+    },
+    "repo_commit": "a9b352ed45855cd872b72223b914f57bc711781e",
+    "threshold_ms": 8000,
+    "sample_len_chars": 200,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+    "prompt_file": "resources/prompts/translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "prompt_chars": 762,
+    "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+    "exe_version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+    "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf",
+    "model_sha256": "4383ac0c3c8e476de98ff979c2a3f069f8c4fb385e7860cf2d28da896cc477c7",
+    "model_size_bytes": 1133080512,
+    "server_args": {
+      "ctx": 4096,
+      "threads": 16,
+      "port": 39281,
+      "host": "127.0.0.1",
+      "gpu_layers": 0,
+      "max_tokens": 100
+    },
+    "sampling": {
+      "temperature": 0.2,
+      "top_p": 0.95,
+      "top_k": 0,
+      "repeat_penalty": 1,
+      "max_tokens": 100,
+      "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+    },
+    "health_ready_ms": 1461.29,
+    "memory_after_load": {
+      "workingSet": 2204196864,
+      "privateMemory": 1190412288,
+      "peakWorkingSet": 2204196864,
+      "cpuSeconds": 5.078125
+    },
+    "memory_after_runs": {
+      "workingSet": 2260303872,
+      "privateMemory": 1195384832,
+      "peakWorkingSet": 2260303872,
+      "cpuSeconds": 190.65625
+    },
+    "idle_unload": {
+      "testable": false,
+      "reason": "idleUnloadSec=600 是 SnipAsk 应用层策略；llama-server 本身没有空闲卸载机制，本机未运行应用，无法观测「600s 空闲后卸载」行为，仅记录模型常驻内存与进程未退出。"
+    },
+    "server_log_tail": "0.00.003.673 I srv          init: The UI is disabled\n0.00.003.678 I srv          init: Use --ui/--no-ui (or deprecated --webui/--no-webui) to enable/disable\n0.00.003.798 W srv  llama_server: -----------------\n0.00.003.800 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set\n0.00.003.800 W srv  llama_server: this can be a security risk (cross-origin attacks)\n0.00.003.801 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655\n0.00.003.801 W srv  llama_server: -----------------\n0.00.007.419 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'\n0.00.406.340 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect\n0.01.371.530 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'\n0.01.377.423 I srv  llama_server: model loaded\n0.01.377.433 I srv  llama_server: listening on http://127.0.0.1:39281\n0.01.843.937 I slot get_availabl: id  3 | task -1 | selected slot by LRU, t_last = -1\n0.01.844.034 I slot launch_slot_: id  3 | task 0 | processing task, is_child = 0\n0.08.435.886 I slot print_timing: id  3 | task 0 | prompt eval time =    1958.18 ms /   458 tokens (    4.28 ms per token,   233.89 tokens per second)\n0.08.435.899 I slot print_timing: id  3 | task 0 |        eval time =    4633.64 ms /   100 tokens (   46.34 ms per token,    21.58 tokens per second)\n0.08.435.900 I slot print_timing: id  3 | task 0 |       total time =    6591.81 ms /   558 tokens\n0.08.435.901 I slot print_timing: id  3 | task 0 |    graphs reused =         98\n0.08.436.040 I slot      release: id  3 | task 0 | stop processing: n_tokens = 557, truncated = 0\n0.08.446.831 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.822\n0.08.447.061 I slot launch_slot_: id  3 | task 101 | processing task, is_child = 0\n0.15.549.215 I slot print_timing: id  3 | task 101 | prompt eval time =    2451.25 ms /   458 tokens (    5.35 ms per token,   186.84 tokens per second)\n0.15.549.223 I slot print_timing: id  3 | task 101 |        eval time =    4650.86 ms /   100 tokens (   46.51 ms per token,    21.50 tokens per second)\n0.15.549.225 I slot print_timing: id  3 | task 101 |       total time =    7102.11 ms /   558 tokens\n0.15.549.226 I slot print_timing: id  3 | task 101 |    graphs reused =        195",
+    "shutdown": {
+      "alreadyExited": false,
+      "exit": {
+        "code": null,
+        "sig": "SIGTERM"
+      }
+    }
+  },
+  "records": [
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "total_ms": 6601.02,
+      "ttfb_ms": 6600.8,
+      "server_prompt_ms": 1958.178,
+      "server_predicted_ms": 4633.636,
+      "tok_per_sec": 21.58132404012745,
+      "prompt_tokens": 458,
+      "completion_tokens": 100,
+      "output_chars": 449,
+      "output_sample": "**Box AI: A Screen Word Selection & Screenshot Q&A Tool**  \nPress Ctrl+Q to summon the selection box. Box the text or image on the screen, and release the mouse",
+      "output_sha256": "4c48cf48ef01a805117f3bf22259db3f5187c74a20f7aa8c0a427503d8d818b6",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "total_ms": 7112.85,
+      "ttfb_ms": 7112.45,
+      "server_prompt_ms": 2451.251,
+      "server_predicted_ms": 4650.858,
+      "tok_per_sec": 21.50140898733094,
+      "prompt_tokens": 458,
+      "completion_tokens": 100,
+      "output_chars": 445,
+      "output_sample": "**Box AI: A Screen Word Selection & Screenshot Q&A Tool**  \nPress Ctrl+Q to invoke the selection box. Box the text or image on the screen, and release the mouse",
+      "output_sha256": "553272699475b4c6ee28708c0d27501074dd5dd5c2522c4dd4f183e5ff8d55e5",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 2,
+    "failures": 0,
+    "failure_rate": 0,
+    "total_ms": {
+      "count": 2,
+      "mean_ms": 6856.94,
+      "p50_ms": 6856.94,
+      "p95_ms": 7087.26,
+      "max_ms": 7112.85,
+      "min_ms": 6601.02
+    },
+    "ttfb_ms": {
+      "count": 2,
+      "mean_ms": 6856.63,
+      "p50_ms": 6856.63,
+      "p95_ms": 7086.87,
+      "max_ms": 7112.45,
+      "min_ms": 6600.8
+    },
+    "server_prompt_ms": {
+      "count": 2,
+      "mean_ms": 2204.71,
+      "p50_ms": 2204.71,
+      "p95_ms": 2426.6,
+      "max_ms": 2451.25,
+      "min_ms": 1958.18
+    },
+    "server_predicted_ms": {
+      "count": 2,
+      "mean_ms": 4642.25,
+      "p50_ms": 4642.25,
+      "p95_ms": 4650,
+      "max_ms": 4650.86,
+      "min_ms": 4633.64
+    },
+    "tok_per_sec": {
+      "count": 2,
+      "mean_ms": 21.54,
+      "p50_ms": 21.54,
+      "p95_ms": 21.58,
+      "max_ms": 21.58,
+      "min_ms": 21.5
+    },
+    "completion_tokens": {
+      "count": 2,
+      "mean_ms": 100,
+      "p50_ms": 100,
+      "p95_ms": 100,
+      "max_ms": 100,
+      "min_ms": 100
+    },
+    "first_failure": null
+  },
+  "verdict": "DONE"
+}

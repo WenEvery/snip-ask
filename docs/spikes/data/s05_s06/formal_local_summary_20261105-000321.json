@@ -1,0 +1,31 @@
+﻿{
+    "stamp":  "20261105-000321",
+    "started_at":  "20261105-000321",
+    "quiet_load_threshold":  40,
+    "load_at_start":  55,
+    "load_before_formal":  100,
+    "load_after_formal":  1,
+    "thread_tuning":  [
+                          {
+                              "threads":  6,
+                              "mean_ms":  18122.76,
+                              "total_p50":  18122.76,
+                              "decode_p50":  14468.47,
+                              "toks_per_s":  12.1,
+                              "file":  "tune_threads6_20261105-000321.json"
+                          },
+                          {
+                              "threads":  16,
+                              "mean_ms":  13966.23,
+                              "total_p50":  13966.23,
+                              "decode_p50":  10915.5,
+                              "toks_per_s":  14,
+                              "file":  "tune_threads16_20261105-000321.json"
+                          }
+                      ],
+    "chosen_threads":  16,
+    "formal_json":  "local_translate_formal_20261105-000321.json",
+    "sensitivity_json":  "local_translate_sens100_20261105-000321.json",
+    "llama_server_leftover":  0,
+    "log":  "formal_local_20261105-000321.log"
+}

@@ -1,0 +1,181 @@
+{
+  "meta": {
+    "script": "bench_local_translate.mjs",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-04T17:07:10.877Z",
+    "mode": "REAL_LOCAL_LLAMA_CPP",
+    "host": {
+      "os": "win32 10.0.26200",
+      "cpu_model": "12th Gen Intel(R) Core(TM) i7-12650H",
+      "logical_cpus": 16,
+      "total_mem_gb": null,
+      "free_mem_gb_before": 8.08,
+      "node": "v24.14.1"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "threshold_ms": 8000,
+    "sample_len_chars": 200,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+    "prompt_variant": "product",
+    "prompt_file": "resources/prompts/translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "prompt_chars": 762,
+    "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+    "exe_version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+    "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "model_sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "model_size_bytes": 491400032,
+    "server_args": {
+      "ctx": 4096,
+      "threads": 16,
+      "port": 39281,
+      "host": "127.0.0.1",
+      "gpu_layers": 0,
+      "max_tokens": 1024
+    },
+    "sampling": {
+      "temperature": 0.2,
+      "top_p": 0.95,
+      "top_k": 0,
+      "repeat_penalty": 1,
+      "max_tokens": 1024,
+      "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+    },
+    "health_ready_ms": 806.14,
+    "memory_after_load": {
+      "workingSet": 545665024,
+      "privateMemory": 236175360,
+      "peakWorkingSet": 545665024,
+      "cpuSeconds": 3.078125
+    },
+    "memory_after_runs": {
+      "workingSet": 589406208,
+      "privateMemory": 240074752,
+      "peakWorkingSet": 589406208,
+      "cpuSeconds": 150.25
+    },
+    "idle_unload": {
+      "testable": false,
+      "reason": "idleUnloadSec=600 是 SnipAsk 应用层策略；llama-server 本身没有空闲卸载机制，本机未运行应用，无法观测「600s 空闲后卸载」行为，仅记录模型常驻内存与进程未退出。"
+    },
+    "server_log_tail": "srv  llama_server: -----------------\n0.00.004.102 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set\n0.00.004.102 W srv  llama_server: this can be a security risk (cross-origin attacks)\n0.00.004.102 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655\n0.00.004.102 W srv  llama_server: -----------------\n0.00.013.051 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf'\n0.00.512.138 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden\n0.00.723.263 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'\n0.00.734.046 I srv  llama_server: model loaded\n0.00.734.056 I srv  llama_server: listening on http://127.0.0.1:39281\n0.01.196.555 I slot get_availabl: id  3 | task -1 | selected slot by LRU, t_last = -1\n0.01.196.601 I slot launch_slot_: id  3 | task 0 | processing task, is_child = 0\n0.04.911.587 I slot print_timing: id  3 | task 0 | prompt eval time =    1290.35 ms /   527 tokens (    2.45 ms per token,   408.42 tokens per second)\n0.04.911.596 I slot print_timing: id  3 | task 0 |        eval time =    2424.60 ms /   125 tokens (   19.40 ms per token,    51.55 tokens per second)\n0.04.911.598 I slot print_timing: id  3 | task 0 |       total time =    3714.95 ms /   652 tokens\n0.04.911.599 I slot print_timing: id  3 | task 0 |    graphs reused =        124\n0.04.911.754 I slot      release: id  3 | task 0 | stop processing: n_tokens = 651, truncated = 0\n0.04.925.903 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.810\n0.04.926.073 I slot launch_slot_: id  3 | task 126 | processing task, is_child = 0\n0.08.571.942 I slot print_timing: id  3 | task 126 | prompt eval time =    1313.83 ms /   527 tokens (    2.49 ms per token,   401.12 tokens per second)\n0.08.571.950 I slot print_timing: id  3 | task 126 |        eval time =    2332.00 ms /   125 tokens (   18.66 ms per token,    53.60 tokens per second)\n0.08.571.951 I slot print_timing: id  3 | task 126 |       total time =    3645.83 ms /   652 tokens\n0.08.571.952 I slot print_timing: id  3 | task 126 |    graphs reused =        247\n0.08.572.008 I slot      release: id  3 | task 126 | stop processing: n_tokens = 651, truncated = 0\n0.08.582.373 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.810\n0.08.582.536 I slot launch_slot_: id  3 | task 252 | processing task, is_child = 0\n0.12.232.115 I slot print_timing: id  3 | task 252 | prompt eval time =    1301.27 ms /   527 tokens (    2.47 ms per token,   404.99 tokens per second)\n0.12.232.124 I slot print_timing: id  3 | task 252 |        eval time =    2348.27 ms /   125 tokens (   18.79 ms per token,    53.23 tokens per second)\n0.12.232.125 I slot print_timing: id  3 | task 252 |       total time =    3649.54 ms /   652 tokens\n0.12.232.128 I slot print_timing: id  3 | task 252 |    graphs reused =        370",
+    "shutdown": {
+      "alreadyExited": false,
+      "exit": {
+        "code": null,
+        "sig": "SIGTERM"
+      }
+    }
+  },
+  "records": [
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "total_ms": 3725.16,
+      "ttfb_ms": 3724.87,
+      "server_prompt_ms": 1290.349,
+      "server_predicted_ms": 2424.597,
+      "tok_per_sec": 51.5549594427445,
+      "prompt_tokens": 527,
+      "completion_tokens": 125,
+      "output_chars": 200,
+      "output_cjk_ratio": 0.795,
+      "looks_translated": false,
+      "output_sample": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议先完成引导，选择常用语言与默认动作。若遇到快捷键冲突，可在设置中修改或暂停热键。",
+      "output_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "total_ms": 3659.34,
+      "ttfb_ms": 3659.12,
+      "server_prompt_ms": 1313.825,
+      "server_predicted_ms": 2332.002,
+      "tok_per_sec": 53.60201234818838,
+      "prompt_tokens": 527,
+      "completion_tokens": 125,
+      "output_chars": 200,
+      "output_cjk_ratio": 0.795,
+      "looks_translated": false,
+      "output_sample": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议先完成引导，选择常用语言与默认动作。若遇到快捷键冲突，可在设置中修改或暂停热键。",
+      "output_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "total_ms": 3659.83,
+      "ttfb_ms": 3659.66,
+      "server_prompt_ms": 1301.272,
+      "server_predicted_ms": 2348.267,
+      "tok_per_sec": 53.23074420413011,
+      "prompt_tokens": 527,
+      "completion_tokens": 125,
+      "output_chars": 200,
+      "output_cjk_ratio": 0.795,
+      "looks_translated": false,
+      "output_sample": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议先完成引导，选择常用语言与默认动作。若遇到快捷键冲突，可在设置中修改或暂停热键。",
+      "output_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 3,
+    "failures": 0,
+    "failure_rate": 0,
+    "total_ms": {
+      "count": 3,
+      "mean_ms": 3681.44,
+      "p50_ms": 3659.83,
+      "p95_ms": 3718.63,
+      "max_ms": 3725.16,
+      "min_ms": 3659.34
+    },
+    "ttfb_ms": {
+      "count": 3,
+      "mean_ms": 3681.22,
+      "p50_ms": 3659.66,
+      "p95_ms": 3718.35,
+      "max_ms": 3724.87,
+      "min_ms": 3659.12
+    },
+    "server_prompt_ms": {
+      "count": 3,
+      "mean_ms": 1301.82,
+      "p50_ms": 1301.27,
+      "p95_ms": 1312.57,
+      "max_ms": 1313.83,
+      "min_ms": 1290.35
+    },
+    "server_predicted_ms": {
+      "count": 3,
+      "mean_ms": 2368.29,
+      "p50_ms": 2348.27,
+      "p95_ms": 2416.96,
+      "max_ms": 2424.6,
+      "min_ms": 2332
+    },
+    "tok_per_sec": {
+      "count": 3,
+      "mean_ms": 52.8,
+      "p50_ms": 53.23,
+      "p95_ms": 53.56,
+      "max_ms": 53.6,
+      "min_ms": 51.55
+    },
+    "completion_tokens": {
+      "count": 3,
+      "mean_ms": 125,
+      "p50_ms": 125,
+      "p95_ms": 125,
+      "max_ms": 125,
+      "min_ms": 125
+    },
+    "first_failure": null
+  },
+  "verdict": "DONE"
+}

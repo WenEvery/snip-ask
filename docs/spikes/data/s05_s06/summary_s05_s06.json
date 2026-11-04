@@ -1,0 +1,840 @@
+{
+  "generated_at": "2026-11-05T01:12:08.545018+08:00",
+  "repo_commit": "a9b352ed45855cd872b72223b914f57bc711781e",
+  "environment": {
+    "os": "Windows 11 专业版 Build 26200",
+    "cpu": "12th Gen Intel Core i7-12650H（10 核 16 线程，6P+4E）",
+    "ram_bytes": 16944848896,
+    "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU（本次本地基准未使用，CPU 推理 ngl=0）",
+    "python": "3.11.3",
+    "node": "24.14.1",
+    "date": "2026-11-04",
+    "cloud_key": "sk-****（用户提供，已脱敏）"
+  },
+  "s05": {
+    "thresholds_ms": {
+      "cloud_fast_ttft": 1500,
+      "local_1_8b": 8000
+    },
+    "cloud": {
+      "provider": "DeepSeek（OpenAI 兼容 /chat/completions，stream=true）",
+      "models_available": [
+        "deepseek-flash",
+        "deepseek-v4-pro"
+      ],
+      "default_config": {
+        "model": "deepseek-flash",
+        "stream": true,
+        "extra_params": [],
+        "calibers": {
+          "ttft_threshold_ms": 1500.0,
+          "total_threshold_ms": 1500.0,
+          "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。"
+        },
+        "measured_runs": 20,
+        "failures": 0,
+        "http_status_distribution": {
+          "200": 22
+        },
+        "total_ms": {
+          "count": 20,
+          "mean_ms": 4049.7,
+          "p50_ms": 4053.49,
+          "p95_ms": 5146.49,
+          "max_ms": 5211.59,
+          "min_ms": 3239.99
+        },
+        "first_byte_ms": {
+          "count": 20,
+          "mean_ms": 94.68,
+          "p50_ms": 83.76,
+          "p95_ms": 132.83,
+          "max_ms": 163.21,
+          "min_ms": 59.52
+        },
+        "first_token_ms": {
+          "count": 20,
+          "mean_ms": 3486.9,
+          "p50_ms": 3470.57,
+          "p95_ms": 4591.45,
+          "max_ms": 4632.21,
+          "min_ms": 2679.52
+        },
+        "verdicts": {
+          "ttft": "FAILED",
+          "total": "FAILED"
+        },
+        "usage_reasoning_tokens": [
+          553,
+          384,
+          400,
+          567,
+          574,
+          571,
+          683,
+          623,
+          622,
+          454,
+          445,
+          616,
+          446,
+          736,
+          526,
+          501,
+          432,
+          608,
+          558,
+          496
+        ],
+        "output_sample": "框选 AI is an on-screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text o"
+      },
+      "thinking_disabled": {
+        "model": "deepseek-flash",
+        "stream": true,
+        "extra_params": [
+          "thinking"
+        ],
+        "calibers": {
+          "ttft_threshold_ms": 1500.0,
+          "total_threshold_ms": 1500.0,
+          "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。"
+        },
+        "measured_runs": 20,
+        "failures": 0,
+        "http_status_distribution": {
+          "200": 22
+        },
+        "total_ms": {
+          "count": 20,
+          "mean_ms": 1498.94,
+          "p50_ms": 1512.64,
+          "p95_ms": 1754.03,
+          "max_ms": 1781.67,
+          "min_ms": 1191.72
+        },
+        "first_byte_ms": {
+          "count": 20,
+          "mean_ms": 83.74,
+          "p50_ms": 78.32,
+          "p95_ms": 115.39,
+          "max_ms": 143.7,
+          "min_ms": 61.41
+        },
+        "first_token_ms": {
+          "count": 20,
+          "mean_ms": 620.37,
+          "p50_ms": 613.66,
+          "p95_ms": 865.0,
+          "max_ms": 876.17,
+          "min_ms": 346.1
+        },
+        "verdicts": {
+          "ttft": "DONE",
+          "total": "FAILED"
+        },
+        "usage_reasoning_tokens": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or"
+      },
+      "verdict": {
+        "default": "两个口径均 FAILED（首字 P95 4.59s / 总耗时 P95 5.15s，>1.5s）",
+        "thinking_disabled": "首字口径 DONE（P95 0.87s ≤1.5s）；总耗时口径 FAILED（P95 1.75s >1.5s）",
+        "reasoning_evidence": "默认 completion_tokens 中 reasoning_tokens 309–574，是首字 3–4.6s 的主因；`{\"thinking\":{\"type\":\"disabled\"}}` 后首字降至 0.61s(P50)/0.87s(P95)。"
+      }
+    },
+    "local_1_8b": {
+      "verdict": "FAILED",
+      "model": {
+        "id": "hy-mt-1.8b-q4",
+        "file": "HY-MT1.5-1.8B-Q4_K_M.gguf",
+        "size_bytes": 1133080512,
+        "sha256": "4383ac0c3c8e476de98ff979c2a3f069f8c4fb385e7860cf2d28da896cc477c7"
+      },
+      "engine": {
+        "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+        "version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+        "args": {
+          "ctx": 4096,
+          "threads": 16,
+          "port": 39281,
+          "host": "127.0.0.1",
+          "gpu_layers": 0,
+          "max_tokens": 1024
+        }
+      },
+      "sampling": {
+        "temperature": 0.2,
+        "top_p": 0.95,
+        "top_k": 0,
+        "repeat_penalty": 1,
+        "max_tokens": 1024,
+        "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+      },
+      "cold_load_ms": 2879.18,
+      "memory": {
+        "after_load": {
+          "workingSet": 2204188672,
+          "privateMemory": 1190035456,
+          "peakWorkingSet": 2204188672,
+          "cpuSeconds": 5.734375
+        },
+        "after_runs": {
+          "workingSet": 2259890176,
+          "privateMemory": 1194455040,
+          "peakWorkingSet": 2259890176,
+          "cpuSeconds": 1573.640625
+        }
+      },
+      "formal_10_runs_threads16": {
+        "total_ms": {
+          "count": 10,
+          "mean_ms": 13557.94,
+          "p50_ms": 11759.5,
+          "p95_ms": 21836.86,
+          "max_ms": 23824.7,
+          "min_ms": 9886.4
+        },
+        "server_prompt_ms": {
+          "count": 10,
+          "mean_ms": 3067.07,
+          "p50_ms": 3007.81,
+          "p95_ms": 3775.71,
+          "max_ms": 3939.19,
+          "min_ms": 2559.72
+        },
+        "server_predicted_ms": {
+          "count": 10,
+          "mean_ms": 10480.67,
+          "p50_ms": 8461.49,
+          "p95_ms": 18201.95,
+          "max_ms": 19874.95,
+          "min_ms": 7317.78
+        },
+        "tok_per_sec": {
+          "count": 10,
+          "mean_ms": 15.81,
+          "p50_ms": 17.56,
+          "p95_ms": 19.81,
+          "max_ms": 20.5,
+          "min_ms": 7.5
+        },
+        "completion_tokens": {
+          "count": 10,
+          "mean_ms": 150,
+          "p50_ms": 150,
+          "p95_ms": 153.1,
+          "max_ms": 154,
+          "min_ms": 147
+        }
+      },
+      "thread_tuning": {
+        "threads_6": {
+          "count": 2,
+          "mean_ms": 18122.76,
+          "p50_ms": 18122.76,
+          "p95_ms": 22998.48,
+          "max_ms": 23540.23,
+          "min_ms": 12705.28
+        },
+        "threads_16": {
+          "count": 2,
+          "mean_ms": 13966.23,
+          "p50_ms": 13966.23,
+          "p95_ms": 15314.02,
+          "max_ms": 15463.77,
+          "min_ms": 12468.69
+        }
+      },
+      "max_tokens_100_sensitivity": {
+        "total_ms": {
+          "count": 2,
+          "mean_ms": 6856.94,
+          "p50_ms": 6856.94,
+          "p95_ms": 7087.26,
+          "max_ms": 7112.85,
+          "min_ms": 6601.02
+        },
+        "tok_per_sec": {
+          "count": 2,
+          "mean_ms": 21.54,
+          "p50_ms": 21.54,
+          "p95_ms": 21.58,
+          "max_ms": 21.58,
+          "min_ms": 21.5
+        },
+        "completion_tokens": {
+          "count": 2,
+          "mean_ms": 100,
+          "p50_ms": 100,
+          "p95_ms": 100,
+          "max_ms": 100,
+          "min_ms": 100
+        }
+      },
+      "contaminated_runs": {
+        "temp0.7_parallel_load": {
+          "total_ms": {
+            "count": 2,
+            "mean_ms": 25130.88,
+            "p50_ms": 25130.88,
+            "p95_ms": 28969.33,
+            "max_ms": 29395.82,
+            "min_ms": 20865.94
+          },
+          "completion_tokens": {
+            "count": 2,
+            "mean_ms": 358,
+            "p50_ms": 358,
+            "p95_ms": 395.8,
+            "max_ms": 400,
+            "min_ms": 316
+          }
+        },
+        "temp0.2_parallel_load": {
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 12450.95,
+            "p50_ms": 12573.64,
+            "p95_ms": 15696.18,
+            "max_ms": 16043.13,
+            "min_ms": 8736.09
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 149,
+            "p50_ms": 149,
+            "p95_ms": 149.9,
+            "max_ms": 150,
+            "min_ms": 148
+          }
+        }
+      },
+      "load_notes": {
+        "quiet_load_threshold_percent": 40,
+        "load_at_start_percent": 55,
+        "load_before_formal_percent": 100,
+        "load_after_formal_percent": 1
+      },
+      "idle_unload": {
+        "testable": false,
+        "reason": "idleUnloadSec=600 是 SnipAsk 应用层策略；llama-server 本身没有空闲卸载机制，本机未运行应用，无法观测「600s 空闲后卸载」行为，仅记录模型常驻内存与进程未退出。"
+      }
+    },
+    "tiny_model": {
+      "verdict": "DONE",
+      "model": {
+        "id": "Qwen2.5-0.5B-Instruct Q4_K_M",
+        "path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "size_bytes": 491400032,
+        "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+        "source": "ModelScope Qwen/Qwen2.5-0.5B-Instruct-GGUF，491,400,032 B，48.26s 下载"
+      },
+      "engine": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+      "exe_version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+      "server_args": {
+        "ctx": 4096,
+        "threads": 16,
+        "port": 39281,
+        "host": "127.0.0.1",
+        "gpu_layers": 0,
+        "max_tokens": 1024
+      },
+      "sampling": {
+        "temperature": 0.2,
+        "top_p": 0.95,
+        "top_k": 0,
+        "repeat_penalty": 1,
+        "max_tokens": 1024,
+        "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+      },
+      "cold_load_ms": 1341.1,
+      "memory": {
+        "after_load": {
+          "workingSet": 545492992,
+          "privateMemory": 235581440,
+          "peakWorkingSet": 545492992,
+          "cpuSeconds": 3.453125
+        },
+        "after_runs": {
+          "workingSet": 589729792,
+          "privateMemory": 240345088,
+          "peakWorkingSet": 589729792,
+          "cpuSeconds": 594.3125
+        }
+      },
+      "summary": {
+        "total_ms": {
+          "count": 10,
+          "mean_ms": 3834.33,
+          "p50_ms": 3781.74,
+          "p95_ms": 4128.48,
+          "max_ms": 4174.05,
+          "min_ms": 3682.32
+        },
+        "server_prompt_ms": {
+          "count": 10,
+          "mean_ms": 1346.47,
+          "p50_ms": 1312.06,
+          "p95_ms": 1503.15,
+          "max_ms": 1595.43,
+          "min_ms": 1292.88
+        },
+        "server_predicted_ms": {
+          "count": 10,
+          "mean_ms": 2476.73,
+          "p50_ms": 2449.9,
+          "p95_ms": 2678.68,
+          "max_ms": 2817.4,
+          "min_ms": 2371.82
+        },
+        "tok_per_sec": {
+          "count": 10,
+          "mean_ms": 50.59,
+          "p50_ms": 51.02,
+          "p95_ms": 52.64,
+          "max_ms": 52.7,
+          "min_ms": 44.37
+        },
+        "completion_tokens": {
+          "count": 10,
+          "mean_ms": 125,
+          "p50_ms": 125,
+          "p95_ms": 125,
+          "max_ms": 125,
+          "min_ms": 125
+        },
+        "failures": 0
+      },
+      "samples": [
+        "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议",
+        "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议"
+      ]
+    },
+    "tiny_candidates": {
+      "note": "0.5B 用产品 translate.md 会复述中文；换极简指令后可正常翻译。1.5B+极简指令 P95 6.72s、质量更好。注意 translated_ratio 只按 CJK 占比自动判定，minimal-fewshot 200 字实际只输出示例句（样例人工判断为不可用）。",
+      "prompt_variants_0_5b": [
+        {
+          "file": "tiny_variant_minimal-fewshot_200_20261105-010658.json",
+          "prompt_variant": "minimal-fewshot",
+          "text_chars": 200,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 792.06,
+            "p50_ms": 778.69,
+            "p95_ms": 815.19,
+            "max_ms": 819.24,
+            "min_ms": 778.26
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 58.71,
+            "p50_ms": 58.19,
+            "p95_ms": 59.9,
+            "max_ms": 60.09,
+            "min_ms": 57.85
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 19,
+            "p50_ms": 19,
+            "p95_ms": 19,
+            "max_ms": 19,
+            "min_ms": 19
+          },
+          "translated_ratio": 1.0,
+          "sample": "Example:\nChinese: The weather is nice today.\nEnglish: The weather is nice today."
+        },
+        {
+          "file": "tiny_variant_minimal-fewshot_30_20261105-010658.json",
+          "prompt_variant": "minimal-fewshot",
+          "text_chars": 23,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 480.54,
+            "p50_ms": 481.77,
+            "p95_ms": 519.1,
+            "max_ms": 523.25,
+            "min_ms": 436.6
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 60.19,
+            "p50_ms": 59.62,
+            "p95_ms": 61.72,
+            "max_ms": 61.95,
+            "min_ms": 59.01
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 15.67,
+            "p50_ms": 15,
+            "p95_ms": 17.7,
+            "max_ms": 18,
+            "min_ms": 14
+          },
+          "translated_ratio": 1.0,
+          "sample": "Please send this report to all the attendees by Friday. Thank you."
+        },
+        {
+          "file": "tiny_variant_minimal_200_20261105-010658.json",
+          "prompt_variant": "minimal",
+          "text_chars": 200,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 3083.61,
+            "p50_ms": 3091.83,
+            "p95_ms": 3209.41,
+            "max_ms": 3222.47,
+            "min_ms": 2936.52
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 55.38,
+            "p50_ms": 55.51,
+            "p95_ms": 55.75,
+            "max_ms": 55.77,
+            "min_ms": 54.85
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 147,
+            "p50_ms": 146,
+            "p95_ms": 154.1,
+            "max_ms": 155,
+            "min_ms": 140
+          },
+          "translated_ratio": 1.0,
+          "sample": "The AI is a screen selection tool for taking words and screenshots: press Ctrl+Q to select the box, box the text or image, and release the mouse to open the action menu. You can translate the selected text, extract the text, search for the content of the image, or ask AI questions. All actions are displayed in the result window. The results are supported by copying, re-executing, and asking. The c"
+        },
+        {
+          "file": "tiny_variant_minimal_30_20261105-010658.json",
+          "prompt_variant": "minimal",
+          "text_chars": 23,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 402.59,
+            "p50_ms": 396.79,
+            "p95_ms": 420.43,
+            "max_ms": 423.06,
+            "min_ms": 387.91
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 60.86,
+            "p50_ms": 61.64,
+            "p95_ms": 62.15,
+            "max_ms": 62.2,
+            "min_ms": 58.74
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 14.67,
+            "p50_ms": 15,
+            "p95_ms": 15,
+            "max_ms": 15,
+            "min_ms": 14
+          },
+          "translated_ratio": 1.0,
+          "sample": "Please send the report to all attendees by Friday. Thank you."
+        },
+        {
+          "file": "tiny_variant_product_200_20261105-010658.json",
+          "prompt_variant": "product",
+          "text_chars": 200,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 3681.44,
+            "p50_ms": 3659.83,
+            "p95_ms": 3718.63,
+            "max_ms": 3725.16,
+            "min_ms": 3659.34
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 52.8,
+            "p50_ms": 53.23,
+            "p95_ms": 53.56,
+            "max_ms": 53.6,
+            "min_ms": 51.55
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 125,
+            "p50_ms": 125,
+            "p95_ms": 125,
+            "max_ms": 125,
+            "min_ms": 125
+          },
+          "translated_ratio": 0.0,
+          "sample": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗口中展示，支持复制、重新执行与追问。云端模型需要配置 API Key，本地模型下载完成后即可离线使用。首次使用建议先完成引导，选择常用语言与默认动作。若遇到快捷键冲突，可在设置中修改或暂停热键。"
+        },
+        {
+          "file": "tiny_variant_product_30_20261105-010658.json",
+          "prompt_variant": "product",
+          "text_chars": 23,
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 1400.06,
+            "p50_ms": 1426.33,
+            "p95_ms": 1428.4,
+            "max_ms": 1428.63,
+            "min_ms": 1345.22
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 52.55,
+            "p50_ms": 52.72,
+            "p95_ms": 54.97,
+            "max_ms": 55.22,
+            "min_ms": 49.72
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 16,
+            "p50_ms": 16,
+            "p95_ms": 16,
+            "max_ms": 16,
+            "min_ms": 16
+          },
+          "translated_ratio": 0.0,
+          "sample": "请把这份报告在周五之前发给所有参会人员，谢谢。"
+        }
+      ],
+      "qwen2_5_1_5b": [
+        {
+          "file": "tiny_candidate_qwen15b_minimal_20261105-010829.json",
+          "model": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+          "prompt_variant": "minimal",
+          "text_chars": 200,
+          "cold_load_ms": 1444.48,
+          "memory_after_load": {
+            "workingSet": 1798410240,
+            "privateMemory": 942813184,
+            "peakWorkingSet": 1798410240,
+            "cpuSeconds": 4.46875
+          },
+          "total_ms": {
+            "count": 10,
+            "mean_ms": 6407.21,
+            "p50_ms": 6443.38,
+            "p95_ms": 6723.41,
+            "max_ms": 6894.49,
+            "min_ms": 5990.08
+          },
+          "tok_per_sec": {
+            "count": 10,
+            "mean_ms": 25.6,
+            "p50_ms": 25.66,
+            "p95_ms": 25.85,
+            "max_ms": 25.86,
+            "min_ms": 25.06
+          },
+          "completion_tokens": {
+            "count": 10,
+            "mean_ms": 146.2,
+            "p50_ms": 146,
+            "p95_ms": 151.75,
+            "max_ms": 154,
+            "min_ms": 139
+          },
+          "translated_ratio": 1.0,
+          "sample": "Select AI is a screen-to-text and screenshot question-and-answer tool: Press Ctrl+Q to summon the select box, select text or images on the screen, release the mouse button, and a menu will pop up. You can translate selected paragraphs, extract text, search, identify image content, or ask the AI. All actions are displayed in the result window, and you can copy, re-run, and ask the AI. Cloud models "
+        },
+        {
+          "file": "tiny_candidate_qwen15b_minimal_30_20261105-010829.json",
+          "model": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+          "prompt_variant": "minimal",
+          "text_chars": 23,
+          "cold_load_ms": 1452.37,
+          "memory_after_load": {
+            "workingSet": 1798336512,
+            "privateMemory": 942452736,
+            "peakWorkingSet": 1798336512,
+            "cpuSeconds": 4.703125
+          },
+          "total_ms": {
+            "count": 3,
+            "mean_ms": 736.92,
+            "p50_ms": 727.51,
+            "p95_ms": 761.09,
+            "max_ms": 764.82,
+            "min_ms": 718.42
+          },
+          "tok_per_sec": {
+            "count": 3,
+            "mean_ms": 28.04,
+            "p50_ms": 28.09,
+            "p95_ms": 28.28,
+            "max_ms": 28.3,
+            "min_ms": 27.73
+          },
+          "completion_tokens": {
+            "count": 3,
+            "mean_ms": 14.33,
+            "p50_ms": 14,
+            "p95_ms": 14.9,
+            "max_ms": 15,
+            "min_ms": 14
+          },
+          "translated_ratio": 1.0,
+          "sample": "Please send this report to all attendees by Friday, and thank you."
+        }
+      ],
+      "recommendation": "极小档 = Qwen2.5-0.5B Q4 + 极简翻译指令（P95 3.21s / 0.55GiB）；质量优先用 Qwen2.5-1.5B Q4 + 极简指令（P95 6.72s / 1.70GiB）；两者都不能使用产品 translate.md 提示词（0.5B 会复述）。"
+    }
+  },
+  "s06": {
+    "verdict": "BLOCKED（验收口径）",
+    "capability_probe": {
+      "models": [
+        {
+          "id": "deepseek-flash",
+          "input_modalities": [
+            "text",
+            "image"
+          ],
+          "output_modalities": [
+            "text"
+          ],
+          "context_window": 1048576,
+          "effort": {
+            "supported_levels": [
+              "low",
+              "high",
+              "max"
+            ],
+            "default_level": "high"
+          },
+          "api_capabilities": {
+            "anthropic_messages": {
+              "system_prompt_update": "in-history",
+              "tool_update": "addition-only"
+            }
+          }
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "input_modalities": [
+            "text"
+          ],
+          "output_modalities": [
+            "text"
+          ],
+          "context_window": 1048576,
+          "effort": {
+            "supported_levels": [
+              "low",
+              "high",
+              "max"
+            ],
+            "default_level": "high"
+          },
+          "api_capabilities": {
+            "anthropic_messages": {
+              "system_prompt_update": "leading-only",
+              "tool_update": "leading-only"
+            }
+          }
+        }
+      ],
+      "vision_supported": true,
+      "search_endpoint_found": false,
+      "probes": {
+        "GET /models": {
+          "status": 200,
+          "reply": null
+        },
+        "vision: POST /chat/completions (image content, model=deepseek-flash)": {
+          "status": 200,
+          "reply": "框选AI的AI服务设置页，包含DeepSeek供应商的API配置项。"
+        },
+        "vision: POST /chat/completions (image content, model=deepseek-v4-pro)": {
+          "status": 200,
+          "reply": "无法查看图片，请重新上传或提供文字内容。"
+        },
+        "search: POST /search": {
+          "status": 404,
+          "reply": null
+        },
+        "search: GET /search": {
+          "status": 404,
+          "reply": null
+        },
+        "search: POST /v1/search": {
+          "status": 404,
+          "reply": null
+        },
+        "search: POST /search/completions": {
+          "status": 404,
+          "reply": null
+        }
+      }
+    },
+    "partial_measurement": {
+      "note": "视觉/摘要为真实 DeepSeek 调用，Search 为 mock；PARTIAL_REAL_VISION_MOCK_SEARCH，不得作为验收结论",
+      "modes": {
+        "quick": {
+          "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+          "total_ms": {
+            "count": 5,
+            "mean_ms": 4772.54,
+            "p50_ms": 4736.76,
+            "p95_ms": 5261.48,
+            "max_ms": 5376.97,
+            "min_ms": 4417.69
+          },
+          "stages_ms": {
+            "vision": 2740.44,
+            "query_gen": 0.08,
+            "search": 20.54,
+            "summary": 2099.34
+          }
+        },
+        "deep": {
+          "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+          "total_ms": {
+            "count": 5,
+            "mean_ms": 5229.86,
+            "p50_ms": 5153.08,
+            "p95_ms": 5682.9,
+            "max_ms": 5753.02,
+            "min_ms": 4761.11
+          },
+          "stages_ms": {
+            "vision": 2712.48,
+            "query_gen": 0.04,
+            "search": 61.15,
+            "summary": 2444.65
+          }
+        }
+      }
+    },
+    "minimum_keys": "DeepSeek Key（已有，作 vision）+ 1 个搜索 API Key（Tavily/Serper）",
+    "thresholds_ms": {
+      "quick": 10000,
+      "deep": 25000
+    }
+  }
+}
