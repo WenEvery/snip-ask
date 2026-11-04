@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "框选 AI 默认窗口能力：main / overlay / result 三窗口共用",
+  "windows": ["main", "overlay", "result"],
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
+}

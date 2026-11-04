@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "currency": "CNY",
+  "usdToCny": 7.1,
+  "updatedAt": "2026-11-04",
+  "notes": "按 2026-11 公开报价估算，实际以供应商结算为准；DeepSeek 存在高峰/低谷两档计价，peak 字段为高峰价。cachedInputPerMTokens 为 0 表示该供应商未单独公布缓存命中价，计费时按 inputPerMTokens 处理。",
+  "models": [
+    {
+      "id": "deepseek-flash",
+      "inputPerMTokens": 1.07,
+      "outputPerMTokens": 4.26,
+      "cachedInputPerMTokens": 0.02,
+      "peakInputPerMTokens": 2.13,
+      "peakOutputPerMTokens": 8.52
+    },
+    {
+      "id": "qwen-mt-lite",
+      "inputPerMTokens": 0.6,
+      "outputPerMTokens": 1.6,
+      "cachedInputPerMTokens": 0
+    },
+    {
+      "id": "qwen-mt-plus",
+      "inputPerMTokens": 1.84,
+      "outputPerMTokens": 5.5,
+      "cachedInputPerMTokens": 0
+    }
+  ],
+  "search": [
+    {
+      "id": "deepseek-search",
+      "perCall": 0.0053
+    },
+    {
+      "id": "deepseek-fetch",
+      "perCall": 0.0053
+    }
+  ]
+}

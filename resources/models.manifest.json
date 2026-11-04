@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "verified": false,
+  "notes": "脚手架内置模型清单：sha256 暂为 64 个 0 的占位值，verified=false 表示尚未核验真实文件大小与哈希；接入真实下载前必须替换为官方发布的 sha256 并在 CI 中校验。模型文件不随安装包分发，由用户按需下载。",
+  "models": [
+    {
+      "id": "hy-mt-1.8b-q4",
+      "name": "HY-MT1.5-1.8B（Q4_K_M）",
+      "kind": "gguf",
+      "sizeBytes": 1258291200,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "license": "Tencent Hunyuan Community License",
+      "minRamMB": 4096,
+      "urls": [
+        "https://huggingface.co/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/main/hy-mt-1.5-1.8b-q4_k_m.gguf",
+        "https://modelscope.cn/models/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/master/hy-mt-1.5-1.8b-q4_k_m.gguf"
+      ],
+      "params": {
+        "quant": "Q4_K_M",
+        "context": 8192,
+        "languages": 38,
+        "engine": "llama.cpp"
+      }
+    },
+    {
+      "id": "qwen3-4b-q4",
+      "name": "Qwen3-4B（Q4_K_M）",
+      "kind": "gguf",
+      "sizeBytes": 2684354560,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "license": "Apache-2.0",
+      "minRamMB": 8192,
+      "urls": [
+        "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/qwen3-4b-q4_k_m.gguf",
+        "https://modelscope.cn/models/Qwen/Qwen3-4B-GGUF/resolve/master/qwen3-4b-q4_k_m.gguf"
+      ],
+      "params": {
+        "quant": "Q4_K_M",
+        "context": 32768,
+        "languages": 119,
+        "engine": "llama.cpp"
+      }
+    },
+    {
+      "id": "opus-mt-zh-en",
+      "name": "OPUS-MT 中英翻译（CTranslate2）",
+      "kind": "ct2",
+      "sizeBytes": 314572800,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "license": "CC-BY-4.0",
+      "minRamMB": 2048,
+      "urls": [
+        "https://huggingface.co/Helsinki-NLP/opus-mt-zh-en/resolve/main/ct2-int8.zip",
+        "https://modelscope.cn/models/Helsinki-NLP/opus-mt-zh-en/resolve/master/ct2-int8.zip"
+      ],
+      "params": {
+        "format": "ctranslate2",
+        "direction": "zh-en",
+        "quant": "int8",
+        "beamSize": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+[package]
+name = "snip-ask"
+version = "0.1.0"
+description = "框选 AI —— 轻量框选解答 / 翻译 / 搜索桌面工具（Tauri 2 后端脚手架）"
+authors = ["SnipAsk Contributors"]
+edition = "2021"
+rust-version = "1.77"
+license = "Apache-2.0"
+
+[lib]
+name = "snip_ask_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "snip-ask"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+anyhow = "1"
+tokio = { version = "1", features = ["sync", "time", "macros", "rt-multi-thread"] }
+async-trait = "0.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-appender = "0.2"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+parking_lot = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+url = "2"
+rusqlite = { version = "0.31", features = ["bundled"] }
+keyring = { version = "3", features = ["windows-native"] }
+base64 = "0.22"
+dirs = "5"
+once_cell = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+
+[features]
+default = []
+# Tauri 生产构建使用（`tauri build` 自动启用）；勿删。
+custom-protocol = ["tauri/custom-protocol"]
+
+[lints.rust]
+unsafe_code = "forbid"

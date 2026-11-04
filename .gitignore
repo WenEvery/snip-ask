@@ -1,0 +1,89 @@
+# ============================================================
+# 框选 AI（Snip Ask）· Git 忽略规则
+# 原则：只忽略「可再生成 / 本机相关 / 体积大」的产物；src-tauri/icons/** 必须入库。
+# ============================================================
+
+# ---- Node / 前端 ----
+node_modules/
+.pnpm-store/
+dist/
+dist-ssr/
+*.tsbuildinfo
+*.local
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Rust / Tauri ----
+src-tauri/target/
+src-tauri/gen/
+src-tauri/bundle/
+*.pdb
+*.rlib
+*.rmeta
+*.d
+
+# ---- 构建 / 打包产物 ----
+*.exe
+*.msi
+*.msix
+*.nsis.zip
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+coverage/
+playwright-report/
+test-results/
+
+# ---- 校验与临时目录 ----
+.verify/
+.tmp/
+*.tmp
+*.log
+
+# ---- Python（图标生成 / 校验脚本运行产生）----
+__pycache__/
+*.py[cod]
+
+# ---- 本机数据（便携版 / 调试产生，不属于仓库内容）----
+data/
+portable.flag
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ---- 本地模型（体积大且含第三方许可，禁止入库；由用户按需下载）----
+*.gguf
+*.onnx
+*.safetensors
+*.bin
+models/
+src-tauri/resources/models/
+
+# ---- 系统 ----
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+
+# ---- IDE / 编辑器 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ---- 图标必须保留（显式声明，防止误加通配规则时被忽略）----
+!src-tauri/icons/
+!src-tauri/icons/**

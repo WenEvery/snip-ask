@@ -1,0 +1,85 @@
+# 框选 AI · CI（windows-latest）
+# - web： pnpm install → typecheck → build:web → 上传 dist 产物（可选）
+# - rust：cargo fmt --check → clippy -D warnings → cargo test
+# 说明：脚手架阶段 CI 首次运行可能因依赖或占位实现未补全而失败，属预期；请以实际输出定位问题。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同一分支的旧任务自动取消，节省 CI 时间
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  web:
+    name: Web（typecheck + build）
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 类型检查
+        run: pnpm typecheck
+
+      - name: Web 构建
+        run: pnpm build:web
+
+      - name: 上传 Web 构建产物（可选）
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+          if-no-files-found: warn
+          retention-days: 7
+
+  rust:
+    name: Rust（fmt + clippy + test）
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: 缓存 Rust 构建
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 格式检查
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+
+      - name: Clippy 静态检查
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: 单元测试
+        run: cargo test --manifest-path src-tauri/Cargo.toml

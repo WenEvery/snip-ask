@@ -1,0 +1,158 @@
+/** 引导第 3 步的本地模型下载列表（models_list + 下载事件 + 取消） */
+
+import { useCallback, useEffect, useState } from "react";
+import type {
+  DownloadProgressPayload,
+  DownloadState,
+  DownloadStatePayload,
+  ModelInfo,
+} from "@/shared/contract/types";
+import { COMMANDS, EVENTS } from "@/shared/contract/names";
+import { ipc } from "@/shared/ipc";
+import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
+import { formatBytes, formatSpeed } from "../format";
+
+const STATE_LABELS: Record<DownloadState, string> = {
+  queued: "排队中",
+  downloading: "下载中",
+  verifying: "校验中",
+  installed: "已安装",
+  failed: "下载失败",
+  cancelled: "已取消",
+};
+
+export interface ModelDownloadListProps {
+  selectedModelId: string | null;
+  onSelectModel: (id: string) => void;
+  onError: (error: unknown) => void;
+}
+
+export function ModelDownloadList(props: ModelDownloadListProps) {
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [states, setStates] = useState<Record<string, DownloadState>>({});
+  const [progress, setProgress] = useState<Record<string, DownloadProgressPayload>>({});
+
+  const refresh = useCallback(async () => {
+    try {
+      const list = await ipc.invoke<ModelInfo[]>(COMMANDS.modelsList);
+      setModels(list.filter((model) => model.kind !== "onnx"));
+    } catch (err) {
+      props.onError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [props]);
+
+  useEffect(() => {
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useIpcEvent<DownloadProgressPayload>(EVENTS.downloadProgress, (payload) => {
+    setProgress((current) => ({ ...current, [payload.model]: payload }));
+  });
+
+  useIpcEvent<DownloadStatePayload>(EVENTS.downloadState, (payload) => {
+    setStates((current) => ({ ...current, [payload.model]: payload.state }));
+    if (payload.state === "installed" || payload.state === "failed" || payload.state === "cancelled") {
+      void refresh();
+    }
+  });
+
+  const download = async (model: ModelInfo) => {
+    setBusyId(model.id);
+    try {
+      await ipc.invoke<string>(COMMANDS.modelsDownload, { id: model.id });
+      setStates((current) => ({ ...current, [model.id]: "queued" }));
+    } catch (err) {
+      props.onError(err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const cancel = async (model: ModelInfo) => {
+    setBusyId(model.id);
+    try {
+      await ipc.invoke<void>(COMMANDS.modelsCancel, { id: model.id });
+    } catch (err) {
+      props.onError(err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (loading) return <p className="ob-hint">正在读取本地模型清单…</p>;
+  if (models.length === 0) return <p className="ob-hint">未找到可下载模型（骨架模式下清单为空时属正常）。</p>;
+
+  return (
+    <div className="ob-models">
+      {models.map((model) => {
+        const state = states[model.id] ?? model.downloadState;
+        const installed = state === "installed" || model.installed;
+        const active = state === "queued" || state === "downloading" || state === "verifying";
+        const item = progress[model.id];
+        const percent = item && item.total > 0 ? Math.min(100, Math.round((item.loaded / item.total) * 100)) : 0;
+        const selected = props.selectedModelId === model.id;
+        return (
+          <div key={model.id} className={`ob-model${selected ? " is-selected" : ""}`}>
+            <div className="ob-model-main">
+              <div className="ob-model-title">
+                <strong>{model.name}</strong>
+                <span className={`ob-tag${installed ? " is-ok" : ""}`}>{STATE_LABELS[state]}</span>
+                {selected ? <span className="ob-tag is-ok">已选用</span> : null}
+              </div>
+              <p className="ob-hint">
+                {formatBytes(model.sizeBytes)} · 需内存 {model.minRamMB} MB · 许可 {model.license}
+              </p>
+              {active ? (
+                <>
+                  <div className="ob-progressbar">
+                    <div className="ob-progressbar-fill" style={{ width: `${percent}%` }} />
+                  </div>
+                  <p className="ob-hint">
+                    {item
+                      ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
+                      : "等待下载进度…"}
+                  </p>
+                </>
+              ) : null}
+            </div>
+            <div className="ob-model-actions">
+              {installed ? (
+                <button
+                  type="button"
+                  className="ob-btn ob-btn-secondary"
+                  disabled={selected}
+                  onClick={() => props.onSelectModel(model.id)}
+                >
+                  {selected ? "已选用" : "选用此模型"}
+                </button>
+              ) : active ? (
+                <button
+                  type="button"
+                  className="ob-btn ob-btn-ghost"
+                  disabled={busyId === model.id}
+                  onClick={() => void cancel(model)}
+                >
+                  取消下载
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="ob-btn ob-btn-secondary"
+                  disabled={busyId === model.id}
+                  onClick={() => void download(model)}
+                >
+                  {state === "failed" ? "重试下载" : "下载"}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
