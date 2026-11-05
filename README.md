@@ -210,6 +210,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 | [`docs/接口契约.md`](docs/接口契约.md) | **IPC 契约 v1**：命令/事件/类型/配置/错误码/骨架模式/主题 token |
 | [`docs/开发指南.md`](docs/开发指南.md) | 环境准备、常用命令、契约变更流程、调试、常见问题、代码风格 |
 | [`docs/技术验证清单.md`](docs/技术验证清单.md) | 可行性报告「Go 前提条件」与 §3.4 技术难点转成的 spike 任务表 |
+| [`docs/追加需求可行性研究.md`](docs/追加需求可行性研究.md) | 追加需求（本地 GPU 推理 / 覆盖式翻译 / 连续提问）可行性、实测证据与工作量；配套证据见 [`docs/research/`](docs/research/README.md) |
 | [`docs/adr/`](docs/adr/) | ADR-0001～0005：技术栈、前端无网络密钥、单覆盖层物理像素、契约优先、骨架模式 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 版本变更记录 |
 | [`LICENSE`](LICENSE) / [`NOTICE`](NOTICE) | Apache-2.0 许可全文 / 第三方组件与模型许可声明 |
