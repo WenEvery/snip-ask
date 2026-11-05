@@ -1,0 +1,33 @@
+{
+    "spike":  "S-18",
+    "timestamp":  "2026-11-05T18:58:59.7824185+08:00",
+    "commit":  "3f1b263d2281bb1335a33be4dcd20d6b31915259",
+    "builder":  {
+                    "tauriCli":  "tauri-cli 2.12.4",
+                    "node":  "v24.14.1",
+                    "rustc":  "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+                    "os":  "Microsoft Windows 11 Pro",
+                    "osBuild":  "26200"
+                },
+    "artifacts":  {
+                      "setupExe":  {
+                                       "name":  "SnipAsk_0.1.0_x64-setup.exe",
+                                       "bytes":  2693865,
+                                       "mib":  2.569,
+                                       "lastWriteTime":  "2026-11-05T18:52:17.9657451+08:00",
+                                       "sha256":  "0212C26EC80FBE11DE4354235DAFB56A5D484D754535047A9AFF8FACE4D0F0FE"
+                                   },
+                      "releaseExe":  {
+                                         "name":  "snip-ask.exe",
+                                         "bytes":  7162880,
+                                         "mib":  6.831,
+                                         "sha256":  "2B1DF43C90C144EB4954457A64B08B135F3979B0199457E5104E3E0C3F46AEE3"
+                                     }
+                  },
+    "threshold":  {
+                      "setupMiB":  25,
+                      "scope":  "不含模型"
+                  },
+    "pass":  true,
+    "baselineRef":  ""
+}

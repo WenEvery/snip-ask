@@ -1,7 +1,8 @@
-# scripts/spikes — P0 技术验证脚本
+# scripts/spikes — 技术验证脚本（P0 + P1）
 
-本目录对应 `docs/技术验证清单.md` 的 P0（Go 前提条件）spike 脚本。所有脚本可独立复跑，
-原始数据写入 `.verify/spikes/<编号>/`（gitignored），结论与汇总写入 `docs/spikes/`。
+本目录对应 `docs/技术验证清单.md` 的 spike 脚本：P0（Go 前提条件）S-01 ~ S-08 与
+P1（技术难点/验收标准）S-09 ~ S-20。所有脚本可独立复跑，原始数据写入
+`.verify/spikes/<编号>/`（gitignored），结论与汇总写入 `docs/spikes/`。
 
 ## 目录
 
@@ -15,6 +16,11 @@
 | `s05_s06/` | S-05/S-06 翻译与图片搜索时延基准 |
 | `s07/` | S-07 首启引导离线/无 Key 走查驱动 |
 | `s08/` | S-08 模型下载断点续传（Rust 测试 + 真实 Range 探测） |
+| `s09/` | **P1** S-09 受保护内容捕获对比：BitBlt / PrintWindow / WGC × WDA_MONITOR / WDA_EXCLUDEFROMCAPTURE（.NET + WinRT） |
+| `s11_s15/` | **P1** S-11 文字存在判定阈值（面积/置信度/行高/行数） + S-15 OCR 字符准确率（100 张语料 + PP-OCRv4 det/rec + CER） |
+| `s12_s14/` | **P1** S-12 图片搜索可信度（真实 DeepSeek 视觉 + 官方 Search/Fetch）与 S-14 翻译一致性（云端 + 本地 llama.cpp） |
+| `s13_s17_s19_s20/` | **P1** S-13 本地模型资源与降档、S-17 网络异常矩阵（真实 app IPC）、S-19 引导自动走查 + 真人走查协议、S-20 托盘/单实例/热键释放 |
+| `s10_s16_s18/` | **P1** S-10 冷启动/空闲资源采样、S-16 未签名安装包与杀软、S-18 安装包体积门禁 |
 
 ## 真实应用验证台（applab）
 
@@ -56,6 +62,27 @@ node scripts/spikes/applab/applab.mjs stop --owner <你的名字>
   （内容：owner / pid / startedAt）；已存在且 <40 分钟且 pid 存活则等待，过期则接管；
   测完删除。测量期间不要并行编译或下载。
 - 大文件/依赖请装到 `.verify/`（venv、llama.cpp、模型），不要污染仓库或全局环境。
+
+## P1 脚本包（S-09 ~ S-20，2026-11-05）
+
+| 脚本包 | 入口（详见各目录 README） |
+| --- | --- |
+| `s09/` | `powershell -File scripts/spikes/s09/wgc_vs_bitblt.ps1 -Reps 3`（需 .NET 10；产物 `.verify/spikes/S-09/raw/`） |
+| `s11_s15/` | `.verify/venv-ocr/Scripts/python.exe scripts/spikes/s11_s15/run_ocr_eval.py all`（语料重建 `build_corpus.py`） |
+| `s12_s14/` | `python scripts/spikes/s12_s14/bench_translate_consistency.py` / `bench_image_search_trust.py`（无 Key 时先 `--mock-self-check`，MOCK 不作验收） |
+| `s13_s17_s19_s20/` | `node scripts/spikes/s13_s17_s19_s20/run_s17.mjs`（mock 矩阵 + 真实 app IPC）、`run_s20.mjs`、`run_s13.mjs`、`run_s19.mjs`；`S-19-新用户走查协议.md` |
+| `s10_s16_s18/` | `s18_build.ps1` + `check_bundle_size.ps1`（CI 同脚本）、`s16_scan_signature.ps1`、`s16_install_test.ps1`、`s10_coldstart.ps1` |
+
+P1 纪律：
+
+- **云端 Key 只放 `.verify/p1/key.txt`**（gitignored，单行）；脚本只从该文件/环境变量读取，不打印、不落盘。
+  S-12/S-14 的真实云端复跑依赖用户提供 Key；无 Key 时脚本以 BLOCKED/MOCK 标注退出，不编造数据。
+- **S-16 会真实安装/卸载 NSIS**（currentUser，默认 `%LOCALAPPDATA%\SnipAsk`，可卸载）；复跑前确认没有
+  其它 `snip-ask` 实例（单实例插件会阻止已安装版启动）。
+- **S-10 需要安静窗口**：冷启动与 30 分钟空闲采样期间禁止 cargo/pnpm build、OCR 基准、llama-server；
+  用 `.verify/p1/quiet/` 标记协调。
+- P1 应用验证复用 `applab`（单实例锁）与 `s04/` 的热键/托盘探测脚本；托盘原生菜单点击受 Win11
+  溢出区/前台激活限制（见 S-20 记录遗留）。
 
 ## 相关文档
 

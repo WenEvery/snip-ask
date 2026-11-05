@@ -1,0 +1,3533 @@
+{
+  "meta": {
+    "script": "bench_translate_consistency.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T19:20:33.304901+08:00",
+    "mode": "REAL",
+    "host": {
+      "os": "Windows 10",
+      "python": "3.11.3",
+      "requests": "2.34.2",
+      "cpu_logical": 16
+    },
+    "cases": {
+      "count": 24,
+      "zh_to_en": 12,
+      "en_to_zh": 12,
+      "with_glossary": 9,
+      "format_checks_total": 47,
+      "required_terms_total": 15
+    },
+    "prompts": {
+      "translate.md": {
+        "path": "resources/prompts/translate.md",
+        "sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+        "chars_body": 594
+      },
+      "translate_minimal.md": {
+        "path": "resources/prompts/translate_minimal.md",
+        "sha256": "61f9bab820a5f89e445b6371a4603435ccca27d1f5c30174a8bf9707ba94102d",
+        "chars_body": 101
+      }
+    },
+    "glossary_rendering": "与 src-tauri/src/services/translator.rs::render_glossary 一致：'from => to' 以 '; ' 连接",
+    "backend_labeling": "每条记录 backend + backend_label；产品侧契约见 docs/spikes/S-14-翻译一致性.md §4",
+    "thresholds": {
+      "term_hit_rate": 1.0,
+      "format_pass_rate": 1.0
+    },
+    "api_key_provided": true,
+    "api_key_source": "file:.verify/p1/key.txt",
+    "base_url_masked": "https://api.deepseek.com",
+    "llama_exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+    "requested_arms": [
+      "local-15b-minimal-v3",
+      "local-tiny-minimal-v3"
+    ]
+  },
+  "runs": [
+    {
+      "arm": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+      "kind": "local",
+      "status": "REAL",
+      "meta": {
+        "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+        "exe_sha256": "a28d0761990856c0b7fb8034190a7dcda18ad04631e1d56e668467651b03a192",
+        "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "model_file": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+        "port": 39281,
+        "threads": 8,
+        "temperature": 0.2,
+        "prompt_key": "translate_minimal_v3(candidate)",
+        "log": ".verify\\spikes\\S-12-S-14\\raw\\llama-logs\\llama_server_local-15b-minimal-v3_20261105-192033.log",
+        "health_ready_ms": 1663.19,
+        "shutdown": {
+          "pid": 22256,
+          "preexisting_pids": [],
+          "post_pids": [],
+          "residue_killed": [],
+          "remaining_after_cleanup": [],
+          "clean": true
+        }
+      },
+      "records": [
+        {
+          "case_id": "zh-en-01-plain",
+          "direction": "zh->en",
+          "category": "段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2942.59,
+          "usage": {
+            "completion_tokens": 30,
+            "prompt_tokens": 134,
+            "total_tokens": 164,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "框选 AI 提供截图问答与翻译能力。按下 Ctrl+Q 即可唤起选框，松开后弹出动作菜单。",
+          "source_sha256": "1cc124e4a3a5b089e20157948f45601c0dacc61ae4e3557eb8995221f11dc426",
+          "glossary_rendered": "框选 AI => SnipAsk",
+          "required_terms": [
+            "SnipAsk"
+          ],
+          "prompt_sha256": "67646872731a189561fc0efc4f9c3d13cd4aa6a85c83496c8146b3d8bf703734",
+          "prompt_chars": 156,
+          "output": "SnipAsk provides screenshot question and translation capabilities. Press Ctrl+Q to invoke the snip, and release to pop up the action menu.",
+          "output_sha256": "ce601a8fe748a4f6de685996aeadb64186b08d74252b024797287e6d080f5d80",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-02-multiline",
+          "direction": "zh->en",
+          "category": "多行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2061.4,
+          "usage": {
+            "completion_tokens": 18,
+            "prompt_tokens": 115,
+            "total_tokens": 133,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "设置已保存。\n重新启动应用后生效。\n如需帮助请查看文档。",
+          "source_sha256": "e1aa7629b04adb3421988061a4b5620fe154859b1f85ac64c692300236c8b4f9",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "4324b68b8f6c3e5e4ab33291fd79ed39daee0fe68a8479b7751d461dd04678de",
+          "prompt_chars": 126,
+          "output": "Setting saved. Effective after restarting the application.\nFor assistance, refer to the documentation.",
+          "output_sha256": "86c6d8cd42d372c5e290aa55147b22e027fdd7bfd1826f69341686350432a325",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-03-bullets",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2030.31,
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 119,
+            "total_tokens": 135,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "- 支持屏幕取词\n- 支持截图问答\n- 支持本地翻译",
+          "source_sha256": "5b47983f6def381bafc84199edf82b6367ac74b7a6d06421a860e37b18ecf6d7",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c32cb1b8b8998adb59af67eb384231fc07a5f38a04d19fad4bf848bca41db70a",
+          "prompt_chars": 124,
+          "output": "- Support screen-to-text\n- Support screenshot question\n- Support local translation",
+          "output_sha256": "559ed2474d7c4d6638aeeccdcc26d93eeb47cfdb0f14da0fd3b522add82c3d3a",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "列表行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-04-numbered",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1538.23,
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 118,
+            "total_tokens": 134,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "1. 打开设置\n2. 选择 AI 服务\n3. 保存配置",
+          "source_sha256": "e7f52a625f79d3ee4677062af97d99e8b7081cccd0616974a0a256e697e23db5",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "034e1e3531486ab7f93b2fcaf37c432c3b2e0e4a6ad527fa2070f29b7f0976fa",
+          "prompt_chars": 125,
+          "output": "1. Open settings\n2. Select AI service\n3. Save configuration",
+          "output_sha256": "7d4bd8013e20b5c02574dda1c5b29cedfd932d8a03e52bf65de299e2713babd7",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "编号行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-05-code",
+          "direction": "zh->en",
+          "category": "代码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1406.13,
+          "usage": {
+            "completion_tokens": 13,
+            "prompt_tokens": 120,
+            "total_tokens": 133,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "请运行以下命令：\n```\npython bench.py --runs 20\n```\n完成后查看输出。",
+          "source_sha256": "170a322521ad16ec2756e45176ce26e1fc02bd3f4d59b79f4acd42d5d5f55429",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "1817ea4ec8eba5c8d072a29a3ca2898cec4fcd7e0c3c061e145f6fe8637ec782",
+          "prompt_chars": 149,
+          "output": "```\npython bench.py --runs 20\n```",
+          "output_sha256": "152ee036fc82e69a7841ebee3463853120a61869a2d0806e68b1656f77ccf406",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 3,
+                "pass": false,
+                "detail": "非空行数 3 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-06-url-mail",
+          "direction": "zh->en",
+          "category": "URL",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1788.13,
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 121,
+            "total_tokens": 142,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "文档地址 https://example.com/docs/s14 与支持邮箱 support@example.com 均可使用。",
+          "source_sha256": "aa64776d5c855de8dc576ed2f706ab7fbd22b40f5e54bf5097c9d5bebebcd30b",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "688752c36758f1d77585fbf8794a233d9437319446380673002cd9f0c5293960",
+          "prompt_chars": 163,
+          "output": "document address https://example.com/docs/s14 and support email support@example.com are both available.",
+          "output_sha256": "78bb556b63af9a643acaf1811e6943716b0b8ca0b559aa4fd2aae25ff989126d",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": "https://example.com/docs/s14",
+                "pass": true,
+                "detail": "应原样保留 'https://example.com/docs/s14'；已保留"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": "support@example.com",
+                "pass": true,
+                "detail": "应原样保留 'support@example.com'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-07-placeholder",
+          "direction": "zh->en",
+          "category": "占位符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1419.84,
+          "usage": {
+            "completion_tokens": 13,
+            "prompt_tokens": 114,
+            "total_tokens": 127,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "欢迎 {user}，你有 {count} 条未读消息。",
+          "source_sha256": "43c7c0fce9a5b512be2a7f00c2946f43928ff483f618937fa855f1e3f5ffa51c",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5fa3ea3887fac482596ca4546388f6a0f157fffb1d8c003967d2385865b5ff09",
+          "prompt_chars": 125,
+          "output": "Welcome {user}, you have {count} unread messages.",
+          "output_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-08-identifiers",
+          "direction": "zh->en",
+          "category": "标识符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1906.81,
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 122,
+            "total_tokens": 143,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "请升级到 v1.2.3，模型 deepseek-flash 已在 Linux 与 macOS 上验证。",
+          "source_sha256": "7c3dda4b0d07f980b815afe357f2b84e9eeb1c384c13ebaab9865d22fd9d447e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "3e3b0f9be3d8c5267ae7138cba72a9e074c9acd5c552d1107542ee3e4a8d6681",
+          "prompt_chars": 149,
+          "output": "Upgrade to v1.2.3, deepseek-flash has been validated on Linux and macOS.",
+          "output_sha256": "2e22f290969fd096a64d2c715268b467e681bd73bdb24e2adb129a3aae6b9f9b",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": "v1.2.3",
+                "pass": true,
+                "detail": "应原样保留 'v1.2.3'；已保留"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": "deepseek-flash",
+                "pass": true,
+                "detail": "应原样保留 'deepseek-flash'；已保留"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": "Linux",
+                "pass": true,
+                "detail": "应原样保留 'Linux'；已保留"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": "macOS",
+                "pass": true,
+                "detail": "应原样保留 'macOS'；已保留"
+              }
+            ],
+            "format_pass": 4,
+            "format_total": 4,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-09-term-heavy",
+          "direction": "zh->en",
+          "category": "术语",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1567.8,
+          "usage": {
+            "completion_tokens": 18,
+            "prompt_tokens": 123,
+            "total_tokens": 141,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "在结果窗中打开术语表，即可查看本次翻译使用的术语。",
+          "source_sha256": "87601c03b3271f91b9a232332821bdbf4d5975aa2f858ef42a9cdccce1d3ea3e",
+          "glossary_rendered": "结果窗 => Result Window; 术语表 => Glossary",
+          "required_terms": [
+            "Result Window",
+            "Glossary"
+          ],
+          "prompt_sha256": "a4386a8398fa6d612a6efe84e2f5320c171e8f4fcff228f142ee9528fd6615d5",
+          "prompt_chars": 157,
+          "output": "Open the glossary in the Result Window to view the terms used in this translation.",
+          "output_sha256": "25d95ce514809d42f639bd4bb6255f5ea30bfe8264d5981c01429895cf0def5e",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "Result Window",
+                "hit": true
+              },
+              {
+                "term": "Glossary",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-10-blankline",
+          "direction": "zh->en",
+          "category": "空行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1967.57,
+          "usage": {
+            "completion_tokens": 24,
+            "prompt_tokens": 132,
+            "total_tokens": 156,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "第一段：框选 AI 支持离线翻译。\n\n第二段：首次使用请完成引导。",
+          "source_sha256": "4348059faa48e866d2bd973eeba400755c24e9de1316d8d4256d87b1ae0eec0c",
+          "glossary_rendered": "框选 AI => SnipAsk; 引导 => Onboarding",
+          "required_terms": [
+            "SnipAsk",
+            "Onboarding"
+          ],
+          "prompt_sha256": "191f40459b35730001296e829a5d0fb31901e4d0667daa62acd862d657472283",
+          "prompt_chars": 162,
+          "output": "First paragraph: SnipAsk supports offline translation.\n\nSecond paragraph: Please complete the onboarding for the first time.",
+          "output_sha256": "9b873c00249dbbcdb7d286446788d2b804dc1cc141aa1a79922287cd7010bd61",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              },
+              {
+                "term": "Onboarding",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "非空行数 2 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "空行数 1 / 至少 1"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-11-error",
+          "direction": "zh->en",
+          "category": "错误码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1710.96,
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 122,
+            "total_tokens": 143,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "错误码 SA-1001：截图失败，该错误可重试。请检查屏幕录制权限。",
+          "source_sha256": "b85f424602749ad125d93b030f174ea88f0a34f247b6cf326df45781f7fbb37e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c39ea13fd5e3a2598f1358f5c29b31d00e654b0f3b22c642dd2bd965c5fa5fe4",
+          "prompt_chars": 132,
+          "output": "Error code SA-1001: screenshot failure, retryable. Check screen recording permission.",
+          "output_sha256": "c9f38fcebfb517bf16b2fb127d662a420a06d00fdd9c9be362a9d3c0cad979a2",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-12-long",
+          "direction": "zh->en",
+          "category": "长段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 5816.6,
+          "usage": {
+            "completion_tokens": 91,
+            "prompt_tokens": 189,
+            "total_tokens": 280,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗中展示，支持复制、重新执行与追问。",
+          "source_sha256": "93cff708273fe8bd6f9a5b84a5a9e163abffc4fe2c95a67a70391dffd46f8b02",
+          "glossary_rendered": "框选 AI => SnipAsk; 结果窗 => Result Window",
+          "required_terms": [
+            "SnipAsk",
+            "Result Window"
+          ],
+          "prompt_sha256": "39e4b02b3e7294bf136d1f119164e236bb8e24c42da0e39fd291d402366d2cb4",
+          "prompt_chars": 253,
+          "output": "SnipAsk is a screen-to-text and screenshot question-answering tool: press Ctrl+Q to activate the snip, select the text or image on the screen, and release the mouse button to pop up the action menu. You can translate the selected paragraph, extract text and search, recognize image content, or ask the AI. All actions are displayed in the result window, supporting copy, re-execution, and re-asking.",
+          "output_sha256": "5877ed422b1a191876390b83a546782f8a381f6a2cde95f96363c867a012e440",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              },
+              {
+                "term": "Result Window",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-01-plain",
+          "direction": "en->zh",
+          "category": "段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1420.24,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 119,
+            "total_tokens": 136,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "SnipAsk captures text from your screen and answers questions about screenshots.",
+          "source_sha256": "1cdcf4efe5d7b69f7eda817835bb9c366a1fe5f0c3a9e34fbeabf3917268d282",
+          "glossary_rendered": "SnipAsk => 框选 AI",
+          "required_terms": [
+            "框选 AI"
+          ],
+          "prompt_sha256": "40583d9389dbfb3a1cebba4a3984587b0b7c333b5874fb39ee8c92e81cf4a70f",
+          "prompt_chars": 190,
+          "output": "框选 AI 捕捉屏幕上的文本并回答关于截图的问题。",
+          "output_sha256": "8c0ff3d70f95444465b14622a5b46ba9c1bfc7765fbaeeaaa39f67ff9cd426a4",
+          "cjk_ratio": 0.8,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.8,
+              "detail": "中文占比 80.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-02-multiline",
+          "direction": "en->zh",
+          "category": "多行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1193.46,
+          "usage": {
+            "completion_tokens": 15,
+            "prompt_tokens": 113,
+            "total_tokens": 128,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Settings saved.\nRestart the app to apply.\nSee the documentation for help.",
+          "source_sha256": "2fe61d996726e4d48b20e772ef54bf432c2da6a9ce790f33faaafbba4d0f68cf",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5a35e52e66591571f2fe474704e625642521d3c258b46a1c9536f2e23c0f7ce3",
+          "prompt_chars": 171,
+          "output": "保存设置。\n重启应用以生效。\n查看文档以获取帮助。",
+          "output_sha256": "cae2fd67194465badd880aac491fef8c94d94adbb9850813ce2c633bea3d5a2e",
+          "cjk_ratio": 0.8,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.8,
+              "detail": "中文占比 80.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-03-bullets",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1176.42,
+          "usage": {
+            "completion_tokens": 13,
+            "prompt_tokens": 114,
+            "total_tokens": 127,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "- Capture text from the screen\n- Answer questions about screenshots\n- Translate locally",
+          "source_sha256": "5fcffc3ba75ea11b5aae1988393f27c166c6f90c54a0b27ffd61d270d7461a48",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "529b6191e727f46b330c73be654eb2bf21cc9a72ae01a1671752f7241b9dd055",
+          "prompt_chars": 185,
+          "output": "捕获屏幕文本\n回答关于截图的问题\n本地翻译",
+          "output_sha256": "b798c9b0bc76f7718e8977999e9bb88e5faf95aedb736206e7300c58b4e6b07f",
+          "cjk_ratio": 0.9048,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 0,
+                "pass": false,
+                "detail": "列表行 0 / 至少 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.9048,
+              "detail": "中文占比 90.5%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-04-numbered",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1504.75,
+          "usage": {
+            "completion_tokens": 22,
+            "prompt_tokens": 118,
+            "total_tokens": 140,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "1. Open settings\n2. Choose the API provider\n3. Save the configuration",
+          "source_sha256": "9d8ba782d2f94a49a08ef0e5492f0c6b39716521a9ce40ac129f05aa9e009e72",
+          "glossary_rendered": "API => 接口",
+          "required_terms": [
+            "接口"
+          ],
+          "prompt_sha256": "dfc49a82487471424946d9b323bf42f7bbee8fd0e887aa512b383f841f64adc8",
+          "prompt_chars": 173,
+          "output": "1. 打开设置\n2. 选择 API 提供者\n3. 保存配置",
+          "output_sha256": "f2973a954d1d33303483e5b5537ce02490b7a55a6500c588230fc588d7de0228",
+          "cjk_ratio": 0.4483,
+          "score": {
+            "term_results": [
+              {
+                "term": "接口",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 1,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "编号行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.4483,
+              "detail": "中文占比 44.8%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-05-code",
+          "direction": "en->zh",
+          "category": "代码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1371.28,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 120,
+            "total_tokens": 137,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Run this command:\n```\npython bench.py --runs 20\n```\nThen check the output.",
+          "source_sha256": "9f9621b66d7e0f31fc82926df8d86bc5270abbb5fd8e6fdef48257c611569d74",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "26342825c7ec44f9f9ee88a5caf636aaa4467cd23c7d28ddda4de10132009a79",
+          "prompt_chars": 172,
+          "output": "运行此命令：\n```\npython bench.py --runs 20\n```",
+          "output_sha256": "8089a0cf47d59ba3bbe998929b753185bdc8e2c4c2522c4748b0530f390c4e38",
+          "cjk_ratio": 0.125,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 4,
+                "pass": false,
+                "detail": "非空行数 4 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.125,
+              "detail": "中文占比 12.5%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-06-url-mail",
+          "direction": "en->zh",
+          "category": "URL",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1253.74,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 114,
+            "total_tokens": 131,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "source_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c45a3b98fedb10ce55a5854d1a64a6e96a0c5b50dd5748cba7e0c731cc905817",
+          "prompt_chars": 163,
+          "output": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "output_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": "https://example.com/docs/s14",
+                "pass": true,
+                "detail": "应原样保留 'https://example.com/docs/s14'；已保留"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": "support@example.com",
+                "pass": true,
+                "detail": "应原样保留 'support@example.com'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-07-placeholder",
+          "direction": "en->zh",
+          "category": "占位符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1294.52,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 110,
+            "total_tokens": 127,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Welcome {user}, you have {count} unread messages.",
+          "source_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "b401212c620cfc11fb9e57e7a3183dc5298e6a6b94a9632bca67067230e219cb",
+          "prompt_chars": 147,
+          "output": "欢迎 {user}，您有 {count} 条未读消息。",
+          "output_sha256": "76099f6b76eabd9ff42b65e217fe3e142921a81935603567412550981549aaa9",
+          "cjk_ratio": 0.3333,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.3333,
+              "detail": "中文占比 33.3%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-08-identifiers",
+          "direction": "en->zh",
+          "category": "标识符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1652.86,
+          "usage": {
+            "completion_tokens": 24,
+            "prompt_tokens": 119,
+            "total_tokens": 143,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Upgrade to v1.2.3; the deepseek-flash model is verified on Linux and macOS.",
+          "source_sha256": "f8cd536be50ecb9b42424ebac1e8a5cd383d63fd5d6b899aad840d48dd64bca1",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "e0e0603bdf5d71f9bc75be052d85345a3ba8d8540bb15d26aebd67773555a331",
+          "prompt_chars": 173,
+          "output": "升级到 v1.2.3；deepseek-flash 模型在 Linux 和 macOS 上已验证。",
+          "output_sha256": "f8b0c08ba75d67e8eaff9ca7f78a5bb5e17497c9b4158ae47f5e0ef71c8e8cf0",
+          "cjk_ratio": 0.2245,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": "v1.2.3",
+                "pass": true,
+                "detail": "应原样保留 'v1.2.3'；已保留"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": "deepseek-flash",
+                "pass": true,
+                "detail": "应原样保留 'deepseek-flash'；已保留"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": "Linux",
+                "pass": true,
+                "detail": "应原样保留 'Linux'；已保留"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": "macOS",
+                "pass": true,
+                "detail": "应原样保留 'macOS'；已保留"
+              }
+            ],
+            "format_pass": 4,
+            "format_total": 4,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.2245,
+              "detail": "中文占比 22.4%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-09-term-heavy",
+          "direction": "en->zh",
+          "category": "术语",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1399.13,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 126,
+            "total_tokens": 143,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Open the Glossary from the Result Window to review the terms used in this translation.",
+          "source_sha256": "9b4e1749912cc7bca283b2cb200fa45c9234d9dbc1d29dc1b8ce67f0d5bbee55",
+          "glossary_rendered": "Result Window => 结果窗; Glossary => 术语表",
+          "required_terms": [
+            "结果窗",
+            "术语表"
+          ],
+          "prompt_sha256": "f18c7984cdb9ecac348e759fd0952b534347e054c4a593905edbb59513adaf50",
+          "prompt_chars": 218,
+          "output": "打开结果窗格中的术语表，以查看本翻译中使用的术语。",
+          "output_sha256": "d3249b66c84a5fdd05ea4a6899623ecf61e4806c94fa8d2b983efe1d4a76deb7",
+          "cjk_ratio": 0.92,
+          "score": {
+            "term_results": [
+              {
+                "term": "结果窗",
+                "hit": true
+              },
+              {
+                "term": "术语表",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.92,
+              "detail": "中文占比 92.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-10-blankline",
+          "direction": "en->zh",
+          "category": "空行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1089.93,
+          "usage": {
+            "completion_tokens": 10,
+            "prompt_tokens": 131,
+            "total_tokens": 141,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Paragraph one: SnipAsk works offline.\n\nParagraph two: finish Onboarding on first launch.",
+          "source_sha256": "0c4a9f2346e8acc395c009f07ae65e2370eb3cbdbaaa2b214dfd82930c5b9749",
+          "glossary_rendered": "SnipAsk => 框选 AI; Onboarding => 引导",
+          "required_terms": [
+            "框选 AI",
+            "引导"
+          ],
+          "prompt_sha256": "582323da2b4b6ac54b9aae5459e86db4fb84106e01383a6916c170bbee5c37e4",
+          "prompt_chars": 217,
+          "output": "框选 AI 工作离线。",
+          "output_sha256": "18f27293a7994ad4918b165d90249fc8886387a5b447ec47bd5e1a865d094a95",
+          "cjk_ratio": 0.5455,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              },
+              {
+                "term": "引导",
+                "hit": false
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "空行数 0 / 至少 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.5455,
+              "detail": "中文占比 54.5%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-11-error",
+          "direction": "en->zh",
+          "category": "错误码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1439.65,
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 119,
+            "total_tokens": 140,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Error SA-1001: screenshot failed and can be retried. Check screen recording permission.",
+          "source_sha256": "ddf2e3b1acf45f90c09536de22f077a7db88ecb4b00d180462ec69fdab9373ec",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "9d02477d6c27ba473109288c117497b397a1ea82daa370c3a1947f8ab56d2a8a",
+          "prompt_chars": 185,
+          "output": "错误 SA-1001：截图失败，可以重试。检查屏幕录制权限。",
+          "output_sha256": "67460ef688f6a0ab9321d74dda52b1b799043383166e09411e2d8ae63febf79e",
+          "cjk_ratio": 0.6,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.6,
+              "detail": "中文占比 60.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-12-long",
+          "direction": "en->zh",
+          "category": "长段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny15b",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 4365.85,
+          "usage": {
+            "completion_tokens": 71,
+            "prompt_tokens": 193,
+            "total_tokens": 264,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "SnipAsk is a screen-capture and screenshot question-and-answer tool. Press Ctrl+Q to open the selection box, then select text or images on the screen. Release the mouse to open the action menu. You can translate the selection, extract and search text, recognize image content, or ask the AI a question. All actions appear in the Result Window and support copy, retry and follow-up.",
+          "source_sha256": "9c477d4de63a6bb885bf596692ed5f97d6ea7b23058258102154c132ce3a1779",
+          "glossary_rendered": "SnipAsk => 框选 AI; Result Window => 结果窗",
+          "required_terms": [
+            "框选 AI",
+            "结果窗"
+          ],
+          "prompt_sha256": "ff453aee4ef7fe3d5a874db88c85fc86599b9aa1c77259d14f2fdb0c186fb6b0",
+          "prompt_chars": 514,
+          "output": "框选 AI 是一个屏幕截图和截图问答工具。按 Ctrl+Q 打开选择框，然后在屏幕上选择文本或图片。释放鼠标以打开动作菜单。你可以翻译选择、提取文本、识别图像内容或向 AI 提问。所有操作都在 Result Window 中显示，并支持复制、重试和后续操作。",
+          "output_sha256": "540ff09a2917e056097c67e8a644e50f6434d5af949ec5895e49fa1af3064ac2",
+          "cjk_ratio": 0.6822,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              },
+              {
+                "term": "结果窗",
+                "hit": false
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.6822,
+              "detail": "中文占比 68.2%（期望 >15%）且不等于原文"
+            }
+          }
+        }
+      ],
+      "summary": {
+        "cases": 24,
+        "cases_ok": 24,
+        "term_hit_rate": 0.8,
+        "term_hits": 12,
+        "term_total": 15,
+        "format_pass_rate": 0.8723,
+        "format_pass": 41,
+        "format_total": 47,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 12,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 1,
+            "total": 2
+          }
+        },
+        "translation_effective_rate": 0.9167,
+        "case_pass_rate": 0.6667,
+        "case_pass": 16,
+        "failures": [
+          {
+            "case_id": "zh-en-02-multiline",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "zh-en-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "en-zh-03-bullets",
+            "reasons": [
+              "格式未保留：['bullets_min']"
+            ]
+          },
+          {
+            "case_id": "en-zh-04-numbered",
+            "reasons": [
+              "术语未命中：['接口']"
+            ]
+          },
+          {
+            "case_id": "en-zh-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact']",
+              "译文无效：中文占比 12.5%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-06-url-mail",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-10-blankline",
+            "reasons": [
+              "术语未命中：['引导']",
+              "格式未保留：['lines_exact', 'blank_lines_min']"
+            ]
+          },
+          {
+            "case_id": "en-zh-12-long",
+            "reasons": [
+              "术语未命中：['结果窗']"
+            ]
+          }
+        ]
+      },
+      "verdict": "FAILED"
+    },
+    {
+      "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+      "kind": "local",
+      "status": "REAL",
+      "meta": {
+        "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+        "exe_sha256": "a28d0761990856c0b7fb8034190a7dcda18ad04631e1d56e668467651b03a192",
+        "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "model_file": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "model_sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+        "port": 39281,
+        "threads": 8,
+        "temperature": 0.2,
+        "prompt_key": "translate_minimal_v3(candidate)",
+        "log": ".verify\\spikes\\S-12-S-14\\raw\\llama-logs\\llama_server_local-tiny-minimal-v3_20261105-192123.log",
+        "health_ready_ms": 866.73,
+        "shutdown": {
+          "pid": 26252,
+          "preexisting_pids": [],
+          "post_pids": [],
+          "residue_killed": [],
+          "remaining_after_cleanup": [],
+          "clean": true
+        }
+      },
+      "records": [
+        {
+          "case_id": "zh-en-01-plain",
+          "direction": "zh->en",
+          "category": "段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 870.19,
+          "usage": {
+            "completion_tokens": 32,
+            "prompt_tokens": 134,
+            "total_tokens": 166,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "框选 AI 提供截图问答与翻译能力。按下 Ctrl+Q 即可唤起选框，松开后弹出动作菜单。",
+          "source_sha256": "1cc124e4a3a5b089e20157948f45601c0dacc61ae4e3557eb8995221f11dc426",
+          "glossary_rendered": "框选 AI => SnipAsk",
+          "required_terms": [
+            "SnipAsk"
+          ],
+          "prompt_sha256": "67646872731a189561fc0efc4f9c3d13cd4aa6a85c83496c8146b3d8bf703734",
+          "prompt_chars": 156,
+          "output": "框选 AI 提供截图问答与翻译能力。按下 Ctrl+Q 即可唤起选框，松开后弹出动作菜单。",
+          "output_sha256": "1cc124e4a3a5b089e20157948f45601c0dacc61ae4e3557eb8995221f11dc426",
+          "cjk_ratio": 0.6667,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 1,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.6667,
+              "detail": "中文占比 66.7%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-02-multiline",
+          "direction": "zh->en",
+          "category": "多行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 613.73,
+          "usage": {
+            "completion_tokens": 15,
+            "prompt_tokens": 115,
+            "total_tokens": 130,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "设置已保存。\n重新启动应用后生效。\n如需帮助请查看文档。",
+          "source_sha256": "e1aa7629b04adb3421988061a4b5620fe154859b1f85ac64c692300236c8b4f9",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "4324b68b8f6c3e5e4ab33291fd79ed39daee0fe68a8479b7751d461dd04678de",
+          "prompt_chars": 126,
+          "output": "术语表（命中时按指定译法）：（空）",
+          "output_sha256": "14b29ea1fb5856806abef39e35b215829ced423b8621d2f97fc2b8cd918764d8",
+          "cjk_ratio": 0.7059,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.7059,
+              "detail": "中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-03-bullets",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 621.97,
+          "usage": {
+            "completion_tokens": 15,
+            "prompt_tokens": 119,
+            "total_tokens": 134,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "- 支持屏幕取词\n- 支持截图问答\n- 支持本地翻译",
+          "source_sha256": "5b47983f6def381bafc84199edf82b6367ac74b7a6d06421a860e37b18ecf6d7",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c32cb1b8b8998adb59af67eb384231fc07a5f38a04d19fad4bf848bca41db70a",
+          "prompt_chars": 124,
+          "output": "- Support screen retrieval\n- Support screenshot questions\n- Support local translation",
+          "output_sha256": "cd9f99111f100ceec68635397710e601811891555db78514bd8b495f75ea5dd5",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "列表行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-04-numbered",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 775.8,
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 118,
+            "total_tokens": 139,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "1. 打开设置\n2. 选择 AI 服务\n3. 保存配置",
+          "source_sha256": "e7f52a625f79d3ee4677062af97d99e8b7081cccd0616974a0a256e697e23db5",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "034e1e3531486ab7f93b2fcaf37c432c3b2e0e4a6ad527fa2070f29b7f0976fa",
+          "prompt_chars": 125,
+          "output": "1. 打开设置\n2. 选择 AI 服务\n3. 保存配置",
+          "output_sha256": "e7f52a625f79d3ee4677062af97d99e8b7081cccd0616974a0a256e697e23db5",
+          "cjk_ratio": 0.4444,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "编号行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.4444,
+              "detail": "中文占比 44.4%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-05-code",
+          "direction": "zh->en",
+          "category": "代码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 488.25,
+          "usage": {
+            "completion_tokens": 4,
+            "prompt_tokens": 120,
+            "total_tokens": 124,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "请运行以下命令：\n```\npython bench.py --runs 20\n```\n完成后查看输出。",
+          "source_sha256": "170a322521ad16ec2756e45176ce26e1fc02bd3f4d59b79f4acd42d5d5f55429",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "1817ea4ec8eba5c8d072a29a3ca2898cec4fcd7e0c3c061e145f6fe8637ec782",
+          "prompt_chars": 149,
+          "output": "```\n```",
+          "output_sha256": "b90a4164732c9e71d5a3bc7d64d9f913bc06c799ce2fa8315804c58fba8c10f9",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'python bench.py --runs 20'；缺失"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-06-url-mail",
+          "direction": "zh->en",
+          "category": "URL",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 660.15,
+          "usage": {
+            "completion_tokens": 15,
+            "prompt_tokens": 121,
+            "total_tokens": 136,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "文档地址 https://example.com/docs/s14 与支持邮箱 support@example.com 均可使用。",
+          "source_sha256": "aa64776d5c855de8dc576ed2f706ab7fbd22b40f5e54bf5097c9d5bebebcd30b",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "688752c36758f1d77585fbf8794a233d9437319446380673002cd9f0c5293960",
+          "prompt_chars": 163,
+          "output": "术语表（命中时按指定译法）：（空）",
+          "output_sha256": "14b29ea1fb5856806abef39e35b215829ced423b8621d2f97fc2b8cd918764d8",
+          "cjk_ratio": 0.7059,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'https://example.com/docs/s14'；缺失"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'support@example.com'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.7059,
+              "detail": "中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-07-placeholder",
+          "direction": "zh->en",
+          "category": "占位符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 805.66,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 114,
+            "total_tokens": 131,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "欢迎 {user}，你有 {count} 条未读消息。",
+          "source_sha256": "43c7c0fce9a5b512be2a7f00c2946f43928ff483f618937fa855f1e3f5ffa51c",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5fa3ea3887fac482596ca4546388f6a0f157fffb1d8c003967d2385865b5ff09",
+          "prompt_chars": 125,
+          "output": "欢迎 {user}，你有 {count} 条未读消息。",
+          "output_sha256": "43c7c0fce9a5b512be2a7f00c2946f43928ff483f618937fa855f1e3f5ffa51c",
+          "cjk_ratio": 0.3333,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.3333,
+              "detail": "中文占比 33.3%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-08-identifiers",
+          "direction": "zh->en",
+          "category": "标识符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 922.76,
+          "usage": {
+            "completion_tokens": 15,
+            "prompt_tokens": 122,
+            "total_tokens": 137,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "请升级到 v1.2.3，模型 deepseek-flash 已在 Linux 与 macOS 上验证。",
+          "source_sha256": "7c3dda4b0d07f980b815afe357f2b84e9eeb1c384c13ebaab9865d22fd9d447e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "3e3b0f9be3d8c5267ae7138cba72a9e074c9acd5c552d1107542ee3e4a8d6681",
+          "prompt_chars": 149,
+          "output": "术语表（命中时按指定译法）：（空）",
+          "output_sha256": "14b29ea1fb5856806abef39e35b215829ced423b8621d2f97fc2b8cd918764d8",
+          "cjk_ratio": 0.7059,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'v1.2.3'；缺失"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'deepseek-flash'；缺失"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Linux'；缺失"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'macOS'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 4,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.7059,
+              "detail": "中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-09-term-heavy",
+          "direction": "zh->en",
+          "category": "术语",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 675.83,
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 123,
+            "total_tokens": 139,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "在结果窗中打开术语表，即可查看本次翻译使用的术语。",
+          "source_sha256": "87601c03b3271f91b9a232332821bdbf4d5975aa2f858ef42a9cdccce1d3ea3e",
+          "glossary_rendered": "结果窗 => Result Window; 术语表 => Glossary",
+          "required_terms": [
+            "Result Window",
+            "Glossary"
+          ],
+          "prompt_sha256": "a4386a8398fa6d612a6efe84e2f5320c171e8f4fcff228f142ee9528fd6615d5",
+          "prompt_chars": 157,
+          "output": "在结果窗中打开术语表，即可查看本次翻译使用的术语。",
+          "output_sha256": "87601c03b3271f91b9a232332821bdbf4d5975aa2f858ef42a9cdccce1d3ea3e",
+          "cjk_ratio": 0.92,
+          "score": {
+            "term_results": [
+              {
+                "term": "Result Window",
+                "hit": false
+              },
+              {
+                "term": "Glossary",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.92,
+              "detail": "中文占比 92.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-10-blankline",
+          "direction": "zh->en",
+          "category": "空行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 654.9,
+          "usage": {
+            "completion_tokens": 11,
+            "prompt_tokens": 132,
+            "total_tokens": 143,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "第一段：框选 AI 支持离线翻译。\n\n第二段：首次使用请完成引导。",
+          "source_sha256": "4348059faa48e866d2bd973eeba400755c24e9de1316d8d4256d87b1ae0eec0c",
+          "glossary_rendered": "框选 AI => SnipAsk; 引导 => Onboarding",
+          "required_terms": [
+            "SnipAsk",
+            "Onboarding"
+          ],
+          "prompt_sha256": "191f40459b35730001296e829a5d0fb31901e4d0667daa62acd862d657472283",
+          "prompt_chars": 162,
+          "output": "框选 AI 支持离线翻译。",
+          "output_sha256": "496126bf95ab5b4160ea5bafe7f4e113eef600f369e8ae18a8f2a163458f089c",
+          "cjk_ratio": 0.6154,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              },
+              {
+                "term": "Onboarding",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "空行数 0 / 至少 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.6154,
+              "detail": "中文占比 61.5%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-11-error",
+          "direction": "zh->en",
+          "category": "错误码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 860.1,
+          "usage": {
+            "completion_tokens": 23,
+            "prompt_tokens": 122,
+            "total_tokens": 145,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "错误码 SA-1001：截图失败，该错误可重试。请检查屏幕录制权限。",
+          "source_sha256": "b85f424602749ad125d93b030f174ea88f0a34f247b6cf326df45781f7fbb37e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c39ea13fd5e3a2598f1358f5c29b31d00e654b0f3b22c642dd2bd965c5fa5fe4",
+          "prompt_chars": 132,
+          "output": "SA-1001：截图失败，该错误可重试。请检查屏幕录制权限。",
+          "output_sha256": "6eaf5db96a07710a1cf9788189f2b6031c86dd8904d328f2a1d42e61b7d3b309",
+          "cjk_ratio": 0.6333,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.6333,
+              "detail": "中文占比 63.3%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-12-long",
+          "direction": "zh->en",
+          "category": "长段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2026.73,
+          "usage": {
+            "completion_tokens": 80,
+            "prompt_tokens": 189,
+            "total_tokens": 269,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗中展示，支持复制、重新执行与追问。",
+          "source_sha256": "93cff708273fe8bd6f9a5b84a5a9e163abffc4fe2c95a67a70391dffd46f8b02",
+          "glossary_rendered": "框选 AI => SnipAsk; 结果窗 => Result Window",
+          "required_terms": [
+            "SnipAsk",
+            "Result Window"
+          ],
+          "prompt_sha256": "39e4b02b3e7294bf136d1f119164e236bb8e24c42da0e39fd291d402366d2cb4",
+          "prompt_chars": 253,
+          "output": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗中展示，支持复制、重新执行与追问。",
+          "output_sha256": "93cff708273fe8bd6f9a5b84a5a9e163abffc4fe2c95a67a70391dffd46f8b02",
+          "cjk_ratio": 0.775,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              },
+              {
+                "term": "Result Window",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.775,
+              "detail": "中文占比 77.5%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-01-plain",
+          "direction": "en->zh",
+          "category": "段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 525.84,
+          "usage": {
+            "completion_tokens": 4,
+            "prompt_tokens": 119,
+            "total_tokens": 123,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "SnipAsk captures text from your screen and answers questions about screenshots.",
+          "source_sha256": "1cdcf4efe5d7b69f7eda817835bb9c366a1fe5f0c3a9e34fbeabf3917268d282",
+          "glossary_rendered": "SnipAsk => 框选 AI",
+          "required_terms": [
+            "框选 AI"
+          ],
+          "prompt_sha256": "40583d9389dbfb3a1cebba4a3984587b0b7c333b5874fb39ee8c92e81cf4a70f",
+          "prompt_chars": 190,
+          "output": "框选 AI",
+          "output_sha256": "2e3190a751d30cd4eab72a5db3895d1369c1577f077f049402a461e0f549a6d6",
+          "cjk_ratio": 0.4,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.4,
+              "detail": "中文占比 40.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-02-multiline",
+          "direction": "en->zh",
+          "category": "多行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 610.28,
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 113,
+            "total_tokens": 129,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Settings saved.\nRestart the app to apply.\nSee the documentation for help.",
+          "source_sha256": "2fe61d996726e4d48b20e772ef54bf432c2da6a9ce790f33faaafbba4d0f68cf",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5a35e52e66591571f2fe474704e625642521d3c258b46a1c9536f2e23c0f7ce3",
+          "prompt_chars": 171,
+          "output": "Settings saved.\nRestart the app to apply.\nSee the documentation for help.",
+          "output_sha256": "2fe61d996726e4d48b20e772ef54bf432c2da6a9ce790f33faaafbba4d0f68cf",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-03-bullets",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 657.86,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 114,
+            "total_tokens": 131,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "- Capture text from the screen\n- Answer questions about screenshots\n- Translate locally",
+          "source_sha256": "5fcffc3ba75ea11b5aae1988393f27c166c6f90c54a0b27ffd61d270d7461a48",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "529b6191e727f46b330c73be654eb2bf21cc9a72ae01a1671752f7241b9dd055",
+          "prompt_chars": 185,
+          "output": "- Capture text from the screen\n- Answer questions about screenshots\n- Translate locally",
+          "output_sha256": "5fcffc3ba75ea11b5aae1988393f27c166c6f90c54a0b27ffd61d270d7461a48",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "列表行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-04-numbered",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 896.55,
+          "usage": {
+            "completion_tokens": 29,
+            "prompt_tokens": 118,
+            "total_tokens": 147,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "1. Open settings\n2. Choose the API provider\n3. Save the configuration",
+          "source_sha256": "9d8ba782d2f94a49a08ef0e5492f0c6b39716521a9ce40ac129f05aa9e009e72",
+          "glossary_rendered": "API => 接口",
+          "required_terms": [
+            "接口"
+          ],
+          "prompt_sha256": "dfc49a82487471424946d9b323bf42f7bbee8fd0e887aa512b383f841f64adc8",
+          "prompt_chars": 173,
+          "output": "1. API => 接口\n\n1. 开设设置\n2. 选择 API 提供者\n3. 保存配置",
+          "output_sha256": "edfb58db2bed75dc0861dcbfea35424e24d41041ab681e7adc5989267bf6a9cd",
+          "cjk_ratio": 0.3488,
+          "score": {
+            "term_results": [
+              {
+                "term": "接口",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 4,
+                "pass": false,
+                "detail": "非空行数 4 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 4,
+                "pass": true,
+                "detail": "编号行 4 / 至少 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.3488,
+              "detail": "中文占比 34.9%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-05-code",
+          "direction": "en->zh",
+          "category": "代码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 640.25,
+          "usage": {
+            "completion_tokens": 13,
+            "prompt_tokens": 120,
+            "total_tokens": 133,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Run this command:\n```\npython bench.py --runs 20\n```\nThen check the output.",
+          "source_sha256": "9f9621b66d7e0f31fc82926df8d86bc5270abbb5fd8e6fdef48257c611569d74",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "26342825c7ec44f9f9ee88a5caf636aaa4467cd23c7d28ddda4de10132009a79",
+          "prompt_chars": 172,
+          "output": "```python\nbench.py --runs 20\n```",
+          "output_sha256": "5f71f50cf2d5e0a7a7982852b02b608babd4cd028966bb6bbf9ab70a08d367d7",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 3,
+                "pass": false,
+                "detail": "非空行数 3 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'python bench.py --runs 20'；缺失"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-06-url-mail",
+          "direction": "en->zh",
+          "category": "URL",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 725.85,
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 114,
+            "total_tokens": 131,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "source_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "c45a3b98fedb10ce55a5854d1a64a6e96a0c5b50dd5748cba7e0c731cc905817",
+          "prompt_chars": 163,
+          "output": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "output_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": "https://example.com/docs/s14",
+                "pass": true,
+                "detail": "应原样保留 'https://example.com/docs/s14'；已保留"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": "support@example.com",
+                "pass": true,
+                "detail": "应原样保留 'support@example.com'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-07-placeholder",
+          "direction": "en->zh",
+          "category": "占位符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 630.08,
+          "usage": {
+            "completion_tokens": 13,
+            "prompt_tokens": 110,
+            "total_tokens": 123,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Welcome {user}, you have {count} unread messages.",
+          "source_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "b401212c620cfc11fb9e57e7a3183dc5298e6a6b94a9632bca67067230e219cb",
+          "prompt_chars": 147,
+          "output": "Welcome {user}, you have {count} unread messages.",
+          "output_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-08-identifiers",
+          "direction": "en->zh",
+          "category": "标识符",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 961.94,
+          "usage": {
+            "completion_tokens": 22,
+            "prompt_tokens": 119,
+            "total_tokens": 141,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Upgrade to v1.2.3; the deepseek-flash model is verified on Linux and macOS.",
+          "source_sha256": "f8cd536be50ecb9b42424ebac1e8a5cd383d63fd5d6b899aad840d48dd64bca1",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "e0e0603bdf5d71f9bc75be052d85345a3ba8d8540bb15d26aebd67773555a331",
+          "prompt_chars": 173,
+          "output": "Upgrade to v1.2.3; the deepseek-flash model is verified on Linux and macOS.",
+          "output_sha256": "f8cd536be50ecb9b42424ebac1e8a5cd383d63fd5d6b899aad840d48dd64bca1",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": "v1.2.3",
+                "pass": true,
+                "detail": "应原样保留 'v1.2.3'；已保留"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": "deepseek-flash",
+                "pass": true,
+                "detail": "应原样保留 'deepseek-flash'；已保留"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": "Linux",
+                "pass": true,
+                "detail": "应原样保留 'Linux'；已保留"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": "macOS",
+                "pass": true,
+                "detail": "应原样保留 'macOS'；已保留"
+              }
+            ],
+            "format_pass": 4,
+            "format_total": 4,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-09-term-heavy",
+          "direction": "en->zh",
+          "category": "术语",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 827.1,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 126,
+            "total_tokens": 140,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Open the Glossary from the Result Window to review the terms used in this translation.",
+          "source_sha256": "9b4e1749912cc7bca283b2cb200fa45c9234d9dbc1d29dc1b8ce67f0d5bbee55",
+          "glossary_rendered": "Result Window => 结果窗; Glossary => 术语表",
+          "required_terms": [
+            "结果窗",
+            "术语表"
+          ],
+          "prompt_sha256": "f18c7984cdb9ecac348e759fd0952b534347e054c4a593905edbb59513adaf50",
+          "prompt_chars": 218,
+          "output": "Result Window => 结果窗; Glossary => 术语表",
+          "output_sha256": "dae2e9b0f3607f2202d13d7e88536bdace3886d5efbd16e116f568d1d38d965b",
+          "cjk_ratio": 0.1622,
+          "score": {
+            "term_results": [
+              {
+                "term": "结果窗",
+                "hit": true
+              },
+              {
+                "term": "术语表",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.1622,
+              "detail": "中文占比 16.2%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-10-blankline",
+          "direction": "en->zh",
+          "category": "空行",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 662.61,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 131,
+            "total_tokens": 145,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Paragraph one: SnipAsk works offline.\n\nParagraph two: finish Onboarding on first launch.",
+          "source_sha256": "0c4a9f2346e8acc395c009f07ae65e2370eb3cbdbaaa2b214dfd82930c5b9749",
+          "glossary_rendered": "SnipAsk => 框选 AI; Onboarding => 引导",
+          "required_terms": [
+            "框选 AI",
+            "引导"
+          ],
+          "prompt_sha256": "582323da2b4b6ac54b9aae5459e86db4fb84106e01383a6916c170bbee5c37e4",
+          "prompt_chars": 217,
+          "output": "SnipAsk works offline. finish Onboarding on first launch.",
+          "output_sha256": "a02b90b7d83fceec0753ea95425e9500df890623c7d6f66180a1a596451440a2",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": false
+              },
+              {
+                "term": "引导",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "空行数 0 / 至少 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-11-error",
+          "direction": "en->zh",
+          "category": "错误码",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 893.82,
+          "usage": {
+            "completion_tokens": 22,
+            "prompt_tokens": 119,
+            "total_tokens": 141,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "Error SA-1001: screenshot failed and can be retried. Check screen recording permission.",
+          "source_sha256": "ddf2e3b1acf45f90c09536de22f077a7db88ecb4b00d180462ec69fdab9373ec",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "9d02477d6c27ba473109288c117497b397a1ea82daa370c3a1947f8ab56d2a8a",
+          "prompt_chars": 185,
+          "output": "Error SA-1001: screenshot failed and can be retried. Check screen recording permission.",
+          "output_sha256": "ddf2e3b1acf45f90c09536de22f077a7db88ecb4b00d180462ec69fdab9373ec",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-12-long",
+          "direction": "en->zh",
+          "category": "长段落",
+          "backend": "local",
+          "backend_label": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+          "prompt_key": "translate_minimal_v3(candidate)",
+          "model": "tiny",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1904.72,
+          "usage": {
+            "completion_tokens": 74,
+            "prompt_tokens": 193,
+            "total_tokens": 267,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "error": null,
+          "source_text": "SnipAsk is a screen-capture and screenshot question-and-answer tool. Press Ctrl+Q to open the selection box, then select text or images on the screen. Release the mouse to open the action menu. You can translate the selection, extract and search text, recognize image content, or ask the AI a question. All actions appear in the Result Window and support copy, retry and follow-up.",
+          "source_sha256": "9c477d4de63a6bb885bf596692ed5f97d6ea7b23058258102154c132ce3a1779",
+          "glossary_rendered": "SnipAsk => 框选 AI; Result Window => 结果窗",
+          "required_terms": [
+            "框选 AI",
+            "结果窗"
+          ],
+          "prompt_sha256": "ff453aee4ef7fe3d5a874db88c85fc86599b9aa1c77259d14f2fdb0c186fb6b0",
+          "prompt_chars": 514,
+          "output": "SnipAsk 是一个屏幕捕捉和截图问题和答案工具。按 Ctrl+Q 打开选择框，然后在屏幕上选择文本或图像。释放鼠标打开动作菜单。您可以将选择、提取和搜索文本、识别图像内容或向 AI 提问。所有操作均在 Result Window 中显示，并支持复制、重试和跟进。",
+          "output_sha256": "83c41ba0c02a8245d3828c6071c57b7104811e3d394d759b199e1bd6e5697c4d",
+          "cjk_ratio": 0.6617,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": false
+              },
+              {
+                "term": "结果窗",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.6617,
+              "detail": "中文占比 66.2%（期望 >15%）且不等于原文"
+            }
+          }
+        }
+      ],
+      "summary": {
+        "cases": 24,
+        "cases_ok": 24,
+        "term_hit_rate": 0.2667,
+        "term_hits": 4,
+        "term_total": 15,
+        "format_pass_rate": 0.6596,
+        "format_pass": 31,
+        "format_total": 47,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 10,
+            "total": 16
+          },
+          "contains": {
+            "pass": 15,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "translation_effective_rate": 0.25,
+        "case_pass_rate": 0.125,
+        "case_pass": 3,
+        "failures": [
+          {
+            "case_id": "zh-en-01-plain",
+            "reasons": [
+              "术语未命中：['SnipAsk']",
+              "译文无效：中文占比 66.7%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-02-multiline",
+            "reasons": [
+              "格式未保留：['lines_exact']",
+              "译文无效：中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-04-numbered",
+            "reasons": [
+              "译文无效：中文占比 44.4%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact', 'contains:python bench.py --runs 20']"
+            ]
+          },
+          {
+            "case_id": "zh-en-06-url-mail",
+            "reasons": [
+              "格式未保留：['contains:https://example.com/docs/s14', 'contains:support@example.com']",
+              "译文无效：中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-07-placeholder",
+            "reasons": [
+              "译文无效：中文占比 33.3%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-08-identifiers",
+            "reasons": [
+              "格式未保留：['contains:v1.2.3', 'contains:deepseek-flash', 'contains:Linux', 'contains:macOS']",
+              "译文无效：中文占比 70.6%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-09-term-heavy",
+            "reasons": [
+              "术语未命中：['Result Window', 'Glossary']",
+              "译文无效：中文占比 92.0%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-10-blankline",
+            "reasons": [
+              "术语未命中：['SnipAsk', 'Onboarding']",
+              "格式未保留：['lines_exact', 'blank_lines_min']",
+              "译文无效：中文占比 61.5%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-11-error",
+            "reasons": [
+              "译文无效：中文占比 63.3%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "zh-en-12-long",
+            "reasons": [
+              "术语未命中：['SnipAsk', 'Result Window']",
+              "译文无效：中文占比 77.5%（期望 <30%，否则视为未翻译/复述）"
+            ]
+          },
+          {
+            "case_id": "en-zh-02-multiline",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-03-bullets",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-04-numbered",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "en-zh-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact', 'contains:python bench.py --runs 20']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-06-url-mail",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-07-placeholder",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-08-identifiers",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-10-blankline",
+            "reasons": [
+              "术语未命中：['框选 AI', '引导']",
+              "格式未保留：['lines_exact', 'blank_lines_min']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-11-error",
+            "reasons": [
+              "译文无效：中文占比 0.0%（期望 >15%）且等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-12-long",
+            "reasons": [
+              "术语未命中：['框选 AI', '结果窗']"
+            ]
+          }
+        ]
+      },
+      "verdict": "FAILED"
+    }
+  ],
+  "aggregate": {
+    "real_arms": 2,
+    "blocked_arms": [],
+    "done_arms": [],
+    "failed_arms": [
+      "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3"
+    ],
+    "targets_met": false
+  }
+}

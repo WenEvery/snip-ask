@@ -93,6 +93,32 @@
   16 契约 + 12 S-08（2 ignored）+ 9 OCR pipeline + 15 provider（1 ignored）+ 6 S-01 + 6 S-04）、`pnpm typecheck`、
   `pnpm build:web` 全部通过。
 
+### 技术验证（P1 Spike：S-09 ~ S-20，2026-11-05）
+
+按 [`docs/技术验证清单.md`](docs/技术验证清单.md) 完成 **P1（技术难点/验收标准）S-09 ~ S-20** 共 12 项验证：
+逐项结论见 [`docs/spikes/README.md`](docs/spikes/README.md) §6，记录见 `docs/spikes/S-09…S-20*.md`，
+复跑脚本见 [`scripts/spikes/`](scripts/spikes/README.md)。本轮由 AI 助手团队（Agent Teams）执行，
+除 S-19 真人走查外均为真实应用/真实模型/真实 HTTP 证据，mock 仅作契约自检且明确标注。
+
+- **DONE**：S-09（WGC 实机可用且与 BitBlt 像素级一致；WDA_MONITOR 保护面 BitBlt/WGC 均纯黑、
+  WDA_EXCLUDEFROMCAPTURE 下 WGC 3/3 无帧 → 黑帧/空帧都判失败；产品新增纯 safe `is_black_frame`/
+  `resolve_capture` 降级链 + SA-1001 16 项单测）；S-10（release 冷启动 P95 858ms ≤1.5s、空闲主进程 WS max
+  36.8MiB ≤120MB、空闲 CPU 均值 0.0022% <0.5%）；S-11（推荐 `det≥0.6+面积≥400px²+行高≤70px` 误判 2.0%/漏判 0%）；
+  S-15（字符准确率 native 99.38% / budget 99.29%，100/100 张 ≥95%）；S-16（未签名安装/启动 840.4ms/卸载通过、
+  Defender 无威胁）；S-17（真实 app IPC 20/20 错误码映射 + 断网降级链 + 真实 DeepSeek 200/350ms）；
+  S-18（NSIS 2.57 MiB ≤25MB，CI 体积门禁落地）；S-20（第二实例 10/10、退出后 Ctrl+Q 无残留 5/5、暂停/恢复 3/3）。
+- **FAILED/部分通过**：S-12 来源可访问率 59.6%（乐观上界 94.1% <95%；四段 100%、不确定标注 100%）；
+  S-14 云端术语/格式 100% 通过，但本地最佳 1.5B 格式 68.1%、0.5B 不达标。
+- **IN PROGRESS / BLOCKED**：S-13（常驻 0.5B/1.5B/1.8B = 520.8/1715.3/2102.4 MB；Job Object 本机未强制 →
+  OOM 未测；8GB 降档提示缺失）；S-19（真人 3 人不可得 → BLOCKED，已交付走查协议 + 自动走查 4.24s）。
+- **代码/工程**：`platform/capture.rs` + `services/capture_service.rs` 黑屏检测与降级决策（16 项单测）；
+  `.github/workflows/ci.yml` 新增 `bundle` job（`pnpm tauri build` + ≤25MiB 门禁 + 体积基线归档，
+  `SKIP_BUNDLE_GATE=true` 可跳过）；新增 P1 脚本包 `scripts/spikes/{s09,s10_s16_s18,s11_s15,s12_s14,s13_s17_s19_s20}/`
+  与 12 份记录、聚合数据。
+- **安全**：用户提供的 DeepSeek Key 仅存 gitignored `.verify/p1/key.txt`，运行时读取；仓库/日志/文档无泄露。
+- **门槛**：`cargo fmt --check`、`cargo clippy --all-targets -- -D warnings`、`cargo test`（**258 passed / 3 ignored**）、
+  `pnpm typecheck`、`pnpm build:web` 全部通过。
+
 ### 修复（真实编译与运行验证，2026-11-04）
 
 - **事件名合法化**：Tauri 2 的 `Emitter::emit` 不允许事件名包含 `.`（原 `overlay.ready` 等 14 个事件在真实运行中全部发射失败），统一改为 `域:动作` 形式（`overlay:ready`、`task:delta` …），并同步契约文档、TS/Rust 常量、mock 与契约测试。

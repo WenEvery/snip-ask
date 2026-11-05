@@ -1,0 +1,85 @@
+{
+  "kind": "automated-walkthrough",
+  "note": "自动走查（参考数据），不代表真人新用户验收；口径：首次启动到第 6 步点击「完成并进入」",
+  "date": "2026-11-05",
+  "totalOnboardingSec": 4.24,
+  "stepMs": [
+    {
+      "index": 1,
+      "title": "框一下，就懂了",
+      "ms": 537
+    },
+    {
+      "index": 2,
+      "title": "连接一个 AI 服务",
+      "ms": 666
+    },
+    {
+      "index": 3,
+      "title": "选择翻译方式",
+      "ms": 779
+    },
+    {
+      "index": 4,
+      "title": "为每个动作选择默认模式",
+      "ms": 579
+    },
+    {
+      "index": 5,
+      "title": "外观与行为",
+      "ms": 621
+    },
+    {
+      "index": 6,
+      "title": "隐私与完成",
+      "ms": 768
+    }
+  ],
+  "stepTitles": [
+    "第 1 / 6 步 · 欢迎与语言 框一下，就懂了",
+    "第 2 / 6 步 · AI 服务 连接一个 AI 服务",
+    "第 3 / 6 步 · 翻译方式 选择翻译方式",
+    "第 4 / 6 步 · AI 模式 为每个动作选择默认模式",
+    "第 5 / 6 步 · 外观与行为 外观与行为",
+    "第 6 / 6 步 · 隐私与完成 隐私与完成"
+  ],
+  "translateTierCards": [
+    {
+      "title": "云端翻译",
+      "desc": "需 API Key；不占磁盘与内存，按量计费",
+      "meta": "推荐 · 最快\n实测（DeepSeek deepseek-flash / thinking 关闭）：首字 P50 0.61s / P95 0.87s 达标；默认 thinking 首字 P95 4.59s（不达标，接入网关需显式关闭思考）\n质量最高（大模型）；需联网并同意文本上传，按量计费",
+      "selected": true
+    },
+    {
+      "title": "极小模型（本地）",
+      "desc": "Qwen2.5-0.5B-Instruct Q4_K_M，隐私/离线/零成本",
+      "meta": "低配友好\n体积 ≈470 MB · 内存 ≈1 GB\n实测 P50 3.1s / P95 3.2s（200 字，纯 CPU；需精简提示词）；30 字短句约 0.4s\n快、省内存（常驻 ≈0.55 GB）；译文质量一般，适合短句/轻度使用，长文建议云端或普通模型",
+      "selected": false
+    },
+    {
+      "title": "普通模型（本地）",
+      "desc": "HY-MT1.5-1.8B Q4，专注翻译、译文更自然",
+      "meta": "本地推荐质量\n体积 ≈1.08 GB · 常驻内存 ≈2.1 GB\n实测 P50 11.76s / P95 21.84s / 最快 9.89s（200 字，纯 CPU i7-12650H）\n质量好但纯 CPU 慢：8s 目标仅云端满足；适合重质量、可等待的场景",
+      "selected": false
+    }
+  ],
+  "finalState": {
+    "completed": true,
+    "skipped": false,
+    "skeletonMode": true,
+    "restrictedBanner": true,
+    "restrictedBannerText": "受限模式\n\n当前未配置任何 AI 服务（无 API Key、无本地模型），应用将以受限模式运行。\n\n仍可用：本地 OCR、浏览器搜索、复制文字\n\n不可用：AI 搜索、解答、图片搜索、云端翻译、本地翻译（原因与修复入口见动作菜单 / 设置页）\n\n去配置 AI 服务"
+  },
+  "uncaught": {
+    "errors": [],
+    "rejections": []
+  },
+  "screenshots": [
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step1-框一下，就懂了.png",
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step2-连接一个 AI 服务.png",
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step3-选择翻译方式.png",
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step4-为每个动作选择默认模式.png",
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step5-外观与行为.png",
+    "D:\\game\\项目：框选ai\\.verify\\spikes\\S-13-S-17-S-19-S-20\\shots\\s19\\step6-隐私与完成.png"
+  ]
+}

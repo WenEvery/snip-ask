@@ -1,0 +1,48 @@
+{
+  "kind": "real-provider-test + s13-frontend-probe",
+  "date": "2026-11-05T11:19:04.103Z",
+  "keySource": ".verify/p1/key.txt",
+  "providerTest": {
+    "threw": false,
+    "wallMs": 366,
+    "apiKeyProvided": true,
+    "host": "api.deepseek.com",
+    "ok": true,
+    "status": 200,
+    "latencyMs": 350,
+    "model": "deepseek-flash",
+    "error": null
+  },
+  "deviceMemory": {
+    "deviceMemory": 8,
+    "hardwareConcurrency": 16,
+    "note": "Chromium 对 deviceMemory 上限报 8（本机 16GB 报 8，8GB 机型会报 4），因此前端不能直接拿它和 minRamMB 比，需要用「< 8 视为低内存」这类阈值口径"
+  },
+  "modelLibrary": {
+    "note": "翻译后端为云端时不渲染模型库；本地（离线）分支的模型行静态内存文案由 S-13 取证",
+    "rows": [
+      {
+        "title": "HY-MT1.5-1.8B（Q4_K_M）\nhy-mt-1.8b-q4\n排队中",
+        "meta": "1.1 GB · 需内存 4096 MB · 许可 Tencent Hunyuan Community License · gguf"
+      },
+      {
+        "title": "Qwen3-4B（Q4_K_M）\nqwen3-4b-q4\n排队中",
+        "meta": "2.3 GB · 需内存 8192 MB · 许可 Apache-2.0 · gguf"
+      },
+      {
+        "title": "Qwen2.5-0.5B-Instruct（Q4_K_M，极小模型）\nqwen2.5-0.5b-instruct-q4\n排队中",
+        "meta": "469 MB · 需内存 1024 MB · 许可 Apache-2.0 · gguf"
+      }
+    ],
+    "screenshot": "shots/s13/02-settings-model-library.png",
+    "s13Aggregate": "docs/spikes/data/s13_s17_s19_s20/s13_local_model_resources.json"
+  },
+  "uncaught": {
+    "errors": [],
+    "rejections": []
+  },
+  "appAlive": {
+    "alive": true,
+    "skeletonMode": true
+  }
+}

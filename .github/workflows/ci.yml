@@ -1,6 +1,10 @@
 # 框选 AI · CI（windows-latest）
 # - web： pnpm install → typecheck → build:web → 上传 dist 产物（可选）
 # - rust：cargo fmt --check → clippy -D warnings → cargo test
+# - bundle：pnpm tauri build（web + cargo release + NSIS）→ 安装包体积门禁（S-18，≤25 MiB 不含模型）
+#   体积基线 JSON 作为 CI 产物归档，并与 docs/spikes/data/s16_s18/volume_baseline.json 对比记录趋势；
+#   仓库变量 SKIP_BUNDLE_GATE=true 可临时停用该 job（无 NSIS/受限网络的降级路径，风险见
+#   docs/spikes/S-18-安装包体积门禁.md）。
 # 说明：脚手架阶段 CI 首次运行可能因依赖或占位实现未补全而失败，属预期；请以实际输出定位问题。
 name: CI
 
@@ -83,3 +87,58 @@ jobs:
 
       - name: 单元测试
         run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  bundle:
+    name: Release bundle（NSIS 体积门禁）
+    runs-on: windows-latest
+    timeout-minutes: 60
+    # 降级路径：仓库变量 SKIP_BUNDLE_GATE=true 时跳过（本地已验证；CI 无 NSIS/网络受限时的风险见记录 §遗留）。
+    if: ${{ vars.SKIP_BUNDLE_GATE != 'true' }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 缓存 Rust 构建
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # RELEASE profile 已配置 lto=true / codegen-units=1 / opt-level="s" / strip=true / panic="abort"
+      # （src-tauri/Cargo.toml），冷构建在 GitHub runner 上约 10–20 分钟；首次运行若因 NSIS 下载失败，
+      # 可用 SKIP_BUNDLE_GATE=true 临时放行，并在 docs/spikes/S-18-安装包体积门禁.md 记录风险。
+      - name: 生产构建（web + cargo release + NSIS）
+        run: pnpm tauri build
+        env:
+          CI: true
+
+      - name: 体积门禁（NSIS 安装包 ≤ 25 MiB，不含模型）
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -ThresholdMiB 25 -BaselineOut .verify/ci/volume_baseline.json -BaselineRef docs/spikes/data/s16_s18/volume_baseline.json
+
+      - name: 归档体积基线（失败也归档，便于定位）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-size-baseline
+          path: .verify/ci/volume_baseline.json
+          if-no-files-found: warn
+          retention-days: 30

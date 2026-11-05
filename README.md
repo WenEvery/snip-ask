@@ -240,6 +240,17 @@ S-05 云端（DeepSeek，关闭 thinking）首字 P95 0.87s、本地**极小档*
 逐项记录与原始数据索引见 [`docs/spikes/`](docs/spikes/README.md)，复跑脚本见 [`scripts/spikes/`](scripts/spikes/README.md)。
 剩余决策项：S-05 云端**总耗时**口径（P95 1.75s vs ≤1.5s，首字已达标）建议明确为「首字」。
 
+**P1 Spike 实测（2026-11-05，AI 助手团队；真实应用/真实模型/真实网络）**：
+S-09 捕获降级（WGC 实机可用且与 BitBlt 像素级一致；WDA_MONITOR 保护面 BitBlt/WGC 均纯黑、WDA_EXCLUDEFROMCAPTURE 下
+WGC 3/3 无帧；产品落地黑屏检测 + 降级链 + SA-1001）、S-10 启动与常驻（release 冷启动 P95 858ms、空闲主进程
+WS max 36.8MiB、空闲 CPU 均值 0.0022%）、S-11 文字存在判定（推荐阈值组合误判 2.0%/漏判 0%）、S-15 OCR 字符准确率
+（native 99.38% / 生产预算口径 99.29%）、S-16 未签名安装包（安装/启动 840ms/卸载通过、Defender 无威胁）、
+S-17 网络异常（真实 IPC 20/20 错误映射 + 断网降级链）、S-18 体积门禁（NSIS 2.57MiB ≤25MB，CI 已加 bundle job）、
+S-20 托盘/单实例/热键（第二实例 10/10、退出后 Ctrl+Q 无残留 5/5）= **DONE**（各有遗留）；
+**S-14 云端 DONE / 本地 FAILED**（本地格式保持 68.1%）；**S-12 FAILED（来源可访问率 59.6%，乐观 94.1% <95%）**；
+**S-13 IN PROGRESS**（8GB 降档提示缺失、OOM 未实测）；**S-19 BLOCKED**（需 3 名真人新用户）。
+记录索引见 [`docs/spikes/`](docs/spikes/README.md) §6。
+
 ## 许可与隐私
 
 - **许可**：[Apache-2.0](LICENSE)。第三方组件、OCR/推理依赖与模型许可见 [NOTICE](NOTICE)；

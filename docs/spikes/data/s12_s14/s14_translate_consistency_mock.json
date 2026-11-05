@@ -1,0 +1,3102 @@
+{
+  "meta": {
+    "script": "bench_translate_consistency.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T19:24:42.909275+08:00",
+    "mode": "MOCK_SELF_TEST",
+    "labels": [
+      "MOCK"
+    ],
+    "note": "mock 数据仅验证判分框架可跑通，不得作为 S-14 DONE/FAILED 依据。"
+  },
+  "runs": [
+    {
+      "arm": "MOCK:mock-model/translate.md",
+      "kind": "mock",
+      "status": "MOCK_SELF_TEST",
+      "meta": {
+        "mock": true,
+        "satisfy": true
+      },
+      "records": [
+        {
+          "case_id": "zh-en-01-plain",
+          "direction": "zh->en",
+          "category": "段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 16.26,
+          "usage": null,
+          "error": null,
+          "source_text": "框选 AI 提供截图问答与翻译能力。按下 Ctrl+Q 即可唤起选框，松开后弹出动作菜单。",
+          "source_sha256": "1cc124e4a3a5b089e20157948f45601c0dacc61ae4e3557eb8995221f11dc426",
+          "glossary_rendered": "框选 AI => SnipAsk",
+          "required_terms": [
+            "SnipAsk"
+          ],
+          "prompt_sha256": "d24135dfbfe2d7cf2169578d35552f4aa8de52262ae10995dd58a9fd0270418a",
+          "prompt_chars": 623,
+          "output": "Mock English translation. Ctrl+Q SnipAsk",
+          "output_sha256": "4a045c3f46aaa366cab6e8118ef11de2a2d9b85f08a5cdc97e0d1c99f848881e",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-02-multiline",
+          "direction": "zh->en",
+          "category": "多行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.86,
+          "usage": null,
+          "error": null,
+          "source_text": "设置已保存。\n重新启动应用后生效。\n如需帮助请查看文档。",
+          "source_sha256": "e1aa7629b04adb3421988061a4b5620fe154859b1f85ac64c692300236c8b4f9",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "26269fc38d4880eea9921fd4b04c6592f0ac1620c56732dab99eaa41e2b4d523",
+          "prompt_chars": 590,
+          "output": "Mock English translation.\nMock English translation.\nMock English translation.",
+          "output_sha256": "5ea1afb25b1b520ea064fe14ff0786205ee260e8d0d3aa777ef5fe6a8f180b8c",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-03-bullets",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.18,
+          "usage": null,
+          "error": null,
+          "source_text": "- 支持屏幕取词\n- 支持截图问答\n- 支持本地翻译",
+          "source_sha256": "5b47983f6def381bafc84199edf82b6367ac74b7a6d06421a860e37b18ecf6d7",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "bdff4097206f854a0046d8f796ee34ccb7cc62ce5430ca5008f17844ecb387a8",
+          "prompt_chars": 588,
+          "output": "- Mock English translation.\n- Mock English translation.\n- Mock English translation.",
+          "output_sha256": "8bde3096e6ccb346a55f23a4d84ca37098d8f2c437edb1229b587c682e6fb4b4",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "列表行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-04-numbered",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.39,
+          "usage": null,
+          "error": null,
+          "source_text": "1. 打开设置\n2. 选择 AI 服务\n3. 保存配置",
+          "source_sha256": "e7f52a625f79d3ee4677062af97d99e8b7081cccd0616974a0a256e697e23db5",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "2bf8b15fa7504a7368ab956f52e2516065ddc75363adbf606310abe08322b200",
+          "prompt_chars": 589,
+          "output": "1. Mock English translation.\n2. Mock English translation.\n3. Mock English translation.",
+          "output_sha256": "7047eee370383ffb7a1237ed0ba66feefa4dab36e006cdeb717a0888f1348986",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "编号行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-05-code",
+          "direction": "zh->en",
+          "category": "代码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.01,
+          "usage": null,
+          "error": null,
+          "source_text": "请运行以下命令：\n```\npython bench.py --runs 20\n```\n完成后查看输出。",
+          "source_sha256": "170a322521ad16ec2756e45176ce26e1fc02bd3f4d59b79f4acd42d5d5f55429",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "cd277e831a111e5873810425a4dd2defd584ab6150850ae229130c3a64a79976",
+          "prompt_chars": 613,
+          "output": "Mock English translation.\n```\nMock English translation. python bench.py --runs 20\n```\nMock English translation.",
+          "output_sha256": "cb1814c3d792d02b5a0b48b2014448b2f901128072fe8cddcded2a4912b50356",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 5,
+                "pass": true,
+                "detail": "非空行数 5 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-06-url-mail",
+          "direction": "zh->en",
+          "category": "URL",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.87,
+          "usage": null,
+          "error": null,
+          "source_text": "文档地址 https://example.com/docs/s14 与支持邮箱 support@example.com 均可使用。",
+          "source_sha256": "aa64776d5c855de8dc576ed2f706ab7fbd22b40f5e54bf5097c9d5bebebcd30b",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "d1b5c76d4545a884939b593c7e4331810449acbecfa1d0ebde67a7ba0c870d77",
+          "prompt_chars": 627,
+          "output": "Mock English translation. https://example.com/docs/s14 support@example.com",
+          "output_sha256": "b6c95e4c409cb18058440ea3d3d0ad12415591105f1ab0f96c43c6bf8e3c38bf",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": "https://example.com/docs/s14",
+                "pass": true,
+                "detail": "应原样保留 'https://example.com/docs/s14'；已保留"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": "support@example.com",
+                "pass": true,
+                "detail": "应原样保留 'support@example.com'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-07-placeholder",
+          "direction": "zh->en",
+          "category": "占位符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.81,
+          "usage": null,
+          "error": null,
+          "source_text": "欢迎 {user}，你有 {count} 条未读消息。",
+          "source_sha256": "43c7c0fce9a5b512be2a7f00c2946f43928ff483f618937fa855f1e3f5ffa51c",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "f32d796c972af641d7a1edef352eaaa68ca9dfb530553f67e1c23397364428cd",
+          "prompt_chars": 589,
+          "output": "Mock English translation. {user} {count}",
+          "output_sha256": "b1af4287dca404da287d03cb8cf008f78e8385d9cff4ccf5889930924dd2b59b",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-08-identifiers",
+          "direction": "zh->en",
+          "category": "标识符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.74,
+          "usage": null,
+          "error": null,
+          "source_text": "请升级到 v1.2.3，模型 deepseek-flash 已在 Linux 与 macOS 上验证。",
+          "source_sha256": "7c3dda4b0d07f980b815afe357f2b84e9eeb1c384c13ebaab9865d22fd9d447e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "cf2872b3814e896ea99f6eb932a9e4cb9943e511c0ffb60c9f3e149bfaa1a802",
+          "prompt_chars": 613,
+          "output": "Mock English translation. v1.2.3 deepseek-flash Linux macOS",
+          "output_sha256": "c760a4874889d880544fc74a28a5778c7e797577e1c3319a12eba4ed31e424c0",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": "v1.2.3",
+                "pass": true,
+                "detail": "应原样保留 'v1.2.3'；已保留"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": "deepseek-flash",
+                "pass": true,
+                "detail": "应原样保留 'deepseek-flash'；已保留"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": "Linux",
+                "pass": true,
+                "detail": "应原样保留 'Linux'；已保留"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": "macOS",
+                "pass": true,
+                "detail": "应原样保留 'macOS'；已保留"
+              }
+            ],
+            "format_pass": 4,
+            "format_total": 4,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-09-term-heavy",
+          "direction": "zh->en",
+          "category": "术语",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.22,
+          "usage": null,
+          "error": null,
+          "source_text": "在结果窗中打开术语表，即可查看本次翻译使用的术语。",
+          "source_sha256": "87601c03b3271f91b9a232332821bdbf4d5975aa2f858ef42a9cdccce1d3ea3e",
+          "glossary_rendered": "结果窗 => Result Window; 术语表 => Glossary",
+          "required_terms": [
+            "Result Window",
+            "Glossary"
+          ],
+          "prompt_sha256": "37d05a5ba58eca02b6fef1d3b1b3a498be4f6413b80aa6c5a5c8c01470490246",
+          "prompt_chars": 624,
+          "output": "Mock English translation. Result Window Glossary",
+          "output_sha256": "0aea83831d12201bf31cb141e49ccedd1d51f44f08b8a2d60f51930a7f6bf503",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "Result Window",
+                "hit": true
+              },
+              {
+                "term": "Glossary",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-10-blankline",
+          "direction": "zh->en",
+          "category": "空行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2.03,
+          "usage": null,
+          "error": null,
+          "source_text": "第一段：框选 AI 支持离线翻译。\n\n第二段：首次使用请完成引导。",
+          "source_sha256": "4348059faa48e866d2bd973eeba400755c24e9de1316d8d4256d87b1ae0eec0c",
+          "glossary_rendered": "框选 AI => SnipAsk; 引导 => Onboarding",
+          "required_terms": [
+            "SnipAsk",
+            "Onboarding"
+          ],
+          "prompt_sha256": "b8eb5a0c0aa95c7b4fb59966e87cc054541660d8d393a094835b1bf3fd65ae9b",
+          "prompt_chars": 629,
+          "output": "Mock English translation. SnipAsk Onboarding\n\nMock English translation.",
+          "output_sha256": "0e4a7ea1ac8080594c353f5bd87593e89da99e671822c66a00908dd935cf831f",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              },
+              {
+                "term": "Onboarding",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "非空行数 2 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "空行数 1 / 至少 1"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-11-error",
+          "direction": "zh->en",
+          "category": "错误码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1.71,
+          "usage": null,
+          "error": null,
+          "source_text": "错误码 SA-1001：截图失败，该错误可重试。请检查屏幕录制权限。",
+          "source_sha256": "b85f424602749ad125d93b030f174ea88f0a34f247b6cf326df45781f7fbb37e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ec95cb100905b3d4dcdce486de1b6f53e196c22664c3fd4d887d8d7d6ce967f3",
+          "prompt_chars": 596,
+          "output": "Mock English translation. SA-1001",
+          "output_sha256": "7eaf20ef410a2b70550a2d886e00f4d684ab44bb8f577eea22c37012aba83094",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-12-long",
+          "direction": "zh->en",
+          "category": "长段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 26.08,
+          "usage": null,
+          "error": null,
+          "source_text": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗中展示，支持复制、重新执行与追问。",
+          "source_sha256": "93cff708273fe8bd6f9a5b84a5a9e163abffc4fe2c95a67a70391dffd46f8b02",
+          "glossary_rendered": "框选 AI => SnipAsk; 结果窗 => Result Window",
+          "required_terms": [
+            "SnipAsk",
+            "Result Window"
+          ],
+          "prompt_sha256": "085d92e2f2e92ce8a87067fa731c8cdb9db58a8e5dc95ba71dd476b6c3c89712",
+          "prompt_chars": 720,
+          "output": "Mock English translation. Ctrl+Q SnipAsk Result Window",
+          "output_sha256": "5a7dadd8d4794297751c3eb974792ba1bec32b411d0130c5a00875c37b225b8f",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": true
+              },
+              {
+                "term": "Result Window",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-01-plain",
+          "direction": "en->zh",
+          "category": "段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.68,
+          "usage": null,
+          "error": null,
+          "source_text": "SnipAsk captures text from your screen and answers questions about screenshots.",
+          "source_sha256": "1cdcf4efe5d7b69f7eda817835bb9c366a1fe5f0c3a9e34fbeabf3917268d282",
+          "glossary_rendered": "SnipAsk => 框选 AI",
+          "required_terms": [
+            "框选 AI"
+          ],
+          "prompt_sha256": "ca4d9a7f3606d551305f1861800c745e21a02fa4b4c8d7387f604a731bc788a5",
+          "prompt_chars": 657,
+          "output": "这是模拟的中文译文内容。 框选 AI",
+          "output_sha256": "1d591d85337b768ca06e3f3bfd5aa3feb3da90f6880fe10e89862457d5e36497",
+          "cjk_ratio": 0.7222,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.7222,
+              "detail": "中文占比 72.2%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-02-multiline",
+          "direction": "en->zh",
+          "category": "多行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.1,
+          "usage": null,
+          "error": null,
+          "source_text": "Settings saved.\nRestart the app to apply.\nSee the documentation for help.",
+          "source_sha256": "2fe61d996726e4d48b20e772ef54bf432c2da6a9ce790f33faaafbba4d0f68cf",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ee88d0f351c9ea63c1497d19a7c7b3aaede62d70a01b87c973180c13b3ffb372",
+          "prompt_chars": 635,
+          "output": "这是模拟的中文译文内容。\n这是模拟的中文译文内容。\n这是模拟的中文译文内容。",
+          "output_sha256": "d59fb7ce1dfcfc2812c3d0b173503c885993bf634b7ee766f8186322167aae55",
+          "cjk_ratio": 0.8684,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.8684,
+              "detail": "中文占比 86.8%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-03-bullets",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.67,
+          "usage": null,
+          "error": null,
+          "source_text": "- Capture text from the screen\n- Answer questions about screenshots\n- Translate locally",
+          "source_sha256": "5fcffc3ba75ea11b5aae1988393f27c166c6f90c54a0b27ffd61d270d7461a48",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "70c877e02207be5b4de6d0eb404862a92db54f6d984d2a2a962162d27ab6fecd",
+          "prompt_chars": 649,
+          "output": "- 这是模拟的中文译文内容。\n- 这是模拟的中文译文内容。\n- 这是模拟的中文译文内容。",
+          "output_sha256": "e1e7d3cab9775372e6d62cd069f515ace4dc68d3fab948bac9c94b2591002d05",
+          "cjk_ratio": 0.75,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "列表行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.75,
+              "detail": "中文占比 75.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-04-numbered",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.46,
+          "usage": null,
+          "error": null,
+          "source_text": "1. Open settings\n2. Choose the API provider\n3. Save the configuration",
+          "source_sha256": "9d8ba782d2f94a49a08ef0e5492f0c6b39716521a9ce40ac129f05aa9e009e72",
+          "glossary_rendered": "API => 接口",
+          "required_terms": [
+            "接口"
+          ],
+          "prompt_sha256": "7ea9cf7783161358609971baa65cbd2c0e5860bacd26757dd91be3502f0ca538",
+          "prompt_chars": 640,
+          "output": "1. 这是模拟的中文译文内容。 接口\n2. 这是模拟的中文译文内容。\n3. 这是模拟的中文译文内容。",
+          "output_sha256": "d7845eb6ed466521b7e6d0d957bafb0d744d95376e1ed5afa8aceddac1807fcf",
+          "cjk_ratio": 0.7,
+          "score": {
+            "term_results": [
+              {
+                "term": "接口",
+                "hit": true
+              }
+            ],
+            "term_hits": 1,
+            "term_total": 1,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "非空行数 3 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 3,
+                "pass": true,
+                "detail": "编号行 3 / 至少 3"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.7,
+              "detail": "中文占比 70.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-05-code",
+          "direction": "en->zh",
+          "category": "代码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.0,
+          "usage": null,
+          "error": null,
+          "source_text": "Run this command:\n```\npython bench.py --runs 20\n```\nThen check the output.",
+          "source_sha256": "9f9621b66d7e0f31fc82926df8d86bc5270abbb5fd8e6fdef48257c611569d74",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "fb88271ebbb643b2175b16bb7265f590d3314ac16ccee379af15187ad27cce03",
+          "prompt_chars": 636,
+          "output": "这是模拟的中文译文内容。\n```\n这是模拟的中文译文内容。 python bench.py --runs 20\n```\n这是模拟的中文译文内容。",
+          "output_sha256": "bacf0da8cdac6ece2ab955d5dc11957d80346c171de0524fdaa1fd4cd3fa1537",
+          "cjk_ratio": 0.4583,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 5,
+                "pass": true,
+                "detail": "非空行数 5 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.4583,
+              "detail": "中文占比 45.8%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-06-url-mail",
+          "direction": "en->zh",
+          "category": "URL",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 16.27,
+          "usage": null,
+          "error": null,
+          "source_text": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "source_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ad4e20fb207671e485576308504a5a8ac093faf83a99d80faf0be75655b96217",
+          "prompt_chars": 627,
+          "output": "这是模拟的中文译文内容。 https://example.com/docs/s14 support@example.com",
+          "output_sha256": "9ea44f98f0871843a965850109a394cff98b7e81c571078ffc2b17cb1b426667",
+          "cjk_ratio": 0.1803,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": "https://example.com/docs/s14",
+                "pass": true,
+                "detail": "应原样保留 'https://example.com/docs/s14'；已保留"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": "support@example.com",
+                "pass": true,
+                "detail": "应原样保留 'support@example.com'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.1803,
+              "detail": "中文占比 18.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-07-placeholder",
+          "direction": "en->zh",
+          "category": "占位符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.13,
+          "usage": null,
+          "error": null,
+          "source_text": "Welcome {user}, you have {count} unread messages.",
+          "source_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5f873c5f8226dcbf148cf7a0be35e5d5f490ee7bfa978f545637371eca11bd1c",
+          "prompt_chars": 611,
+          "output": "这是模拟的中文译文内容。 {user} {count}",
+          "output_sha256": "a33c5785df4f401d5e6f15fb2eba1ba1476a1f42675909ee7b4d63454138929e",
+          "cjk_ratio": 0.4074,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": "{user}",
+                "pass": true,
+                "detail": "应原样保留 '{user}'；已保留"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": "{count}",
+                "pass": true,
+                "detail": "应原样保留 '{count}'；已保留"
+              }
+            ],
+            "format_pass": 3,
+            "format_total": 3,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.4074,
+              "detail": "中文占比 40.7%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-08-identifiers",
+          "direction": "en->zh",
+          "category": "标识符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.01,
+          "usage": null,
+          "error": null,
+          "source_text": "Upgrade to v1.2.3; the deepseek-flash model is verified on Linux and macOS.",
+          "source_sha256": "f8cd536be50ecb9b42424ebac1e8a5cd383d63fd5d6b899aad840d48dd64bca1",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "b93eb3cbc43127d660491e8b675aef9a9bc512bc78c89d1913582e2c076b2aaf",
+          "prompt_chars": 637,
+          "output": "这是模拟的中文译文内容。 v1.2.3 deepseek-flash Linux macOS",
+          "output_sha256": "d1adb8fd0ca418078c92275928f37226702dae5d7d1bbc8b582d98950f7b295d",
+          "cjk_ratio": 0.2391,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": "v1.2.3",
+                "pass": true,
+                "detail": "应原样保留 'v1.2.3'；已保留"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": "deepseek-flash",
+                "pass": true,
+                "detail": "应原样保留 'deepseek-flash'；已保留"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": "Linux",
+                "pass": true,
+                "detail": "应原样保留 'Linux'；已保留"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": "macOS",
+                "pass": true,
+                "detail": "应原样保留 'macOS'；已保留"
+              }
+            ],
+            "format_pass": 4,
+            "format_total": 4,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.2391,
+              "detail": "中文占比 23.9%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-09-term-heavy",
+          "direction": "en->zh",
+          "category": "术语",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.84,
+          "usage": null,
+          "error": null,
+          "source_text": "Open the Glossary from the Result Window to review the terms used in this translation.",
+          "source_sha256": "9b4e1749912cc7bca283b2cb200fa45c9234d9dbc1d29dc1b8ce67f0d5bbee55",
+          "glossary_rendered": "Result Window => 结果窗; Glossary => 术语表",
+          "required_terms": [
+            "结果窗",
+            "术语表"
+          ],
+          "prompt_sha256": "a827d56a46b30a6b4452d2466216b30eb605377caa001672f886b0957a3a852c",
+          "prompt_chars": 685,
+          "output": "这是模拟的中文译文内容。 结果窗 术语表",
+          "output_sha256": "e540c8339a39956094c2749eff770928ff68acaabd19de81668035d3177f1367",
+          "cjk_ratio": 0.85,
+          "score": {
+            "term_results": [
+              {
+                "term": "结果窗",
+                "hit": true
+              },
+              {
+                "term": "术语表",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "非空行数 1 / 期望 1"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.85,
+              "detail": "中文占比 85.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-10-blankline",
+          "direction": "en->zh",
+          "category": "空行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.44,
+          "usage": null,
+          "error": null,
+          "source_text": "Paragraph one: SnipAsk works offline.\n\nParagraph two: finish Onboarding on first launch.",
+          "source_sha256": "0c4a9f2346e8acc395c009f07ae65e2370eb3cbdbaaa2b214dfd82930c5b9749",
+          "glossary_rendered": "SnipAsk => 框选 AI; Onboarding => 引导",
+          "required_terms": [
+            "框选 AI",
+            "引导"
+          ],
+          "prompt_sha256": "97e6d16fbc17c6c73e291f48dd8aa305c20ee495e09505086b28b49ec2ec5155",
+          "prompt_chars": 684,
+          "output": "这是模拟的中文译文内容。 框选 AI 引导\n\n这是模拟的中文译文内容。",
+          "output_sha256": "9b33043757e667435cab48423ae4ab1a4eb9051ba6412bc1e20365a557ce5dab",
+          "cjk_ratio": 0.7429,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              },
+              {
+                "term": "引导",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "非空行数 2 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 1,
+                "pass": true,
+                "detail": "空行数 1 / 至少 1"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 2,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.7429,
+              "detail": "中文占比 74.3%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-11-error",
+          "direction": "en->zh",
+          "category": "错误码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.51,
+          "usage": null,
+          "error": null,
+          "source_text": "Error SA-1001: screenshot failed and can be retried. Check screen recording permission.",
+          "source_sha256": "ddf2e3b1acf45f90c09536de22f077a7db88ecb4b00d180462ec69fdab9373ec",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "d09bc52870f9f20982fbf9d28a88aff63ffd4846e605d62869fd57fef9d93c26",
+          "prompt_chars": 649,
+          "output": "这是模拟的中文译文内容。 SA-1001",
+          "output_sha256": "c68aea2c00df7ff4220910f2b18e8d858d410f7ecc1c79c7d6bfcf9e9c0fb4dd",
+          "cjk_ratio": 0.55,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": "SA-1001",
+                "pass": true,
+                "detail": "应原样保留 'SA-1001'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.55,
+              "detail": "中文占比 55.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-12-long",
+          "direction": "en->zh",
+          "category": "长段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.48,
+          "usage": null,
+          "error": null,
+          "source_text": "SnipAsk is a screen-capture and screenshot question-and-answer tool. Press Ctrl+Q to open the selection box, then select text or images on the screen. Release the mouse to open the action menu. You can translate the selection, extract and search text, recognize image content, or ask the AI a question. All actions appear in the Result Window and support copy, retry and follow-up.",
+          "source_sha256": "9c477d4de63a6bb885bf596692ed5f97d6ea7b23058258102154c132ce3a1779",
+          "glossary_rendered": "SnipAsk => 框选 AI; Result Window => 结果窗",
+          "required_terms": [
+            "框选 AI",
+            "结果窗"
+          ],
+          "prompt_sha256": "035206eb85ad7a3e29f6ed0983f8da54f7d708bbe282e0126124c3a2f8efe42d",
+          "prompt_chars": 981,
+          "output": "这是模拟的中文译文内容。 Ctrl+Q 框选 AI 结果窗",
+          "output_sha256": "cdec840126e94fb5c9bc3db36b5af43409a8027f00307fc73f132a386a6e8526",
+          "cjk_ratio": 0.5517,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": true
+              },
+              {
+                "term": "结果窗",
+                "hit": true
+              }
+            ],
+            "term_hits": 2,
+            "term_total": 2,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": "Ctrl+Q",
+                "pass": true,
+                "detail": "应原样保留 'Ctrl+Q'；已保留"
+              }
+            ],
+            "format_pass": 1,
+            "format_total": 1,
+            "all_format_pass": true,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.5517,
+              "detail": "中文占比 55.2%（期望 >15%）且不等于原文"
+            }
+          }
+        }
+      ],
+      "summary": {
+        "cases": 24,
+        "cases_ok": 24,
+        "term_hit_rate": 1.0,
+        "term_hits": 15,
+        "term_total": 15,
+        "format_pass_rate": 1.0,
+        "format_pass": 47,
+        "format_total": 47,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 16,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 2,
+            "total": 2
+          }
+        },
+        "translation_effective_rate": 1.0,
+        "case_pass_rate": 1.0,
+        "case_pass": 24,
+        "failures": []
+      },
+      "verdict": "MOCK_SELF_CHECK_OK"
+    },
+    {
+      "arm": "MOCK:mock-model/translate.md（故意失败臂）",
+      "kind": "mock",
+      "status": "MOCK_SELF_TEST",
+      "meta": {
+        "mock": true,
+        "satisfy": false
+      },
+      "records": [
+        {
+          "case_id": "zh-en-01-plain",
+          "direction": "zh->en",
+          "category": "段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.11,
+          "usage": null,
+          "error": null,
+          "source_text": "框选 AI 提供截图问答与翻译能力。按下 Ctrl+Q 即可唤起选框，松开后弹出动作菜单。",
+          "source_sha256": "1cc124e4a3a5b089e20157948f45601c0dacc61ae4e3557eb8995221f11dc426",
+          "glossary_rendered": "框选 AI => SnipAsk",
+          "required_terms": [
+            "SnipAsk"
+          ],
+          "prompt_sha256": "d24135dfbfe2d7cf2169578d35552f4aa8de52262ae10995dd58a9fd0270418a",
+          "prompt_chars": 623,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 1,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              },
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Ctrl+Q'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-02-multiline",
+          "direction": "zh->en",
+          "category": "多行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.56,
+          "usage": null,
+          "error": null,
+          "source_text": "设置已保存。\n重新启动应用后生效。\n如需帮助请查看文档。",
+          "source_sha256": "e1aa7629b04adb3421988061a4b5620fe154859b1f85ac64c692300236c8b4f9",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "26269fc38d4880eea9921fd4b04c6592f0ac1620c56732dab99eaa41e2b4d523",
+          "prompt_chars": 590,
+          "output": "Mock English translation.\nMock English translation.",
+          "output_sha256": "6bee91a8fb3a54bf949a9702932281660443a3abe7221a9b0b1e286d35d07cfc",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-03-bullets",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1.89,
+          "usage": null,
+          "error": null,
+          "source_text": "- 支持屏幕取词\n- 支持截图问答\n- 支持本地翻译",
+          "source_sha256": "5b47983f6def381bafc84199edf82b6367ac74b7a6d06421a860e37b18ecf6d7",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "bdff4097206f854a0046d8f796ee34ccb7cc62ce5430ca5008f17844ecb387a8",
+          "prompt_chars": 588,
+          "output": "- Mock English translation.\n- Mock English translation.",
+          "output_sha256": "a3c66fc0dd8476f39257cfe2276591bf5f7715bc7fbb33561c7c4f55cdf478f9",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "列表行 2 / 至少 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-04-numbered",
+          "direction": "zh->en",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 12.66,
+          "usage": null,
+          "error": null,
+          "source_text": "1. 打开设置\n2. 选择 AI 服务\n3. 保存配置",
+          "source_sha256": "e7f52a625f79d3ee4677062af97d99e8b7081cccd0616974a0a256e697e23db5",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "2bf8b15fa7504a7368ab956f52e2516065ddc75363adbf606310abe08322b200",
+          "prompt_chars": 589,
+          "output": "1. Mock English translation.\n2. Mock English translation.",
+          "output_sha256": "235e1124d00175d68102ee2126b88107eb518523280761ab571712e5400490fa",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "编号行 2 / 至少 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-05-code",
+          "direction": "zh->en",
+          "category": "代码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 1.97,
+          "usage": null,
+          "error": null,
+          "source_text": "请运行以下命令：\n```\npython bench.py --runs 20\n```\n完成后查看输出。",
+          "source_sha256": "170a322521ad16ec2756e45176ce26e1fc02bd3f4d59b79f4acd42d5d5f55429",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "cd277e831a111e5873810425a4dd2defd584ab6150850ae229130c3a64a79976",
+          "prompt_chars": 613,
+          "output": "Mock English translation.\n```\nMock English translation. python bench.py --runs 20\n```",
+          "output_sha256": "c4a34bc28141c3cf50d0ccb15defb7bfdad898f0ac7fb40a2862fed00184dd14",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 4,
+                "pass": false,
+                "detail": "非空行数 4 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-06-url-mail",
+          "direction": "zh->en",
+          "category": "URL",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 12.31,
+          "usage": null,
+          "error": null,
+          "source_text": "文档地址 https://example.com/docs/s14 与支持邮箱 support@example.com 均可使用。",
+          "source_sha256": "aa64776d5c855de8dc576ed2f706ab7fbd22b40f5e54bf5097c9d5bebebcd30b",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "d1b5c76d4545a884939b593c7e4331810449acbecfa1d0ebde67a7ba0c870d77",
+          "prompt_chars": 627,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'https://example.com/docs/s14'；缺失"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'support@example.com'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-07-placeholder",
+          "direction": "zh->en",
+          "category": "占位符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.62,
+          "usage": null,
+          "error": null,
+          "source_text": "欢迎 {user}，你有 {count} 条未读消息。",
+          "source_sha256": "43c7c0fce9a5b512be2a7f00c2946f43928ff483f618937fa855f1e3f5ffa51c",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "f32d796c972af641d7a1edef352eaaa68ca9dfb530553f67e1c23397364428cd",
+          "prompt_chars": 589,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 '{user}'；缺失"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 '{count}'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-08-identifiers",
+          "direction": "zh->en",
+          "category": "标识符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.93,
+          "usage": null,
+          "error": null,
+          "source_text": "请升级到 v1.2.3，模型 deepseek-flash 已在 Linux 与 macOS 上验证。",
+          "source_sha256": "7c3dda4b0d07f980b815afe357f2b84e9eeb1c384c13ebaab9865d22fd9d447e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "cf2872b3814e896ea99f6eb932a9e4cb9943e511c0ffb60c9f3e149bfaa1a802",
+          "prompt_chars": 613,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'v1.2.3'；缺失"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'deepseek-flash'；缺失"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Linux'；缺失"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'macOS'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 4,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-09-term-heavy",
+          "direction": "zh->en",
+          "category": "术语",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.88,
+          "usage": null,
+          "error": null,
+          "source_text": "在结果窗中打开术语表，即可查看本次翻译使用的术语。",
+          "source_sha256": "87601c03b3271f91b9a232332821bdbf4d5975aa2f858ef42a9cdccce1d3ea3e",
+          "glossary_rendered": "结果窗 => Result Window; 术语表 => Glossary",
+          "required_terms": [
+            "Result Window",
+            "Glossary"
+          ],
+          "prompt_sha256": "37d05a5ba58eca02b6fef1d3b1b3a498be4f6413b80aa6c5a5c8c01470490246",
+          "prompt_chars": 624,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "Result Window",
+                "hit": false
+              },
+              {
+                "term": "Glossary",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-10-blankline",
+          "direction": "zh->en",
+          "category": "空行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.42,
+          "usage": null,
+          "error": null,
+          "source_text": "第一段：框选 AI 支持离线翻译。\n\n第二段：首次使用请完成引导。",
+          "source_sha256": "4348059faa48e866d2bd973eeba400755c24e9de1316d8d4256d87b1ae0eec0c",
+          "glossary_rendered": "框选 AI => SnipAsk; 引导 => Onboarding",
+          "required_terms": [
+            "SnipAsk",
+            "Onboarding"
+          ],
+          "prompt_sha256": "b8eb5a0c0aa95c7b4fb59966e87cc054541660d8d393a094835b1bf3fd65ae9b",
+          "prompt_chars": 629,
+          "output": "Mock English translation.\n",
+          "output_sha256": "81d04996fa52f80659820936eb773e624d699c8abb68aa7797c16a72c7f6485e",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              },
+              {
+                "term": "Onboarding",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "空行数 0 / 至少 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-11-error",
+          "direction": "zh->en",
+          "category": "错误码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.07,
+          "usage": null,
+          "error": null,
+          "source_text": "错误码 SA-1001：截图失败，该错误可重试。请检查屏幕录制权限。",
+          "source_sha256": "b85f424602749ad125d93b030f174ea88f0a34f247b6cf326df45781f7fbb37e",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ec95cb100905b3d4dcdce486de1b6f53e196c22664c3fd4d887d8d7d6ce967f3",
+          "prompt_chars": 596,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'SA-1001'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "zh-en-12-long",
+          "direction": "zh->en",
+          "category": "长段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.34,
+          "usage": null,
+          "error": null,
+          "source_text": "框选 AI 是一款屏幕取词与截图问答工具：按下 Ctrl+Q 唤起选框，框住屏幕上的文字或图像，松开鼠标后弹出动作菜单。你可以翻译选中段落、提取文字并搜索、识别图片内容，或向 AI 提问。所有动作都在结果窗中展示，支持复制、重新执行与追问。",
+          "source_sha256": "93cff708273fe8bd6f9a5b84a5a9e163abffc4fe2c95a67a70391dffd46f8b02",
+          "glossary_rendered": "框选 AI => SnipAsk; 结果窗 => Result Window",
+          "required_terms": [
+            "SnipAsk",
+            "Result Window"
+          ],
+          "prompt_sha256": "085d92e2f2e92ce8a87067fa731c8cdb9db58a8e5dc95ba71dd476b6c3c89712",
+          "prompt_chars": 720,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "SnipAsk",
+                "hit": false
+              },
+              {
+                "term": "Result Window",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Ctrl+Q'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 <30%，否则视为未翻译/复述）"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-01-plain",
+          "direction": "en->zh",
+          "category": "段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 2.03,
+          "usage": null,
+          "error": null,
+          "source_text": "SnipAsk captures text from your screen and answers questions about screenshots.",
+          "source_sha256": "1cdcf4efe5d7b69f7eda817835bb9c366a1fe5f0c3a9e34fbeabf3917268d282",
+          "glossary_rendered": "SnipAsk => 框选 AI",
+          "required_terms": [
+            "框选 AI"
+          ],
+          "prompt_sha256": "ca4d9a7f3606d551305f1861800c745e21a02fa4b4c8d7387f604a731bc788a5",
+          "prompt_chars": 657,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 1,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-02-multiline",
+          "direction": "en->zh",
+          "category": "多行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 13.15,
+          "usage": null,
+          "error": null,
+          "source_text": "Settings saved.\nRestart the app to apply.\nSee the documentation for help.",
+          "source_sha256": "2fe61d996726e4d48b20e772ef54bf432c2da6a9ce790f33faaafbba4d0f68cf",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ee88d0f351c9ea63c1497d19a7c7b3aaede62d70a01b87c973180c13b3ffb372",
+          "prompt_chars": 635,
+          "output": "这是模拟的中文译文内容。\n这是模拟的中文译文内容。",
+          "output_sha256": "2c3994bade646d440063be46069441a89533eecc6c1ebfe24e68a20f6f6be589",
+          "cjk_ratio": 0.88,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.88,
+              "detail": "中文占比 88.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-03-bullets",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.03,
+          "usage": null,
+          "error": null,
+          "source_text": "- Capture text from the screen\n- Answer questions about screenshots\n- Translate locally",
+          "source_sha256": "5fcffc3ba75ea11b5aae1988393f27c166c6f90c54a0b27ffd61d270d7461a48",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "70c877e02207be5b4de6d0eb404862a92db54f6d984d2a2a962162d27ab6fecd",
+          "prompt_chars": 649,
+          "output": "- 这是模拟的中文译文内容。\n- 这是模拟的中文译文内容。",
+          "output_sha256": "59b44db6c69aec60bc3c7f228ca82595573b9de4e33d4193200cd5e7509f26ac",
+          "cjk_ratio": 0.7586,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              },
+              {
+                "label": "bullets_min",
+                "kind": "bullets_min",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "列表行 2 / 至少 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.7586,
+              "detail": "中文占比 75.9%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-04-numbered",
+          "direction": "en->zh",
+          "category": "列表",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.8,
+          "usage": null,
+          "error": null,
+          "source_text": "1. Open settings\n2. Choose the API provider\n3. Save the configuration",
+          "source_sha256": "9d8ba782d2f94a49a08ef0e5492f0c6b39716521a9ce40ac129f05aa9e009e72",
+          "glossary_rendered": "API => 接口",
+          "required_terms": [
+            "接口"
+          ],
+          "prompt_sha256": "7ea9cf7783161358609971baa65cbd2c0e5860bacd26757dd91be3502f0ca538",
+          "prompt_chars": 640,
+          "output": "1. 这是模拟的中文译文内容。\n2. 这是模拟的中文译文内容。",
+          "output_sha256": "9949caa9342c8f0d17d8c944de6346dfd3f30cae595bd429326870f7cfe904b7",
+          "cjk_ratio": 0.7097,
+          "score": {
+            "term_results": [
+              {
+                "term": "接口",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 1,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "非空行数 2 / 期望 3"
+              },
+              {
+                "label": "numbered_min",
+                "kind": "numbered_min",
+                "expected": 3,
+                "actual": 2,
+                "pass": false,
+                "detail": "编号行 2 / 至少 3"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.7097,
+              "detail": "中文占比 71.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-05-code",
+          "direction": "en->zh",
+          "category": "代码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.24,
+          "usage": null,
+          "error": null,
+          "source_text": "Run this command:\n```\npython bench.py --runs 20\n```\nThen check the output.",
+          "source_sha256": "9f9621b66d7e0f31fc82926df8d86bc5270abbb5fd8e6fdef48257c611569d74",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "fb88271ebbb643b2175b16bb7265f590d3314ac16ccee379af15187ad27cce03",
+          "prompt_chars": 636,
+          "output": "这是模拟的中文译文内容。\n```\n这是模拟的中文译文内容。 python bench.py --runs 20\n```",
+          "output_sha256": "f83ddea02e6ef109a8215bc7839135839bedca9f8324517981d4195ce31b1fc6",
+          "cjk_ratio": 0.3729,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 5,
+                "actual": 4,
+                "pass": false,
+                "detail": "非空行数 4 / 期望 5"
+              },
+              {
+                "label": "code_fences_exact",
+                "kind": "code_fences_exact",
+                "expected": 2,
+                "actual": 2,
+                "pass": true,
+                "detail": "代码围栏 ``` 出现 2 次 / 期望 2"
+              },
+              {
+                "label": "contains:python bench.py --runs 20",
+                "kind": "contains",
+                "expected": "python bench.py --runs 20",
+                "actual": "python bench.py --runs 20",
+                "pass": true,
+                "detail": "应原样保留 'python bench.py --runs 20'；已保留"
+              }
+            ],
+            "format_pass": 2,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.3729,
+              "detail": "中文占比 37.3%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-06-url-mail",
+          "direction": "en->zh",
+          "category": "URL",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.85,
+          "usage": null,
+          "error": null,
+          "source_text": "Docs: https://example.com/docs/s14 — support: support@example.com",
+          "source_sha256": "e6054c2f4b5789035608ab3ec1a5e6f343e4dc3f708f33af1bf44edb499c9c77",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "ad4e20fb207671e485576308504a5a8ac093faf83a99d80faf0be75655b96217",
+          "prompt_chars": 627,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:https://example.com/docs/s14",
+                "kind": "contains",
+                "expected": "https://example.com/docs/s14",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'https://example.com/docs/s14'；缺失"
+              },
+              {
+                "label": "contains:support@example.com",
+                "kind": "contains",
+                "expected": "support@example.com",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'support@example.com'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-07-placeholder",
+          "direction": "en->zh",
+          "category": "占位符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.64,
+          "usage": null,
+          "error": null,
+          "source_text": "Welcome {user}, you have {count} unread messages.",
+          "source_sha256": "5b4daf11382c3deb04e12c8c4f9a0251fadc33538a2a0a861bccdfb8aa46d7a4",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "5f873c5f8226dcbf148cf7a0be35e5d5f490ee7bfa978f545637371eca11bd1c",
+          "prompt_chars": 611,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              },
+              {
+                "label": "contains:{user}",
+                "kind": "contains",
+                "expected": "{user}",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 '{user}'；缺失"
+              },
+              {
+                "label": "contains:{count}",
+                "kind": "contains",
+                "expected": "{count}",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 '{count}'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 3,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-08-identifiers",
+          "direction": "en->zh",
+          "category": "标识符",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 14.59,
+          "usage": null,
+          "error": null,
+          "source_text": "Upgrade to v1.2.3; the deepseek-flash model is verified on Linux and macOS.",
+          "source_sha256": "f8cd536be50ecb9b42424ebac1e8a5cd383d63fd5d6b899aad840d48dd64bca1",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "b93eb3cbc43127d660491e8b675aef9a9bc512bc78c89d1913582e2c076b2aaf",
+          "prompt_chars": 637,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:v1.2.3",
+                "kind": "contains",
+                "expected": "v1.2.3",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'v1.2.3'；缺失"
+              },
+              {
+                "label": "contains:deepseek-flash",
+                "kind": "contains",
+                "expected": "deepseek-flash",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'deepseek-flash'；缺失"
+              },
+              {
+                "label": "contains:Linux",
+                "kind": "contains",
+                "expected": "Linux",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Linux'；缺失"
+              },
+              {
+                "label": "contains:macOS",
+                "kind": "contains",
+                "expected": "macOS",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'macOS'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 4,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-09-term-heavy",
+          "direction": "en->zh",
+          "category": "术语",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.63,
+          "usage": null,
+          "error": null,
+          "source_text": "Open the Glossary from the Result Window to review the terms used in this translation.",
+          "source_sha256": "9b4e1749912cc7bca283b2cb200fa45c9234d9dbc1d29dc1b8ce67f0d5bbee55",
+          "glossary_rendered": "Result Window => 结果窗; Glossary => 术语表",
+          "required_terms": [
+            "结果窗",
+            "术语表"
+          ],
+          "prompt_sha256": "a827d56a46b30a6b4452d2466216b30eb605377caa001672f886b0957a3a852c",
+          "prompt_chars": 685,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "结果窗",
+                "hit": false
+              },
+              {
+                "term": "术语表",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "非空行数 0 / 期望 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-10-blankline",
+          "direction": "en->zh",
+          "category": "空行",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.44,
+          "usage": null,
+          "error": null,
+          "source_text": "Paragraph one: SnipAsk works offline.\n\nParagraph two: finish Onboarding on first launch.",
+          "source_sha256": "0c4a9f2346e8acc395c009f07ae65e2370eb3cbdbaaa2b214dfd82930c5b9749",
+          "glossary_rendered": "SnipAsk => 框选 AI; Onboarding => 引导",
+          "required_terms": [
+            "框选 AI",
+            "引导"
+          ],
+          "prompt_sha256": "97e6d16fbc17c6c73e291f48dd8aa305c20ee495e09505086b28b49ec2ec5155",
+          "prompt_chars": 684,
+          "output": "这是模拟的中文译文内容。\n",
+          "output_sha256": "1bace0c7be1a8969581f2509f622969c22f2913c241507b5d5a9072d090c2e5b",
+          "cjk_ratio": 0.8462,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": false
+              },
+              {
+                "term": "引导",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "lines_exact",
+                "kind": "lines_exact",
+                "expected": 2,
+                "actual": 1,
+                "pass": false,
+                "detail": "非空行数 1 / 期望 2"
+              },
+              {
+                "label": "blank_lines_min",
+                "kind": "blank_lines_min",
+                "expected": 1,
+                "actual": 0,
+                "pass": false,
+                "detail": "空行数 0 / 至少 1"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 2,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": true,
+              "cjk_ratio": 0.8462,
+              "detail": "中文占比 84.6%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-11-error",
+          "direction": "en->zh",
+          "category": "错误码",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.19,
+          "usage": null,
+          "error": null,
+          "source_text": "Error SA-1001: screenshot failed and can be retried. Check screen recording permission.",
+          "source_sha256": "ddf2e3b1acf45f90c09536de22f077a7db88ecb4b00d180462ec69fdab9373ec",
+          "glossary_rendered": "",
+          "required_terms": [],
+          "prompt_sha256": "d09bc52870f9f20982fbf9d28a88aff63ffd4846e605d62869fd57fef9d93c26",
+          "prompt_chars": 649,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [],
+            "term_hits": 0,
+            "term_total": 0,
+            "all_terms_hit": true,
+            "format_checks": [
+              {
+                "label": "contains:SA-1001",
+                "kind": "contains",
+                "expected": "SA-1001",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'SA-1001'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        },
+        {
+          "case_id": "en-zh-12-long",
+          "direction": "en->zh",
+          "category": "长段落",
+          "backend": "mock",
+          "backend_label": "MOCK:mock-model/translate.md（故意失败臂）",
+          "prompt_key": "translate",
+          "model": "mock-model",
+          "ok": true,
+          "status": 200,
+          "latency_ms": 15.4,
+          "usage": null,
+          "error": null,
+          "source_text": "SnipAsk is a screen-capture and screenshot question-and-answer tool. Press Ctrl+Q to open the selection box, then select text or images on the screen. Release the mouse to open the action menu. You can translate the selection, extract and search text, recognize image content, or ask the AI a question. All actions appear in the Result Window and support copy, retry and follow-up.",
+          "source_sha256": "9c477d4de63a6bb885bf596692ed5f97d6ea7b23058258102154c132ce3a1779",
+          "glossary_rendered": "SnipAsk => 框选 AI; Result Window => 结果窗",
+          "required_terms": [
+            "框选 AI",
+            "结果窗"
+          ],
+          "prompt_sha256": "035206eb85ad7a3e29f6ed0983f8da54f7d708bbe282e0126124c3a2f8efe42d",
+          "prompt_chars": 981,
+          "output": "",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cjk_ratio": 0.0,
+          "score": {
+            "term_results": [
+              {
+                "term": "框选 AI",
+                "hit": false
+              },
+              {
+                "term": "结果窗",
+                "hit": false
+              }
+            ],
+            "term_hits": 0,
+            "term_total": 2,
+            "all_terms_hit": false,
+            "format_checks": [
+              {
+                "label": "contains:Ctrl+Q",
+                "kind": "contains",
+                "expected": "Ctrl+Q",
+                "actual": null,
+                "pass": false,
+                "detail": "应原样保留 'Ctrl+Q'；缺失"
+              }
+            ],
+            "format_pass": 0,
+            "format_total": 1,
+            "all_format_pass": false,
+            "translation_effective": {
+              "pass": false,
+              "cjk_ratio": 0.0,
+              "detail": "中文占比 0.0%（期望 >15%）且不等于原文"
+            }
+          }
+        }
+      ],
+      "summary": {
+        "cases": 24,
+        "cases_ok": 24,
+        "term_hit_rate": 0.0,
+        "term_hits": 0,
+        "term_total": 15,
+        "format_pass_rate": 0.0851,
+        "format_pass": 4,
+        "format_total": 47,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 0,
+            "total": 16
+          },
+          "contains": {
+            "pass": 2,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 0,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 0,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "translation_effective_rate": 0.7083,
+        "case_pass_rate": 0.0,
+        "case_pass": 0,
+        "failures": [
+          {
+            "case_id": "zh-en-01-plain",
+            "reasons": [
+              "术语未命中：['SnipAsk']",
+              "格式未保留：['lines_exact', 'contains:Ctrl+Q']"
+            ]
+          },
+          {
+            "case_id": "zh-en-02-multiline",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "zh-en-03-bullets",
+            "reasons": [
+              "格式未保留：['lines_exact', 'bullets_min']"
+            ]
+          },
+          {
+            "case_id": "zh-en-04-numbered",
+            "reasons": [
+              "格式未保留：['lines_exact', 'numbered_min']"
+            ]
+          },
+          {
+            "case_id": "zh-en-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "zh-en-06-url-mail",
+            "reasons": [
+              "格式未保留：['contains:https://example.com/docs/s14', 'contains:support@example.com']"
+            ]
+          },
+          {
+            "case_id": "zh-en-07-placeholder",
+            "reasons": [
+              "格式未保留：['lines_exact', 'contains:{user}', 'contains:{count}']"
+            ]
+          },
+          {
+            "case_id": "zh-en-08-identifiers",
+            "reasons": [
+              "格式未保留：['contains:v1.2.3', 'contains:deepseek-flash', 'contains:Linux', 'contains:macOS']"
+            ]
+          },
+          {
+            "case_id": "zh-en-09-term-heavy",
+            "reasons": [
+              "术语未命中：['Result Window', 'Glossary']",
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "zh-en-10-blankline",
+            "reasons": [
+              "术语未命中：['SnipAsk', 'Onboarding']",
+              "格式未保留：['lines_exact', 'blank_lines_min']"
+            ]
+          },
+          {
+            "case_id": "zh-en-11-error",
+            "reasons": [
+              "格式未保留：['contains:SA-1001']"
+            ]
+          },
+          {
+            "case_id": "zh-en-12-long",
+            "reasons": [
+              "术语未命中：['SnipAsk', 'Result Window']",
+              "格式未保留：['contains:Ctrl+Q']"
+            ]
+          },
+          {
+            "case_id": "en-zh-01-plain",
+            "reasons": [
+              "术语未命中：['框选 AI']",
+              "格式未保留：['lines_exact']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-02-multiline",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "en-zh-03-bullets",
+            "reasons": [
+              "格式未保留：['lines_exact', 'bullets_min']"
+            ]
+          },
+          {
+            "case_id": "en-zh-04-numbered",
+            "reasons": [
+              "术语未命中：['接口']",
+              "格式未保留：['lines_exact', 'numbered_min']"
+            ]
+          },
+          {
+            "case_id": "en-zh-05-code",
+            "reasons": [
+              "格式未保留：['lines_exact']"
+            ]
+          },
+          {
+            "case_id": "en-zh-06-url-mail",
+            "reasons": [
+              "格式未保留：['contains:https://example.com/docs/s14', 'contains:support@example.com']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-07-placeholder",
+            "reasons": [
+              "格式未保留：['lines_exact', 'contains:{user}', 'contains:{count}']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-08-identifiers",
+            "reasons": [
+              "格式未保留：['contains:v1.2.3', 'contains:deepseek-flash', 'contains:Linux', 'contains:macOS']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-09-term-heavy",
+            "reasons": [
+              "术语未命中：['结果窗', '术语表']",
+              "格式未保留：['lines_exact']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-10-blankline",
+            "reasons": [
+              "术语未命中：['框选 AI', '引导']",
+              "格式未保留：['lines_exact', 'blank_lines_min']"
+            ]
+          },
+          {
+            "case_id": "en-zh-11-error",
+            "reasons": [
+              "格式未保留：['contains:SA-1001']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          },
+          {
+            "case_id": "en-zh-12-long",
+            "reasons": [
+              "术语未命中：['框选 AI', '结果窗']",
+              "格式未保留：['contains:Ctrl+Q']",
+              "译文无效：中文占比 0.0%（期望 >15%）且不等于原文"
+            ]
+          }
+        ]
+      },
+      "verdict": "MOCK_SELF_CHECK_OK"
+    }
+  ],
+  "self_check_assertions": [
+    {
+      "name": "mock-pass 全通过",
+      "ok": true,
+      "detail": "case_pass=24/24 term=1.0 format=1.0"
+    },
+    {
+      "name": "mock-fail 失败被检出（术语 + 格式）",
+      "ok": true,
+      "detail": "term=0.0 format=0.0851 failures=24"
+    }
+  ],
+  "self_check_ok": true
+}

@@ -1,0 +1,786 @@
+{
+    "tool":  "s09-capture/1.0",
+    "generatedAt":  "2026-11-05T19:01:04+08:00",
+    "capturedBy":  "scripts/spikes/s09/wgc_vs_bitblt.ps1 (3 reps)",
+    "repoCommit":  "3f1b263",
+    "thresholds":  {
+                       "blackLumaMax":  16,
+                       "blackRatioMin":  0.99,
+                       "blackStdDevMax":  6
+                   },
+    "virtualDesktop":  {
+                           "x":  -1080,
+                           "y":  -470,
+                           "width":  3640,
+                           "height":  1920
+                       },
+    "primaryMonitor":  {
+                           "x":  0,
+                           "y":  0,
+                           "width":  2560,
+                           "height":  1440
+                       },
+    "d3dDeviceInfo":  "D3D11 featureLevel=0xB000 (45184=11_0); wgcSelfCheck=ok",
+    "rawDataDir":  ".verify/spikes/S-09/raw/results.json（gitignored）",
+    "scenarios":  [
+                      {
+                          "name":  "normal",
+                          "label":  "S09 NORMAL 普通窗口（无 WDA）",
+                          "description":  "普通顶层窗口（无 SetWindowDisplayAffinity）：三条捕获路径都应拿到内容。",
+                          "affinity":  0,
+                          "affinityName":  "WDA_NONE(0x0)",
+                          "affinityApplied":  false,
+                          "fullscreen":  false,
+                          "windowRect":  {
+                                             "x":  120,
+                                             "y":  120,
+                                             "width":  900,
+                                             "height":  600
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  0,
+                                                              "meanBlackRatio":  0.14063,
+                                                              "minBlackRatio":  0.14063,
+                                                              "maxBlackRatio":  0.14063,
+                                                              "meanLuma":  126.508,
+                                                              "meanStdDev":  79.255,
+                                                              "meanElapsedMs":  9.666,
+                                                              "rep1Sha256":  "cd9a8571cf907c348ad55dd52484dda4157fba017d5a6f898c1073fa742c2c42",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "content",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.285777,
+                                                               "minBlackRatio":  0.285777,
+                                                               "maxBlackRatio":  0.285777,
+                                                               "meanLuma":  123.067,
+                                                               "meanStdDev":  106.147,
+                                                               "meanElapsedMs":  48.486,
+                                                               "rep1Sha256":  "f655c08317d730dc9feda1c5c1a71349134a74752d384b8676b31e01cd5de0f2",
+                                                               "regionMeanBlackRatio":  0.14063,
+                                                               "regionBlackCount":  0,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.14063,
+                                                            "minBlackRatio":  0.14063,
+                                                            "maxBlackRatio":  0.14063,
+                                                            "meanLuma":  126.508,
+                                                            "meanStdDev":  79.255,
+                                                            "meanElapsedMs":  8.068,
+                                                            "rep1Sha256":  "cd9a8571cf907c348ad55dd52484dda4157fba017d5a6f898c1073fa742c2c42",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  3,
+                                                           "frameCount":  3,
+                                                           "blackCount":  0,
+                                                           "meanBlackRatio":  0.14063,
+                                                           "minBlackRatio":  0.14063,
+                                                           "maxBlackRatio":  0.14063,
+                                                           "meanLuma":  126.508,
+                                                           "meanStdDev":  79.255,
+                                                           "meanElapsedMs":  48.821,
+                                                           "rep1Sha256":  "cd9a8571cf907c348ad55dd52484dda4157fba017d5a6f898c1073fa742c2c42",
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "content",
+                                                           "errors":  [
+
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.091755,
+                                                            "minBlackRatio":  0.091755,
+                                                            "maxBlackRatio":  0.091755,
+                                                            "meanLuma":  164.317,
+                                                            "meanStdDev":  98.592,
+                                                            "meanElapsedMs":  57.551,
+                                                            "rep1Sha256":  "814fb74a79badbf16c6746f828c65bc68c9c663addade483ef939243d5f14d9c",
+                                                            "regionMeanBlackRatio":  0.14063,
+                                                            "regionBlackCount":  0,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      },
+                      {
+                          "name":  "wda_exclude",
+                          "label":  "S09 WDA_EXCLUDEFROMCAPTURE 受保护窗口",
+                          "description":  "SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE=0x11)：等价于 Netflix/DRM 受保护内容对截屏 API 的屏蔽。",
+                          "affinity":  17,
+                          "affinityName":  "WDA_EXCLUDEFROMCAPTURE(0x11)",
+                          "affinityApplied":  true,
+                          "fullscreen":  false,
+                          "windowRect":  {
+                                             "x":  120,
+                                             "y":  120,
+                                             "width":  900,
+                                             "height":  600
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  0,
+                                                              "meanBlackRatio":  0.018248,
+                                                              "minBlackRatio":  0.01787,
+                                                              "maxBlackRatio":  0.018437,
+                                                              "meanLuma":  200.447,
+                                                              "meanStdDev":  85.316,
+                                                              "meanElapsedMs":  13.153,
+                                                              "rep1Sha256":  "5e1a612489c69d5f7c76742d79c54d74eaadb91e1a6c64b749592c674bb6472c",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "content",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.276542,
+                                                               "minBlackRatio":  0.276291,
+                                                               "maxBlackRatio":  0.276667,
+                                                               "meanLuma":  128.202,
+                                                               "meanStdDev":  107.697,
+                                                               "meanElapsedMs":  70.439,
+                                                               "rep1Sha256":  "341a1c19390831bb40853fd28fd8fbb9dd02b4d18df0bc404765ba4634d0927e",
+                                                               "regionMeanBlackRatio":  0.018248,
+                                                               "regionBlackCount":  0,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  3,
+                                                            "meanBlackRatio":  1,
+                                                            "minBlackRatio":  1,
+                                                            "maxBlackRatio":  1,
+                                                            "meanLuma":  0,
+                                                            "meanStdDev":  0,
+                                                            "meanElapsedMs":  13.61,
+                                                            "rep1Sha256":  "942dcd30f2ceecbf66b0b4145766842effa6297be9815d41a0a2101c6267c165",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "black",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  0,
+                                                           "frameCount":  0,
+                                                           "blackCount":  0,
+                                                           "meanBlackRatio":  null,
+                                                           "minBlackRatio":  null,
+                                                           "maxBlackRatio":  null,
+                                                           "meanLuma":  null,
+                                                           "meanStdDev":  null,
+                                                           "meanElapsedMs":  7753.535,
+                                                           "rep1Sha256":  null,
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "noFrame",
+                                                           "errors":  [
+                                                                          "frameTimeout(5000ms)"
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.074485,
+                                                            "minBlackRatio":  0.074485,
+                                                            "maxBlackRatio":  0.074485,
+                                                            "meanLuma":  173.293,
+                                                            "meanStdDev":  96.785,
+                                                            "meanElapsedMs":  89.978,
+                                                            "rep1Sha256":  "fa6c7bb511f855d9b8be0b368f1804e36364f41a52d679b547eeb34dc27373f0",
+                                                            "regionMeanBlackRatio":  0.018437,
+                                                            "regionBlackCount":  0,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      },
+                      {
+                          "name":  "wda_monitor",
+                          "label":  "S09 WDA_MONITOR 受保护窗口（旧口径）",
+                          "description":  "SetWindowDisplayAffinity(WDA_MONITOR=0x01)：Win7 时代的捕获屏蔽口径，用于对照。",
+                          "affinity":  1,
+                          "affinityName":  "WDA_MONITOR(0x1)",
+                          "affinityApplied":  true,
+                          "fullscreen":  false,
+                          "windowRect":  {
+                                             "x":  120,
+                                             "y":  120,
+                                             "width":  900,
+                                             "height":  600
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  3,
+                                                              "meanBlackRatio":  1,
+                                                              "minBlackRatio":  1,
+                                                              "maxBlackRatio":  1,
+                                                              "meanLuma":  0,
+                                                              "meanStdDev":  0,
+                                                              "meanElapsedMs":  10.683,
+                                                              "rep1Sha256":  "942dcd30f2ceecbf66b0b4145766842effa6297be9815d41a0a2101c6267c165",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "black",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.352509,
+                                                               "minBlackRatio":  0.352509,
+                                                               "maxBlackRatio":  0.352509,
+                                                               "meanLuma":  112.424,
+                                                               "meanStdDev":  107.551,
+                                                               "meanElapsedMs":  65.53,
+                                                               "rep1Sha256":  "9300756bb15e2b9dc822a8a4b77fc7d5dad2e6a4ddc52ab0e460bb5082b9557d",
+                                                               "regionMeanBlackRatio":  1,
+                                                               "regionBlackCount":  3,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  3,
+                                                            "meanBlackRatio":  1,
+                                                            "minBlackRatio":  1,
+                                                            "maxBlackRatio":  1,
+                                                            "meanLuma":  0,
+                                                            "meanStdDev":  0,
+                                                            "meanElapsedMs":  11.817,
+                                                            "rep1Sha256":  "942dcd30f2ceecbf66b0b4145766842effa6297be9815d41a0a2101c6267c165",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "black",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  3,
+                                                           "frameCount":  3,
+                                                           "blackCount":  3,
+                                                           "meanBlackRatio":  1,
+                                                           "minBlackRatio":  1,
+                                                           "maxBlackRatio":  1,
+                                                           "meanLuma":  0,
+                                                           "meanStdDev":  0,
+                                                           "meanElapsedMs":  52.517,
+                                                           "rep1Sha256":  "942dcd30f2ceecbf66b0b4145766842effa6297be9815d41a0a2101c6267c165",
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "black",
+                                                           "errors":  [
+
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.218268,
+                                                            "minBlackRatio":  0.218268,
+                                                            "maxBlackRatio":  0.218268,
+                                                            "meanLuma":  144.139,
+                                                            "meanStdDev":  108.449,
+                                                            "meanElapsedMs":  76.422,
+                                                            "rep1Sha256":  "f663ad2cfe12423d9d68e26f8ab688fb5b5e37bd324f49f8b879cb131ad10285",
+                                                            "regionMeanBlackRatio":  1,
+                                                            "regionBlackCount":  3,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      },
+                      {
+                          "name":  "fullscreen_normal",
+                          "label":  "S09 FULLSCREEN 无边框全屏（等价全屏独占的近似）",
+                          "description":  "覆盖主屏的无边框置顶窗口：近似全屏应用；真·全屏独占（D3D exclusive）无法用窗口模拟，见记录「遗留」。",
+                          "affinity":  0,
+                          "affinityName":  "WDA_NONE(0x0)",
+                          "affinityApplied":  false,
+                          "fullscreen":  true,
+                          "windowRect":  {
+                                             "x":  0,
+                                             "y":  0,
+                                             "width":  2560,
+                                             "height":  1440
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  0,
+                                                              "meanBlackRatio":  0.065285,
+                                                              "minBlackRatio":  0.065285,
+                                                              "maxBlackRatio":  0.065285,
+                                                              "meanLuma":  137.188,
+                                                              "meanStdDev":  72.927,
+                                                              "meanElapsedMs":  39.653,
+                                                              "rep1Sha256":  "2bc5877afcce1d3a0c60930f3bbe665d394fdce71aef18e0dea30e78ad042569",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "content",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.271814,
+                                                               "minBlackRatio":  0.271814,
+                                                               "maxBlackRatio":  0.271814,
+                                                               "meanLuma":  108.757,
+                                                               "meanStdDev":  89.152,
+                                                               "meanElapsedMs":  70.823,
+                                                               "rep1Sha256":  "0235877ca523a8b02c2ec2be39551a76f0343ba19b40ccddcc16f10224f19310",
+                                                               "regionMeanBlackRatio":  0.065285,
+                                                               "regionBlackCount":  0,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.065285,
+                                                            "minBlackRatio":  0.065285,
+                                                            "maxBlackRatio":  0.065285,
+                                                            "meanLuma":  137.188,
+                                                            "meanStdDev":  72.927,
+                                                            "meanElapsedMs":  50.067,
+                                                            "rep1Sha256":  "2bc5877afcce1d3a0c60930f3bbe665d394fdce71aef18e0dea30e78ad042569",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  3,
+                                                           "frameCount":  3,
+                                                           "blackCount":  0,
+                                                           "meanBlackRatio":  0.065285,
+                                                           "minBlackRatio":  0.065285,
+                                                           "maxBlackRatio":  0.065285,
+                                                           "meanLuma":  137.188,
+                                                           "meanStdDev":  72.927,
+                                                           "meanElapsedMs":  67.833,
+                                                           "rep1Sha256":  "9f4a1e1833f78f3d590c1bb7a119e4d3a479d54c457a4eee4251da61f4ea5939",
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "content",
+                                                           "errors":  [
+
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.065285,
+                                                            "minBlackRatio":  0.065285,
+                                                            "maxBlackRatio":  0.065285,
+                                                            "meanLuma":  137.188,
+                                                            "meanStdDev":  72.927,
+                                                            "meanElapsedMs":  74.581,
+                                                            "rep1Sha256":  "9f4a1e1833f78f3d590c1bb7a119e4d3a479d54c457a4eee4251da61f4ea5939",
+                                                            "regionMeanBlackRatio":  0.065285,
+                                                            "regionBlackCount":  0,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      },
+                      {
+                          "name":  "fullscreen_wda_monitor",
+                          "label":  "S09 FULLSCREEN + WDA_MONITOR（受保护全屏≈DRM 黑屏）",
+                          "description":  "覆盖主屏 + WDA_MONITOR(0x01)：截屏得到整块黑屏，等价「DRM/受保护全屏视频」的黑屏表现。",
+                          "affinity":  1,
+                          "affinityName":  "WDA_MONITOR(0x1)",
+                          "affinityApplied":  true,
+                          "fullscreen":  true,
+                          "windowRect":  {
+                                             "x":  0,
+                                             "y":  0,
+                                             "width":  2560,
+                                             "height":  1440
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  3,
+                                                              "meanBlackRatio":  1,
+                                                              "minBlackRatio":  1,
+                                                              "maxBlackRatio":  1,
+                                                              "meanLuma":  0,
+                                                              "meanStdDev":  0,
+                                                              "meanElapsedMs":  42.171,
+                                                              "rep1Sha256":  "cdea412a9ed18f710d049559b136cac7464688e601467877214a7316fd55753b",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "black",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.764851,
+                                                               "minBlackRatio":  0.764851,
+                                                               "maxBlackRatio":  0.764851,
+                                                               "meanLuma":  36.394,
+                                                               "meanStdDev":  75.624,
+                                                               "meanElapsedMs":  78.15,
+                                                               "rep1Sha256":  "96e4338b63558b4d2d726396a2254fdde0901d926e1770a70599604cddeb6172",
+                                                               "regionMeanBlackRatio":  1,
+                                                               "regionBlackCount":  3,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  3,
+                                                            "meanBlackRatio":  1,
+                                                            "minBlackRatio":  1,
+                                                            "maxBlackRatio":  1,
+                                                            "meanLuma":  0,
+                                                            "meanStdDev":  0,
+                                                            "meanElapsedMs":  51.996,
+                                                            "rep1Sha256":  "cdea412a9ed18f710d049559b136cac7464688e601467877214a7316fd55753b",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "black",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  3,
+                                                           "frameCount":  3,
+                                                           "blackCount":  3,
+                                                           "meanBlackRatio":  1,
+                                                           "minBlackRatio":  1,
+                                                           "maxBlackRatio":  1,
+                                                           "meanLuma":  0,
+                                                           "meanStdDev":  0.044,
+                                                           "meanElapsedMs":  74.738,
+                                                           "rep1Sha256":  "97b938aed04f3701c3aa90e85a2f5edf908a86640293ce5a62cbe54d0ef22d3d",
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "black",
+                                                           "errors":  [
+
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  3,
+                                                            "meanBlackRatio":  1,
+                                                            "minBlackRatio":  1,
+                                                            "maxBlackRatio":  1,
+                                                            "meanLuma":  0,
+                                                            "meanStdDev":  0.044,
+                                                            "meanElapsedMs":  83.17,
+                                                            "rep1Sha256":  "97b938aed04f3701c3aa90e85a2f5edf908a86640293ce5a62cbe54d0ef22d3d",
+                                                            "regionMeanBlackRatio":  1,
+                                                            "regionBlackCount":  3,
+                                                            "verdict":  "black",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      },
+                      {
+                          "name":  "fullscreen_wda_exclude",
+                          "label":  "S09 FULLSCREEN + WDA_EXCLUDEFROMCAPTURE（窗口从截屏中消失）",
+                          "description":  "覆盖主屏 + WDA_EXCLUDEFROMCAPTURE(0x11)：窗口在截屏中「消失」，露出背后的桌面内容，不是黑屏。",
+                          "affinity":  17,
+                          "affinityName":  "WDA_EXCLUDEFROMCAPTURE(0x11)",
+                          "affinityApplied":  true,
+                          "fullscreen":  true,
+                          "windowRect":  {
+                                             "x":  0,
+                                             "y":  0,
+                                             "width":  2560,
+                                             "height":  1440
+                                         },
+                          "paths":  {
+                                        "bitblt_region":  {
+                                                              "samples":  3,
+                                                              "okCount":  3,
+                                                              "frameCount":  3,
+                                                              "blackCount":  0,
+                                                              "meanBlackRatio":  0.074485,
+                                                              "minBlackRatio":  0.074485,
+                                                              "maxBlackRatio":  0.074485,
+                                                              "meanLuma":  173.27,
+                                                              "meanStdDev":  96.79,
+                                                              "meanElapsedMs":  43.39,
+                                                              "rep1Sha256":  "2972dd1235429f76f316a6f07ef40b21fd217b86b12c5875d4795ebeb889c850",
+                                                              "regionMeanBlackRatio":  null,
+                                                              "regionBlackCount":  null,
+                                                              "verdict":  "content",
+                                                              "errors":  [
+
+                                                                         ]
+                                                          },
+                                        "bitblt_desktop":  {
+                                                               "samples":  3,
+                                                               "okCount":  3,
+                                                               "frameCount":  3,
+                                                               "blackCount":  0,
+                                                               "meanBlackRatio":  0.276667,
+                                                               "minBlackRatio":  0.276667,
+                                                               "maxBlackRatio":  0.276667,
+                                                               "meanLuma":  127.789,
+                                                               "meanStdDev":  107.196,
+                                                               "meanElapsedMs":  70.746,
+                                                               "rep1Sha256":  "bd393932c19780663a5db51a1a1f2128ceac366ce99d7e9b895cff28206ea728",
+                                                               "regionMeanBlackRatio":  0.074485,
+                                                               "regionBlackCount":  0,
+                                                               "verdict":  "content",
+                                                               "errors":  [
+
+                                                                          ]
+                                                           },
+                                        "printwindow":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  3,
+                                                            "meanBlackRatio":  1,
+                                                            "minBlackRatio":  1,
+                                                            "maxBlackRatio":  1,
+                                                            "meanLuma":  0,
+                                                            "meanStdDev":  0,
+                                                            "meanElapsedMs":  48.819,
+                                                            "rep1Sha256":  "cdea412a9ed18f710d049559b136cac7464688e601467877214a7316fd55753b",
+                                                            "regionMeanBlackRatio":  null,
+                                                            "regionBlackCount":  null,
+                                                            "verdict":  "black",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        },
+                                        "wgc_window":  {
+                                                           "samples":  3,
+                                                           "okCount":  0,
+                                                           "frameCount":  0,
+                                                           "blackCount":  0,
+                                                           "meanBlackRatio":  null,
+                                                           "minBlackRatio":  null,
+                                                           "maxBlackRatio":  null,
+                                                           "meanLuma":  null,
+                                                           "meanStdDev":  null,
+                                                           "meanElapsedMs":  7770.469,
+                                                           "rep1Sha256":  null,
+                                                           "regionMeanBlackRatio":  null,
+                                                           "regionBlackCount":  null,
+                                                           "verdict":  "noFrame",
+                                                           "errors":  [
+                                                                          "frameTimeout(5000ms)"
+                                                                      ]
+                                                       },
+                                        "wgc_monitor":  {
+                                                            "samples":  3,
+                                                            "okCount":  3,
+                                                            "frameCount":  3,
+                                                            "blackCount":  0,
+                                                            "meanBlackRatio":  0.074485,
+                                                            "minBlackRatio":  0.074485,
+                                                            "maxBlackRatio":  0.074485,
+                                                            "meanLuma":  173.27,
+                                                            "meanStdDev":  96.79,
+                                                            "meanElapsedMs":  83.729,
+                                                            "rep1Sha256":  "79c9560b9dfd670072f8f6e39d7ade558285fca22b00d70c05062d157ba2ff3a",
+                                                            "regionMeanBlackRatio":  0.074485,
+                                                            "regionBlackCount":  0,
+                                                            "verdict":  "content",
+                                                            "errors":  [
+
+                                                                       ]
+                                                        }
+                                    }
+                      }
+                  ],
+    "checks":  [
+                   {
+                       "name":  "normal_bitblt_content",
+                       "pass":  true,
+                       "detail":  "BitBlt 普通窗口区域 blackRatio=0.14063, meanLuma=126.508 → content"
+                   },
+                   {
+                       "name":  "normal_wgc_content",
+                       "pass":  true,
+                       "detail":  "WGC 窗口项 blackRatio=0.14063, meanLuma=126.508 → content"
+                   },
+                   {
+                       "name":  "normal_wgc_equals_bitblt_pixels",
+                       "pass":  true,
+                       "detail":  "普通窗口 BitBlt 与 WGC 窗口项 rep1 帧 sha256 相同 = True"
+                   },
+                   {
+                       "name":  "normal_wgc_monitor_region_content",
+                       "pass":  true,
+                       "detail":  "WGC 主屏捕获中窗口区域 blackRatio=0.14063（应≈窗口内容，非黑）"
+                   },
+                   {
+                       "name":  "wda_monitor_bitblt_region_black",
+                       "pass":  true,
+                       "detail":  "WDA_MONITOR(0x01) BitBlt 窗口区域 blackRatio=1（期望 1.0）"
+                   },
+                   {
+                       "name":  "wda_monitor_bitblt_desktop_region_black",
+                       "pass":  true,
+                       "detail":  "WDA_MONITOR 整桌面 BitBlt 中窗口区域 blackRatio=1（整帧 blackRatio=0.352509）"
+                   },
+                   {
+                       "name":  "wda_monitor_bitblt_desktop_frame_not_black",
+                       "pass":  true,
+                       "detail":  "混合双屏整帧 blackRatio=0.352509 \u003c 0.99 → 整帧黑判定不会触发（需按区域/切片判定）"
+                   },
+                   {
+                       "name":  "wda_monitor_wgc_window_black",
+                       "pass":  true,
+                       "detail":  "WDA_MONITOR WGC 窗口项 blackRatio=1 → WGC 不能绕过保护"
+                   },
+                   {
+                       "name":  "wda_monitor_wgc_monitor_region_black",
+                       "pass":  true,
+                       "detail":  "WDA_MONITOR WGC 主屏捕获中窗口区域 blackRatio=1（整帧 blackRatio=0.218268，窗口只占部分屏幕）"
+                   },
+                   {
+                       "name":  "wda_exclude_bitblt_region_not_black",
+                       "pass":  true,
+                       "detail":  "WDA_EXCLUDEFROMCAPTURE(0x11) BitBlt 区域 blackRatio=0.018248 → 窗口从截屏消失、露出背后内容而非黑屏"
+                   },
+                   {
+                       "name":  "wda_exclude_wgc_window_no_frame",
+                       "pass":  true,
+                       "detail":  "WDA_EXCLUDEFROMCAPTURE WGC 窗口项 0/3 次拿到帧（每次 5000ms 超时）"
+                   },
+                   {
+                       "name":  "wda_exclude_wgc_monitor_region_not_black",
+                       "pass":  true,
+                       "detail":  "WDA_EXCLUDEFROMCAPTURE WGC 主屏捕获中窗口区域 blackRatio=0.018437（窗口缺失，露出背后内容）"
+                   },
+                   {
+                       "name":  "fullscreen_wda_monitor_bitblt_region_black",
+                       "pass":  true,
+                       "detail":  "全屏+WDA_MONITOR BitBlt 主屏区域 blackRatio=1（≈DRM 全屏黑屏）"
+                   },
+                   {
+                       "name":  "fullscreen_wda_monitor_desktop_frame_not_black",
+                       "pass":  true,
+                       "detail":  "全屏+WDA_MONITOR 虚拟桌面整帧 blackRatio=0.764851 \u003c 0.99（混合 DPI 双屏只有主屏黑）→ 整帧判定漏检"
+                   },
+                   {
+                       "name":  "fullscreen_wda_monitor_wgc_black",
+                       "pass":  true,
+                       "detail":  "全屏+WDA_MONITOR WGC 窗口项/主屏项 blackRatio=1/1"
+                   },
+                   {
+                       "name":  "fullscreen_wda_exclude_bitblt_not_black",
+                       "pass":  true,
+                       "detail":  "全屏+WDA_EXCLUDEFROMCAPTURE BitBlt 主屏区域 blackRatio=0.074485 → 不是黑屏"
+                   },
+                   {
+                       "name":  "fullscreen_wda_exclude_wgc_no_frame",
+                       "pass":  true,
+                       "detail":  "全屏+WDA_EXCLUDEFROMCAPTURE WGC 窗口项 0/3 拿到帧"
+                   }
+               ]
+}
