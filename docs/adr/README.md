@@ -11,6 +11,7 @@
 | [ADR-0003](0003-single-overlay-physical-pixels.md) | 单覆盖窗口覆盖虚拟桌面，坐标全程物理像素 | 已接受 | 契约 §1.5/§2；概要设计 §4.2；实施架构 §5 |
 | [ADR-0004](0004-contract-first.md) | 契约优先：文档 + 双端 contract 同构，先定协议后写实现 | 已接受 | 契约 §16；实施架构 §1/§2 |
 | [ADR-0005](0005-skeleton-mode.md) | 骨架模式：外部能力用确定性占位实现 | 已接受 | 契约 §12；实施架构 §9 |
+| [ADR-0006](0006-vulkan-first-gpu-inference.md) | GPU 推理以 **Vulkan** 为主体、CUDA 为可选组件（跨 AMD/Intel/NVIDIA、依赖最小、无需额外 runtime） | 已接受 | 实施架构 §4.1/§9.3；契约 §4.1/§6；研究 §1 |
 
 ## 约定
 

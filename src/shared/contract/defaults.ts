@@ -34,7 +34,7 @@ export const defaultHotkeys: Hotkeys = {
 
 /** 契约 §4.1：首次运行写入磁盘的配置 */
 export const defaultConfig: Config = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   app: {
     language: "zh-CN",
     autostart: false,
@@ -95,6 +95,9 @@ export const defaultConfig: Config = {
     model: "hy-mt-1.8b-q4",
     port: 39281,
     idleUnloadSec: 600,
+    device: "auto",
+    gpuBackend: "auto",
+    gpuLayers: 99,
   },
   ocr: {
     engine: "rapidocr",

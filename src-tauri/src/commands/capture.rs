@@ -84,6 +84,15 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         }
     }
     let session = start.session;
+    // 契约 v4：新框选 = 新对话。清理被作废会话的轮次（避免 TurnStore 长会话泄漏），
+    // 并保证新会话从空线程开始（追问上下文只覆盖当前会话）。
+    {
+        let mut turns = state.turns.lock();
+        if let Some(replaced) = start.replaced_session.as_ref() {
+            turns.drop_session(replaced);
+        }
+        turns.begin(&session);
+    }
     // S-02/S-03：新会话作废旧整屏 det 缓存（缓存键为 Session::ocr_session_id，新会话会换键）。
     state.ocr.clear();
     let ocr_session_id = state

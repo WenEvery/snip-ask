@@ -18,10 +18,18 @@
 //! 22. `translate_test`
 //! 23. `hotkey_probe` / 24. `set_autostart` / 25. `open_external` / 26. `app_stats`
 //! 27. `window_show` / 28. `window_hide` / 29. `app_quit`
+//!
+//! 契约 v4 新增（30–38，详见 `docs/接口契约.md` §6）：
+//! 30. `local_gpu_probe`（Vulkan 优先的真实探测，60s 缓存）
+//! 31. `local_engine_status` / 32. `local_engine_start` / 33. `local_engine_stop`
+//! 34. `backends_list` / 35. `backends_download` / 36. `backends_cancel` / 37. `backends_remove`
+//! 38. `translate_cover`（覆盖式翻译，结构化块输入输出）
 
 pub mod action;
 pub mod capture;
 pub mod config;
+pub mod cover;
+pub mod local;
 pub mod models;
 pub mod onboarding;
 pub mod provider;
@@ -33,6 +41,11 @@ pub mod window;
 pub use action::{menu_execute, result_close, task_cancel, task_followup};
 pub use capture::{capture_cancel, capture_freeze};
 pub use config::{config_export, config_get, config_import, config_patch, config_reset};
+pub use cover::translate_cover;
+pub use local::{
+    backends_cancel, backends_download, backends_list, backends_remove, local_engine_start,
+    local_engine_status, local_engine_stop, local_gpu_probe,
+};
 pub use models::{models_cancel, models_download, models_list, models_remove};
 pub use onboarding::{onboarding_finish, onboarding_state, onboarding_update};
 pub use provider::provider_test;

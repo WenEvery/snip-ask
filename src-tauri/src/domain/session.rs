@@ -2,13 +2,15 @@
 //!
 //! ```text
 //! idle → freezing → selecting → menu → executing → showingResult → idle
-//!              ↘ 取消/失败 → error → idle
+//!              ↘ 取消 → idle                     ↘ 失败 → showingResult（契约 v4：
+//!                                                  错误随 task:error 内联展示，
+//!                                                  之后仍可追问/重答）
 //! ```
 //!
 //! 规则（后端强制，非法转移返回 `SA-1099`）：
 //! - 同一时刻仅一个活动会话；新 `capture_freeze` 自动作废旧会话（旧 OCR 缓存作废、旧任务取消）；
-//! - `selection_commit` 只在 `selecting` 态合法；`menu_execute` 只在 `menu` 态合法；
-//! - `task_followup` 只在 `showingResult` 态合法；
+//! - `selection_commit` 只在 `selecting` 态合法；`menu_execute` 只在 `menu` / `showingResult` 态合法；
+//! - `task_followup` 只在 `showingResult` 态合法（任务失败后也回到该态，故仍可追问）；
 //! - `result_close` / `capture_cancel` 在任意非 idle 态合法。
 //!
 //! 本模块为纯逻辑（无 IO / 无 tauri），可单元测试。
@@ -161,6 +163,13 @@ impl SessionStore {
             .and_then(|session| session.selection.clone())
     }
 
+    /// 当前会话最近一次任务 ID（追问定位用；`TaskStore` 只保留进行中任务，不能作为来源）。
+    pub fn last_task_id(&self) -> Option<TaskId> {
+        self.active
+            .as_ref()
+            .and_then(|session| session.task_ids.last().cloned())
+    }
+
     /// 开始新的捕获会话；自动作废旧会话并返回其任务 ID（调用方负责取消）。
     pub fn begin_capture(&mut self) -> CaptureStart {
         let mut replaced_session = None;
@@ -241,10 +250,34 @@ impl SessionStore {
         Ok(())
     }
 
-    /// 任务失败（`executing → error`）。
+    /// 任务失败（`executing → showingResult`，契约 v4 修订 / 研究 §3.9-①）。
+    ///
+    /// 失败不再进入终局 `error` 态：错误通过 `task:error` 事件内联展示，
+    /// 会话回到结果态后仍可追问或重答（否则「失败一次即报废」）。
+    /// `error` 阶段保留在枚举中，由 [`Self::enter_error`] 表达不可恢复的会话级错误。
     pub fn task_failed(&mut self, session: &SessionId) -> AppResult<()> {
         let active = self.get_mut(session)?;
         ensure_phase(active, &[SessionPhase::Executing])?;
+        active.phase = SessionPhase::ShowingResult;
+        Ok(())
+    }
+
+    /// 进入 `error` 阶段（`任意非 idle → error`；保留给不可恢复的会话级错误）。
+    ///
+    /// 当前任务链路不使用该转移（任务失败走 [`Self::task_failed`] 回结果态）；
+    /// 仍可通过 `cancel` / `close` 从 `error` 回到 `idle`。
+    pub fn enter_error(&mut self, session: &SessionId) -> AppResult<()> {
+        let active = self.get_mut(session)?;
+        ensure_phase(
+            active,
+            &[
+                SessionPhase::Freezing,
+                SessionPhase::Selecting,
+                SessionPhase::Menu,
+                SessionPhase::Executing,
+                SessionPhase::ShowingResult,
+            ],
+        )?;
         active.phase = SessionPhase::Error;
         Ok(())
     }
@@ -450,7 +483,8 @@ mod tests {
     }
 
     #[test]
-    fn task_failure_enters_error_then_can_close() {
+    fn task_failure_returns_to_showing_result_then_can_followup() {
+        // 契约 v4：失败不再进终局 error；错误随 task:error 内联展示，之后仍可追问/重答。
         let mut store = SessionStore::new();
         let start = store.begin_capture();
         let session = start.session;
@@ -460,9 +494,58 @@ mod tests {
             .unwrap();
         store.begin_task(&session, TaskId::from("t")).unwrap();
         store.task_failed(&session).unwrap();
+        assert_eq!(store.current_phase(), SessionPhase::ShowingResult);
+        assert_eq!(store.last_task_id(), Some(TaskId::from("t")));
+
+        // 失败后可以继续追问（showingResult → executing）。
+        store
+            .begin_task(&session, TaskId::from("t-followup"))
+            .unwrap();
+        assert_eq!(store.current_phase(), SessionPhase::Executing);
+        store.task_finished(&session).unwrap();
+        assert_eq!(store.current_phase(), SessionPhase::ShowingResult);
+        assert_eq!(
+            store.last_task_id(),
+            Some(TaskId::from("t-followup")),
+            "追问定位必须取最近一轮任务"
+        );
+
+        store.close(&session).unwrap();
+        assert_eq!(store.current_phase(), SessionPhase::Idle);
+    }
+
+    #[test]
+    fn error_phase_remains_reachable_and_can_close() {
+        // `error` 阶段保留可达性（不可恢复的会话级错误），并能回到 idle。
+        let mut store = SessionStore::new();
+        let start = store.begin_capture();
+        let session = start.session;
+        store.set_selecting(&session).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
+        store.enter_error(&session).unwrap();
         assert_eq!(store.current_phase(), SessionPhase::Error);
         store.cancel(&session).unwrap();
         assert_eq!(store.current_phase(), SessionPhase::Idle);
+    }
+
+    #[test]
+    fn last_task_id_tracks_most_recent_task() {
+        let mut store = SessionStore::new();
+        assert_eq!(store.last_task_id(), None);
+        let start = store.begin_capture();
+        let session = start.session;
+        store.set_selecting(&session).unwrap();
+        store
+            .commit_selection(&session, selection(&session))
+            .unwrap();
+        assert_eq!(store.last_task_id(), None);
+        store.begin_task(&session, TaskId::from("t-1")).unwrap();
+        assert_eq!(store.last_task_id(), Some(TaskId::from("t-1")));
+        store.task_finished(&session).unwrap();
+        store.begin_task(&session, TaskId::from("t-2")).unwrap();
+        assert_eq!(store.last_task_id(), Some(TaskId::from("t-2")));
     }
 
     #[test]

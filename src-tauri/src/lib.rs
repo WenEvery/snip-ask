@@ -118,6 +118,16 @@ pub fn run() {
             commands::window::window_show,
             commands::window::window_hide,
             commands::system::app_quit,
+            // —— 契约 v4：本地 GPU 推理 / 后端组件 / 覆盖翻译（30–38）
+            commands::local::local_gpu_probe,
+            commands::local::local_engine_status,
+            commands::local::local_engine_start,
+            commands::local::local_engine_stop,
+            commands::local::backends_list,
+            commands::local::backends_download,
+            commands::local::backends_cancel,
+            commands::local::backends_remove,
+            commands::cover::translate_cover,
         ])
         .run(tauri::generate_context!())
         .expect("框选 AI 启动失败");

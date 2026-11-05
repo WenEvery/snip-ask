@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "verified": false,
+  "notes": "推理后端组件清单（契约 v4 / spec §1.2）。主安装包只带 CPU 后端；Vulkan 是默认 GPU 组件（AMD/Intel/NVIDIA 通用，推荐），CUDA 是 NVIDIA 用户的可选组件。组件来自 llama.cpp 官方 GitHub Release b12128：sizeBytes 与 sha256 取自 GitHub Release API 的 asset digest 字段（sha256 校验不因镜像而放宽）。urls 首个为官方主源、第二个为镜像（受限网络用）；Vulkan 已在真机经镜像实下 + SHA256 校验 + tar.exe 解压 + --list-devices 复测（见 .verify/evidence/gpu-probe/）。CUDA/CPU 未逐一实下，故 top-level verified=false。解压后目录内应有 llama-server.exe；CUDA 需额外安装 cudart 运行时包（additional），未装时探测会给出可操作原因。",
+  "backends": [
+    {
+      "id": "vulkan",
+      "label": "Vulkan（AMD/Intel/NVIDIA 通用，推荐）",
+      "backend": "vulkan",
+      "version": "b12128",
+      "sizeBytes": 37684327,
+      "sha256": "9cc33cbbb4c124a5694d6eec0bd0ecb69db291085ebe0a535a573484be2845ba",
+      "license": "MIT",
+      "urls": [
+        "https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-vulkan-x64.zip",
+        "https://gh-proxy.com/https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-vulkan-x64.zip"
+      ],
+      "requiresVendor": null,
+      "archive": "llama-b12128-bin-win-vulkan-x64.zip",
+      "additional": []
+    },
+    {
+      "id": "cuda",
+      "label": "CUDA（NVIDIA 可选组件，需 NVIDIA 显卡）",
+      "backend": "cuda",
+      "version": "b12128",
+      "sizeBytes": 288918265,
+      "sha256": "8cbd5e64dcb61160ea6dca16e7d353536de593851cefc5a2dc27f3478eae5e52",
+      "license": "MIT（另有 NVIDIA CUDA EULA 约束，仅 NVIDIA 用户可选）",
+      "urls": [
+        "https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-cuda-12.4-x64.zip",
+        "https://gh-proxy.com/https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-cuda-12.4-x64.zip"
+      ],
+      "requiresVendor": "nvidia",
+      "archive": "llama-b12128-bin-win-cuda-12.4-x64.zip",
+      "additional": [
+        {
+          "name": "cudart-llama-b12128-bin-win-cuda-12.4-x64.zip",
+          "sizeBytes": 391443627,
+          "sha256": "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
+          "urls": [
+            "https://github.com/ggml-org/llama.cpp/releases/download/b12128/cudart-llama-bin-win-cuda-12.4-x64.zip",
+            "https://gh-proxy.com/https://github.com/ggml-org/llama.cpp/releases/download/b12128/cudart-llama-bin-win-cuda-12.4-x64.zip"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cpu",
+      "label": "CPU（随主安装包，无需下载）",
+      "backend": "cpu",
+      "version": "b12128",
+      "sizeBytes": 24730477,
+      "sha256": "2864bc950fe1681f1867ebc1bf0d6a66d18cc5561b29c285b4504787145bd7b7",
+      "license": "MIT",
+      "urls": [
+        "https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-cpu-x64.zip",
+        "https://gh-proxy.com/https://github.com/ggml-org/llama.cpp/releases/download/b12128/llama-b12128-bin-win-cpu-x64.zip"
+      ],
+      "requiresVendor": null,
+      "archive": "llama-b12128-bin-win-cpu-x64.zip",
+      "additional": []
+    }
+  ]
+}

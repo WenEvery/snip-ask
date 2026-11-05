@@ -12,11 +12,13 @@ use tauri::{AppHandle, Emitter};
 use crate::contract::events::{
     ConfigChangedPayload, DownloadProgressPayload, DownloadStatePayload, EngineStatusPayload,
     MenuReadyPayload, OcrStatusPayload, OverlayReadyPayload, OverlaySelectionPayload,
-    TaskDeltaPayload, TaskDonePayload, TaskErrorPayload, TaskStartedPayload, TrayActionPayload,
-    UpdateState, UpdateStatusPayload, EVENT_CONFIG_CHANGED, EVENT_DOWNLOAD_PROGRESS,
-    EVENT_DOWNLOAD_STATE, EVENT_ENGINE_STATUS, EVENT_MENU_READY, EVENT_OCR_STATUS,
-    EVENT_OVERLAY_READY, EVENT_OVERLAY_SELECTION, EVENT_TASK_DELTA, EVENT_TASK_DONE,
-    EVENT_TASK_ERROR, EVENT_TASK_STARTED, EVENT_TRAY_ACTION, EVENT_UPDATE_STATUS,
+    TaskDeltaPayload, TaskDonePayload, TaskErrorPayload, TaskStartedPayload,
+    TranslateProgressPayload, TranslateReadyPayload, TrayActionPayload, UpdateState,
+    UpdateStatusPayload, EVENT_CONFIG_CHANGED, EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE,
+    EVENT_ENGINE_STATUS, EVENT_MENU_READY, EVENT_OCR_STATUS, EVENT_OVERLAY_READY,
+    EVENT_OVERLAY_SELECTION, EVENT_TASK_DELTA, EVENT_TASK_DONE, EVENT_TASK_ERROR,
+    EVENT_TASK_STARTED, EVENT_TRANSLATE_PROGRESS, EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION,
+    EVENT_UPDATE_STATUS,
 };
 use crate::contract::types::EngineStatus;
 
@@ -83,9 +85,35 @@ pub fn emit_tray_action(app: &AppHandle, payload: &TrayActionPayload) {
     let _ = app.emit(EVENT_TRAY_ACTION, payload);
 }
 
-/// `engine:status`
+/// `engine:status`（仅状态，保持旧签名）。
 pub fn emit_engine_status(app: &AppHandle, status: EngineStatus) {
-    let _ = app.emit(EVENT_ENGINE_STATUS, EngineStatusPayload { local: status });
+    emit_engine_status_payload(
+        app,
+        &EngineStatusPayload {
+            local: status,
+            device: None,
+            backend: None,
+            fallback_reason: None,
+            offload_layers: None,
+            device_name: None,
+            port: None,
+        },
+    );
+}
+
+/// `engine:status`（契约 v4：带设备 / 后端 / 回退原因 / offload 层数）。
+pub fn emit_engine_status_payload(app: &AppHandle, payload: &EngineStatusPayload) {
+    let _ = app.emit(EVENT_ENGINE_STATUS, payload);
+}
+
+/// `translate:progress`（契约 v4：覆盖翻译批处理进度）。
+pub fn emit_translate_progress(app: &AppHandle, payload: &TranslateProgressPayload) {
+    let _ = app.emit(EVENT_TRANSLATE_PROGRESS, payload);
+}
+
+/// `translate:ready`（契约 v4：覆盖翻译完成）。
+pub fn emit_translate_ready(app: &AppHandle, payload: &TranslateReadyPayload) {
+    let _ = app.emit(EVENT_TRANSLATE_READY, payload);
 }
 
 /// `update:status`

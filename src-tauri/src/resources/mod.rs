@@ -32,6 +32,11 @@ pub const MODELS_MANIFEST: &str = include_str!("../../../resources/models.manife
 /// 价格表（`{ version, currency, usdToCny, models[], search[] }`）。
 pub const PRICING: &str = include_str!("../../../resources/pricing.json");
 
+/// 推理后端组件清单（`{ version, verified, backends: BackendManifestEntry[] }`，契约 v4）。
+///
+/// Vulkan 为默认 GPU 组件（AMD/Intel/NVIDIA 通用）；CUDA 为 NVIDIA 可选组件；CPU 随包。
+pub const BACKENDS_MANIFEST: &str = include_str!("../../../resources/backends.manifest.json");
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -46,6 +51,7 @@ mod tests {
             ("answer", PROMPT_ANSWER),
             ("followup", PROMPT_FOLLOWUP),
             ("models.manifest", MODELS_MANIFEST),
+            ("backends.manifest", BACKENDS_MANIFEST),
             ("pricing", PRICING),
         ] {
             assert!(!content.trim().is_empty(), "内置资源 {name} 为空");
@@ -55,6 +61,7 @@ mod tests {
     #[test]
     fn embedded_json_is_parseable() {
         assert!(serde_json::from_str::<serde_json::Value>(MODELS_MANIFEST).is_ok());
+        assert!(serde_json::from_str::<serde_json::Value>(BACKENDS_MANIFEST).is_ok());
         assert!(serde_json::from_str::<serde_json::Value>(PRICING).is_ok());
     }
 }

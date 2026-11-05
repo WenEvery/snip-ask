@@ -8,9 +8,133 @@
 
 ### 计划中
 
-- 技术验证（Spike）：`Ctrl+Q` → 虚拟桌面冻结 → 前置 OCR → 框选 → 流式问答最小闭环（见 `docs/技术验证清单.md`）。
-- 真实能力接入：Win32 `BitBlt`/WGC 捕获、RapidOCR/ONNX 推理、OpenAI 兼容流式网关、DeepSeek Search/Fetch、Qwen-MT、本地 llama.cpp/Ollama 引擎、Windows Credential Manager、模型下载与 SHA256 校验。
-- 安装包（NSIS 用户级）、代码签名、更新通道与体积门禁。
+- 真实能力接入（剩余）：Win32 `BitBlt`/WGC 捕获、RapidOCR/ONNX 推理、云端 OpenAI 兼容网关与 DeepSeek Search/Fetch、
+  Qwen-MT、Ollama/CTranslate2 本地引擎、Windows Credential Manager。
+- 追加需求遗留验证：**AMD / Intel 实机 GPU**（Vulkan 路径已论证厂商无关、本批未实测）、8GB 内存机降档提示（S-13）、
+  真实流式首字（TTFT）补测、受保护内容（DRM）下的覆盖翻译。
+- 发布工程：代码签名（EV/OV 证书）、`tauri-plugin-updater` 更新通道、默认安装目录改为
+  `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）、卸载时可选删除本地数据。
+- 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。
+
+## [0.1.0] - 2026-11-05（收尾发布）
+
+> 版本说明：仓库早期脚手架提交（2026-11-04）的内部版本号为 0.1.0，在本变更日志中改记为
+> `0.0.1（2026-11-04，脚手架）`；本条目是**首个可安装的收尾版本**，包含此前各批次（P0/P1 技术验证、
+> 追加需求可行性研究与契约 v4 落地）的全部内容，并首次归档发行安装包。
+
+### 发布收尾：安装包入库与文档定稿（2026-11-05）
+
+- **发行产物**：由 `pnpm build` 重新构建 NSIS 安装包并归档到 [`release/`](release/README.md)：
+  `SnipAsk_0.1.0_x64-setup.exe`（2,810,494 B / 2.68 MiB，SHA256 `066347985d081db5…eed7de25`），
+  附 `release/SHA256SUMS.txt` 与 `release/README.md`（产物清单、校验方法、安装/卸载、数据目录、
+  未签名与 SmartScreen 说明、构建信息、已知限制）。
+- **安装包冒烟（Windows 11 x64，本次发行包）**：静默安装 `/S` → 退出码 0，安装目录出现主程序与卸载器并注册 HKCU 卸载项；
+  启动 6s → 进程存活、主窗口「框选 AI」、响应正常、工作集 40.1 MiB；静默卸载 `/S` → 退出码 0，
+  程序文件/卸载项/开始菜单与桌面快捷方式全部清除；签名 `NotSigned`、版本资源 `0.1.0`。
+- **README 发行化**：新增「下载与安装」章节（产物表、SHA256 校验、安装/卸载、数据目录、SmartScreen 提示），
+  更新当前状态、快速开始、仓库结构、文档索引与最终验证事实；`SECURITY.md` 支持范围同步为
+  「0.1.x：安装包随仓库分发（未签名）」。
+- **工程门禁补强**：新增 `pnpm test` 统一前端纯逻辑单测（覆盖布局 25 + 线程模型 7），`scripts/verify.ps1` 与
+  CI web job 增加单测步骤；`.gitignore` 增加 `release/` 例外（安装包与校验和入库）。
+  另修复 `local_gateway_sse::server_errors_exhaust_retries` 在连接复用竞态下的偶发失败：
+  「请求数」断言增加「退避耗时」兜底（5xx 重试最多等待 3×BASE_BACKOFF），测试不再受服务端连接关闭时序影响。
+- **最终门禁**：`cargo fmt --check`、`cargo clippy --all-targets -- -D warnings`（0 warning）、`cargo test`
+  （**376 passed / 0 failed / 6 ignored**）、`pnpm typecheck`、`pnpm test`、`pnpm build:web`、`pnpm build` 全部通过。
+
+### 追加需求落地：本地 GPU / 覆盖翻译 / 连续提问（契约 v4，2026-11-05）
+
+按 [`docs/追加需求可行性研究.md`](docs/追加需求可行性研究.md) 与实施规范实现三项追加需求。
+**GPU 推理以 Vulkan 为主体、CUDA 为可选组件**，确保 AMD / Intel / NVIDIA 用户都能用（详见
+[ADR-0006](docs/adr/0006-vulkan-first-gpu-inference.md)）。
+
+#### 契约 v4（配置 / 命令 / 事件 / 结构）
+
+- **配置 Schema v3 → v4**：`local.device`（`auto` / `cpu` / `gpu`）、`local.gpuBackend`
+  （`auto` / `vulkan` / `cuda`，**`auto` = Vulkan → CUDA → CPU**）、`local.gpuLayers`（默认 99，`[0,512]`）；
+  迁移链 **1 → 2 → 3 → 4**；`local.idleUnloadSec ∈ [0,2592000]`。`resources/models.manifest.json` 每个条目增加
+  `vramMB`（0.5B=700 / 1.8B=1600 / 4B=3200；1.5B=1300 为研究估算，清单暂无该条目）。
+- **新增 9 命令**（30–38）：`local_gpu_probe` / `local_engine_status` / `local_engine_start` /
+  `local_engine_stop` / `backends_list` / `backends_download` / `backends_cancel` / `backends_remove` /
+  `translate_cover`；**新增 2 事件**：`translate:progress` / `translate:ready`（事件总数 14 → 16）。
+- `engine:status` 载荷扩展 `device` / `backend` / `fallbackReason` / `offloadLayers` / `deviceName` / `port`
+  （旧字段 `local` 保留）；`TaskStartedPayload.parent`（首轮/重答为 `null`）；`RunActionOptions.cover`。
+- 新增结构 `BackendInfo` / `GpuDevice` / `GpuBackendStatus` / `GpuBudget` / `GpuProbeResult` /
+  `CoverBlock` / `CoveredBlock` / `CoverResult`；新增 `resources/backends.manifest.json`。
+- `translate_cover` 定为**新命令**而非复用 `menu_execute`：覆盖翻译需要「块 id ↔ 译文」结构化映射，
+  `task:delta` 事件流无法承载。`IPC_CONTRACT_VERSION` 保持 `1`（全部为纯增量）。
+
+#### 需求一 · 本地模型 GPU 推理（Vulkan 优先，CUDA 可选）
+
+- **GPU 探测**：真实执行 `llama-server --list-devices` / `--version` 并解析设备与显存，过滤虚拟/软件适配器
+  （Microsoft Basic Render Driver / RDP / 虚拟化等），厂商归类，显存预算 `need = model.vramMB + 512 MiB`，
+  推荐后端 **Vulkan 优先**，60s 缓存 + `refresh` 强制重探；`nvidia-smi` 仅作补充展示、失败静默。
+- **后端组件**：`backends_list` 从清单 + 安装状态生成；`backends_download` 复用 Range 断点续传 / SHA256 /
+  镜像 / `tar.exe` 解压；主安装包只带 CPU 后端，**Vulkan 为默认 GPU 组件按需下载**（AMD/Intel/NVIDIA 通用），
+  CUDA（含 runtime）为 NVIDIA 可选组件。清单实际体积（官方 `b12128`）：Vulkan 37,684,327 B /
+  CUDA 288,918,265 B + cudart 391,443,627 B / CPU 24,730,477 B（研究期估算 ≈55.8 MB 与 ≈0.9 GB，
+  以 `resources/backends.manifest.json` 为准）。
+- **引擎监督者**：`plan_attempts` 按配置与探测结果生成 **Vulkan → CUDA → CPU** 回退链；显式传
+  `-ngl` / `--device Vulkan0|CUDA0`（研究 §1.2 踩坑）；端口 `39281..=39289` 探测；`/health` 200 → ready（20s 超时）；
+  日志解析 offload 层数与 `using device`；空闲 `idleUnloadSec` 卸载；**按 PID/进程树**清理（禁止按镜像名 taskkill）。
+- **网关**：`HttpLlmGateway` 实现 OpenAI 兼容流式 SSE（`/v1/chat/completions`），本地 llama-server 与云端共用；
+  429/5xx 退避、取消令牌、usage。
+- **设置页**：计算设备（自动/CPU/GPU）、GPU 后端（自动=Vulkan 优先/CUDA 可选）、GPU 层数（0–512）、
+  设备状态行（如「已检测：AMD Radeon RX 7800 XT 16GB（空闲 15.2GB，Vulkan 可用，推荐 Vulkan）」/
+  「未检测到可用 GPU，将使用 CPU」）、后端组件下载入口、显存不足提示与「改用 CPU」；文案明确
+  「Vulkan 支持 AMD / Intel / NVIDIA」。
+- **真机与遗留**：本机 **NVIDIA RTX 4060 Laptop** 上完成 Vulkan 真机验证（探测、真实推理、offload 日志、
+  停止后无残留）；**AMD 真机未测**——兼容性按「Vulkan 路径无 NVIDIA 专属依赖」论证，不能等同实测；
+  8GB 机型降档提示（S-13）仍为产品缺口。原始证据见 `.verify/evidence/`（gitignored）。
+
+#### 需求二 · 覆盖式翻译（冻结帧 Canvas 覆盖层）
+
+- 前端 `src/windows/overlay/translationLayout.ts`（**零依赖纯函数，`node --test` 可跑**）：
+  OCR 行→段块合并（同行合并 + 垂直间距阈值 + 允许吞行间空白）、自适应字号（0.60–1.00×源行高，5% 步长）、
+  自动换行（CJK/拉丁混排）、溢出降级小气泡（不截断，<12px 直接气泡）、深/浅底字色与对比度衬底、`clampRect`。
+- `TranslationOverlay.tsx`：冻结帧上叠 Canvas，对原文块高斯模糊 + 半透明遮罩后原位绘制译文；
+  三态 `cover | bilingual | original`；ESC 第一次回原文、第二次退出；resize/dpr 自适应；失败块保留原文并标红。
+- 后端 `translate_cover`：10 块/批、会话级 `sha1(text+lang+model)` LRU 缓存、失败块保留原文 `failed=true`、
+  `translate:progress`（节流）/ `translate:ready`；`engine` 如实标注（`skeleton` / 供应商 id / `local`）。
+- 入口：动作菜单翻译项新增「覆盖原句」（仅 `hasText` 且 boxes 非空可用）；overlay 前端子阶段
+  `translating → covered`（**后端会话保持 `showingResult`**，有意偏差，避免破坏已冻结契约）。
+- **边界**：只做冻结帧覆盖，不实时穿透、不修改目标应用；DRM/无 `dataUrl` 明确降级提示（S-09 结论）。
+
+#### 需求三 · 连续提问（多轮追问）
+
+- **修复 F1（P0）**：`task_followup` 改为按当前活动会话 + `session.task_ids.last()` 定位；任务完成后从
+  `TaskStore` 移除不再必然返回 `SA-1099`；增加「任务已完成后追问成功」回归测试。
+- **多轮上下文**：`TurnStore` 记录每轮（原始问题 + 完整回答 + engine），追问时注入「选区 + 最近 N 轮问答（截断
+  4000–6000 字）」到 `followup.md` 的 `{context}`；取消/失败不记录正文。
+- **父子链路**：`TaskStartedPayload.parent` 指向上一轮任务（首轮/重答为 `null`），结果窗据此区分线程首轮/追问。
+- **状态机**：任务失败改为 `executing → showingResult`（错误经 `task:error` 内联展示），失败后仍可追问/重答。
+- **结果窗线程化**：`turns[]` 模型；历史轮次折叠摘要（可展开）、仅最后一条流式渲染、错误内联、流式期间禁用输入、
+  重答清空当前线程并重跑、清空线程按钮；`task:started` 不再清空历史。
+- **mock 对齐**：mock 追问守卫改为与真实后端一致（`showingResult` 且最近任务存在），不再出现「预览看着能用」的假象。
+- 完整版（`messages` 表持久化 / 历史恢复 / token 预算）不在本批范围。
+
+#### 工程与文档
+
+- `package.json` 新增 `test:layout`（`node --test src/windows/overlay/translationLayout.test.ts`）。
+- 新增 `docs/adr/0006-vulkan-first-gpu-inference.md`；更新 `docs/接口契约.md`（契约 v4）、`docs/实施架构.md`
+  （§4.1 本地 GPU 模块 / §9.3 追加需求边界）、`docs/开发指南.md`（§8 GPU / Vulkan 与验证钩子）、
+  `README.md`、`docs/技术验证清单.md`。
+- **门禁与真机验收（2026-11-05 执行）**：
+  - 全量门禁全绿：`cargo fmt --check`、`cargo clippy --offline --all-targets -- -D warnings`（0 warning）、
+    `cargo test --offline`（**376 passed / 0 failed / 6 ignored**，16 套件）、`pnpm typecheck`、
+    `node --test src/windows/overlay/translationLayout.test.ts`（**25/25**）、
+    `node --test src/windows/result/thread.test.ts`（**7/7**）、`pnpm build:web`。
+  - 真机 GPU（NVIDIA RTX 4060 Laptop）：`local_gpu_probe` → `Vulkan0` 识别、`useable=true`、
+    `recommended="vulkan"`、预算 `{requiredMb:2112, availableMb:7180, fits:true}`；真实 Vulkan 引擎
+    （`-ngl 99 --device Vulkan0`，1.8B Q4）→ `/health` 就绪 **2188 ms**、日志 `offloaded 33/33 layers to GPU` +
+    `using device Vulkan0`、真实 `/v1/chat/completions` SSE 输出 **90 ms**（CPU `-ngl 0` 同请求 **482 ms**，约 5.4×）、
+    `nvidia-smi` 佐证 3477 MiB、按 PID 树停止后无残留；Vulkan 后端组件真实下载 **37,684,327 B** + SHA256 校验一致 +
+    跨进程 Range 续传 + 解压后官方 exe 复测 `Vulkan0`。
+  - 覆盖翻译：浏览器 mock **真实位图**演示（`.verify/evidence/overlay-cover/`）覆盖模式 Canvas 采样
+    `opaque=46964/50400`、原文模式 `opaque=0`，三态/ESC 正确、0 控制台异常；真实 OCR/翻译质量未验收。
+  - 连续提问：`followup_regression` **9/9**（含 F1「任务完成后追问成功」、上下文含上一轮回答、失败后可追问）。
+  - **遗留（如实标注）**：**AMD/Intel 实机未测**（Vulkan 无 NVIDIA 专属依赖为论证依据）；CUDA 真实推理未实测
+    （本机缺 CUDA runtime，探测如实 `available=false`）；真实捕获/OCR 与覆盖翻译生产链路、4B/8GB 边界、真实流式 TTFT 未验收。
+  - 通过/失败矩阵、复跑命令与原始输出见 `.verify/verify-20261105-2311/SUMMARY.md`（gitignored，本地证据）。
 
 ### 技术验证（P0 Spike，2026-11-04/05）
 
@@ -145,7 +269,7 @@
 - **日志降噪**：捕获/事件诊断日志降为 `debug` 级别（默认 `info` 不刷屏），保留生命周期与失败告警。
 - **验证结果**：`cargo build`（debug / release / `--features custom-protocol`）、`cargo test`（132 单测 + 16 契约测试）、`cargo clippy -D warnings`、`cargo fmt --check` 全部通过；release 应用实机启动并完成「`Ctrl+Q` → 框选 → 动作菜单 → 流式结果窗」端到端闭环（骨架模式），配置/历史库/日志落盘正常。
 
-## [0.1.0] - 2026-11-04
+## [0.0.1] - 2026-11-04（脚手架）
 
 首个**基础架构（脚手架）**版本：可运行的空壳闭环，真实外部能力均为 `TODO(real)` 占位实现。
 

@@ -6,7 +6,7 @@
 /** 契约版本：出现在 `Stats.contractVersion` */
 export const IPC_CONTRACT_VERSION = 1;
 
-/** §6 命令表：29 个命令 */
+/** §6 命令表：38 个命令（契约 v4 追加 30–38） */
 export const COMMANDS = {
   captureFreeze: "capture_freeze",
   captureCancel: "capture_cancel",
@@ -37,11 +37,21 @@ export const COMMANDS = {
   windowShow: "window_show",
   windowHide: "window_hide",
   appQuit: "app_quit",
+  // —— 契约 v4：本地 GPU 推理与覆盖翻译（新增） ——
+  localGpuProbe: "local_gpu_probe",
+  localEngineStatus: "local_engine_status",
+  localEngineStart: "local_engine_start",
+  localEngineStop: "local_engine_stop",
+  backendsList: "backends_list",
+  backendsDownload: "backends_download",
+  backendsCancel: "backends_cancel",
+  backendsRemove: "backends_remove",
+  translateCover: "translate_cover",
 } as const;
 
 export type CommandName = (typeof COMMANDS)[keyof typeof COMMANDS];
 
-/** §7 事件表：14 个事件 */
+/** §7 事件表：16 个事件（v4 新增 translate:progress / translate:ready） */
 export const EVENTS = {
   overlayReady: "overlay:ready",
   overlaySelection: "overlay:selection",
@@ -56,6 +66,8 @@ export const EVENTS = {
   configChanged: "config:changed",
   trayAction: "tray:action",
   engineStatus: "engine:status",
+  translateProgress: "translate:progress",
+  translateReady: "translate:ready",
   updateStatus: "update:status",
 } as const;
 

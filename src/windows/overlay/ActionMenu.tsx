@@ -1,15 +1,16 @@
 /**
  * 动作菜单：锚定选区右下角，自动翻转避免出屏。
- * 内容：识别预览、动作按钮（禁用时展示 disabledReason）、快/深切换、重新框选、取消。
+ * 内容：识别预览、动作按钮（禁用时展示 disabledReason）、「覆盖原句」子项、
+ *       快/深切换、重新框选、取消。
  */
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { Button, Kbd } from "../../components/ui";
 import type { ActionItem, MenuReadyPayload, Mode, RectPhys } from "../../shared/contract/types";
 import { toCssRect } from "./coords";
 
 const MENU_WIDTH = 300;
-const MENU_ESTIMATED_HEIGHT = 330;
+const MENU_ESTIMATED_HEIGHT = 372;
 const GAP = 8;
 
 export interface ActionMenuProps {
@@ -19,8 +20,13 @@ export interface ActionMenuProps {
   dpr: number;
   mode: Mode;
   disabled?: boolean;
+  /** 「覆盖原句」是否可用（仅 hasText 且 boxes 非空）。 */
+  coverAvailable: boolean;
+  /** 不可用原因（可直接展示给用户）。 */
+  coverDisabledReason: string | null;
   onToggleMode: () => void;
   onAction: (item: ActionItem) => void;
+  onCover: () => void;
   onReset: () => void;
   onCancel: () => void;
 }
@@ -32,8 +38,11 @@ export function ActionMenu({
   dpr,
   mode,
   disabled = false,
+  coverAvailable,
+  coverDisabledReason,
   onToggleMode,
   onAction,
+  onCover,
   onReset,
   onCancel,
 }: ActionMenuProps) {
@@ -91,52 +100,74 @@ export function ActionMenu({
           const reason = item.disabledReason ?? "当前不可用";
           const title = item.enabled ? item.label : `${item.label}：${reason}`;
           return (
-            <button
-              key={item.id}
-              type="button"
-              className="overlay-menu__action"
-              disabled={unavailable}
-              title={title}
-              aria-describedby={unavailable ? `overlay-action-reason-${item.id}` : undefined}
-              onClick={() => onAction(item)}
-            >
-              <span
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  gap: 2,
-                  minWidth: 0,
-                  flex: "1 1 auto",
-                }}
+            <Fragment key={item.id}>
+              <button
+                type="button"
+                className="overlay-menu__action"
+                disabled={unavailable}
+                title={title}
+                aria-describedby={unavailable ? `overlay-action-reason-${item.id}` : undefined}
+                onClick={() => onAction(item)}
               >
-                <span className="overlay-menu__action-label">{item.label}</span>
-                {unavailable ? (
-                  // 受限模式：禁用原因直接可见（不只放在 tooltip），文案为可操作路径。
-                  <span
-                    id={`overlay-action-reason-${item.id}`}
-                    style={{
-                      display: "block",
-                      fontSize: 11,
-                      lineHeight: 1.35,
-                      opacity: 0.8,
-                      whiteSpace: "normal",
-                      textAlign: "left",
-                    }}
-                  >
-                    {reason}
-                  </span>
-                ) : null}
-              </span>
-              <span className="overlay-menu__action-meta">
-                {item.shortcut ? <Kbd>{item.shortcut}</Kbd> : null}
                 <span
-                  className={`overlay-menu__action-mode overlay-menu__action-mode--${item.mode}`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 2,
+                    minWidth: 0,
+                    flex: "1 1 auto",
+                  }}
                 >
-                  {item.mode === "deep" ? "深度" : "快速"}
+                  <span className="overlay-menu__action-label">{item.label}</span>
+                  {unavailable ? (
+                    // 受限模式：禁用原因直接可见（不只放在 tooltip），文案为可操作路径。
+                    <span
+                      id={`overlay-action-reason-${item.id}`}
+                      style={{
+                        display: "block",
+                        fontSize: 11,
+                        lineHeight: 1.35,
+                        opacity: 0.8,
+                        whiteSpace: "normal",
+                        textAlign: "left",
+                      }}
+                    >
+                      {reason}
+                    </span>
+                  ) : null}
                 </span>
-              </span>
-            </button>
+                <span className="overlay-menu__action-meta">
+                  {item.shortcut ? <Kbd>{item.shortcut}</Kbd> : null}
+                  <span
+                    className={`overlay-menu__action-mode overlay-menu__action-mode--${item.mode}`}
+                  >
+                    {item.mode === "deep" ? "深度" : "快速"}
+                  </span>
+                </span>
+              </button>
+              {item.id === "translate" ? (
+                // 覆盖翻译入口：模糊原文 + 原位译文；仅 hasText 且 OCR 框非空时可用
+                <button
+                  type="button"
+                  className="overlay-menu__action overlay-menu__action--cover"
+                  disabled={disabled || !coverAvailable}
+                  title={
+                    coverAvailable
+                      ? "覆盖原句：模糊原文并原位显示译文（只在框选 AI 的冻结画面上，不改动目标应用）"
+                      : (coverDisabledReason ?? "选区内没有可覆盖的文本")
+                  }
+                  onClick={onCover}
+                >
+                  <span className="overlay-menu__action-label">覆盖原句</span>
+                  <span className="overlay-menu__action-meta">
+                    <span className="overlay-menu__action-mode overlay-menu__action-mode--cover">
+                      {coverAvailable ? "模糊原文 · 原位译文" : (coverDisabledReason ?? "无文本")}
+                    </span>
+                  </span>
+                </button>
+              ) : null}
+            </Fragment>
           );
         })}
       </div>

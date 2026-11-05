@@ -40,7 +40,8 @@ export interface VirtualDesktop {
 export interface OcrBox {
   text: string;
   confidence: number;
-  box: RectPhys;
+  /** 文字框（物理像素）。字段名与 Rust `OcrBox::bbox` 一致。 */
+  bbox: RectPhys;
 }
 
 export type WindowLabel = "main" | "overlay" | "result";
@@ -54,6 +55,12 @@ export type ResultPosition = "follow" | "fixed";
 export type SearchMode = "browser" | "ai";
 export type TranslateBackend = "cloud" | "local";
 export type LocalEngine = "llama.cpp" | "ollama" | "ct2";
+/** 计算设备（契约 v4）。`auto` = 优先 GPU，不可用时自动回退 CPU。 */
+export type LocalDevice = "auto" | "cpu" | "gpu";
+/** GPU 后端（契约 v4）。`auto` 的解析顺序为 Vulkan → CUDA → CPU（Vulkan 跨厂商，AMD 可用）。 */
+export type GpuBackend = "auto" | "vulkan" | "cuda";
+/** 实际使用的推理后端（含 CPU；配置里的 gpuBackend 不含 cpu，因为 CPU 是回退结果）。 */
+export type LocalBackend = "vulkan" | "cuda" | "cpu";
 export type UpdateChannel = "stable" | "preview";
 export type Cap = "vision" | "search" | "thinking" | "translate";
 
@@ -158,6 +165,12 @@ export interface LocalPrefs {
   model: string;
   port: number;
   idleUnloadSec: number;
+  /** 计算设备；`auto` 优先 GPU、不可用回退 CPU。 */
+  device: LocalDevice;
+  /** GPU 后端；`auto` = Vulkan 优先（AMD/Intel/NVIDIA 通用），CUDA 为可选组件。 */
+  gpuBackend: GpuBackend;
+  /** offload 到 GPU 的层数；99 = 全部，0 = 不 offload。 */
+  gpuLayers: number;
 }
 
 export interface OcrPrefs {
@@ -251,6 +264,8 @@ export interface ActionItem {
 export interface RunActionOptions {
   text?: string | null;
   targetLang?: string | null;
+  /** 覆盖式翻译开关（`translate_cover` 使用）。 */
+  cover?: boolean | null;
 }
 
 export type StreamKind = "text" | "reasoning" | "meta";
@@ -276,6 +291,8 @@ export interface TaskStartedPayload {
   action: ActionId;
   mode: Mode;
   engine: EngineId;
+  /** 父任务：追问/重答指向上一轮任务；首轮为 null（契约 v4）。 */
+  parent?: TaskId | null;
 }
 
 export interface TaskDonePayload {
@@ -318,11 +335,94 @@ export interface ModelInfo {
   sha256: string;
   license: string;
   minRamMB: number;
+  /** 推理时显存预算（MB，契约 v4）。 */
+  vramMB: number;
   urls: string[];
   params: Record<string, string | number | boolean>;
   installed: boolean;
   installedBytes: number;
   downloadState: DownloadState;
+}
+
+/** 本地推理后端组件（`backends_list` 元素，契约 v4）。 */
+export interface BackendInfo {
+  /** `"vulkan"` / `"cuda"` / `"cpu"` */
+  id: string;
+  label: string;
+  backend: LocalBackend;
+  version: string;
+  sizeBytes: number;
+  sha256: string;
+  license: string;
+  urls: string[];
+  /** CUDA 为 `"nvidia"`；Vulkan/CPU 为 null。 */
+  requiresVendor: string | null;
+  installed: boolean;
+  installedBytes: number;
+  downloadState: DownloadState;
+}
+
+export interface GpuDevice {
+  index: number;
+  name: string;
+  backend: LocalBackend;
+  vramTotalMb: number;
+  vramFreeMb: number;
+  vendor: string | null;
+  virtualAdapter: boolean;
+}
+
+export interface GpuBackendStatus {
+  backend: LocalBackend;
+  installed: boolean;
+  available: boolean;
+  exePath: string | null;
+  version: string | null;
+  reason: string | null;
+}
+
+export interface GpuBudget {
+  requiredMb: number;
+  availableMb: number;
+  fits: boolean;
+}
+
+/** `local_gpu_probe` 返回（契约 v4）。 */
+export interface GpuProbeResult {
+  checkedAt: string;
+  cached: boolean;
+  useable: boolean;
+  recommended: GpuBackend | null;
+  devices: GpuDevice[];
+  backends: GpuBackendStatus[];
+  budget: GpuBudget | null;
+  issue: string | null;
+}
+
+/* ─────────────────── 覆盖式翻译（契约 v4，研究 §2） ─────────────────── */
+
+export interface CoverBlock {
+  id: string;
+  text: string;
+  bbox: RectPhys;
+  confidence?: number;
+}
+
+export interface CoveredBlock {
+  id: string;
+  source: string;
+  translation: string;
+  failed: boolean;
+  engine: string;
+}
+
+export interface CoverResult {
+  session: SessionId;
+  blocks: CoveredBlock[];
+  engine: string;
+  latencyMs: number;
+  totalBlocks: number;
+  translatedBlocks: number;
 }
 
 export interface HotkeyStatus {
@@ -414,6 +514,30 @@ export interface TrayActionPayload {
 
 export interface EngineStatusPayload {
   local: EngineStatus;
+  /** 实际使用的计算设备。 */
+  device?: LocalDevice | null;
+  /** 实际使用的后端（含 CPU）。 */
+  backend?: LocalBackend | null;
+  /** 回退原因（如「Vulkan 后端未安装，已回退 CPU」）。 */
+  fallbackReason?: string | null;
+  /** 实际 offload 到 GPU 的层数。 */
+  offloadLayers?: number | null;
+  /** 设备名（如 `AMD Radeon RX 7800 XT`）。 */
+  deviceName?: string | null;
+  /** 监听端口。 */
+  port?: number | null;
+}
+
+export interface TranslateProgressPayload {
+  session: SessionId;
+  done: number;
+  total: number;
+}
+
+export interface TranslateReadyPayload {
+  session: SessionId;
+  blocks: CoveredBlock[];
+  engine: string;
 }
 
 export type UpdateState = "idle" | "checking" | "available" | "downloading" | "ready" | "error";
@@ -479,6 +603,8 @@ export interface ModelManifestEntry {
   sha256: string;
   license: string;
   minRamMB: number;
+  /** 推理时显存预算（MB，契约 v4）。 */
+  vramMB: number;
   urls: string[];
   params: Record<string, string | number | boolean>;
 }

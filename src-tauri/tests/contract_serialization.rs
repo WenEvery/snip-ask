@@ -16,18 +16,19 @@ use snip_ask_lib::contract::events::{
     TaskErrorPayload, TaskStartedPayload, TrayActionPayload, UpdateState, UpdateStatusPayload,
     EVENT_CONFIG_CHANGED, EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE, EVENT_ENGINE_STATUS,
     EVENT_MENU_READY, EVENT_OCR_STATUS, EVENT_OVERLAY_READY, EVENT_OVERLAY_SELECTION,
-    EVENT_TASK_DELTA, EVENT_TASK_DONE, EVENT_TASK_ERROR, EVENT_TASK_STARTED, EVENT_TRAY_ACTION,
-    EVENT_UPDATE_STATUS, IPC_CONTRACT_VERSION,
+    EVENT_TASK_DELTA, EVENT_TASK_DONE, EVENT_TASK_ERROR, EVENT_TASK_STARTED,
+    EVENT_TRANSLATE_PROGRESS, EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION, EVENT_UPDATE_STATUS,
+    IPC_CONTRACT_VERSION,
 };
 use snip_ask_lib::contract::types::{
     ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta, HotkeyStatus,
-    Mode, ModelInfo, ModelKind, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
+    Mode, ModelInfo, ModelKind, OcrBox, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
     SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload, TaskId, TestResult,
     TokenUsage, WindowLabel,
 };
 
-/// 契约 §7 的 14 个事件名（顺序即契约表顺序）。
-const EXPECTED_EVENTS: [&str; 14] = [
+/// 契约 §7 的 16 个事件名（顺序即契约表顺序；v4 新增 translate:progress / translate:ready）。
+const EXPECTED_EVENTS: [&str; 16] = [
     EVENT_OVERLAY_READY,
     EVENT_OVERLAY_SELECTION,
     EVENT_OCR_STATUS,
@@ -41,19 +42,22 @@ const EXPECTED_EVENTS: [&str; 14] = [
     EVENT_CONFIG_CHANGED,
     EVENT_TRAY_ACTION,
     EVENT_ENGINE_STATUS,
+    EVENT_TRANSLATE_PROGRESS,
+    EVENT_TRANSLATE_READY,
     EVENT_UPDATE_STATUS,
 ];
 
 #[test]
 fn contract_version_is_one() {
     assert_eq!(IPC_CONTRACT_VERSION, 1);
-    assert_eq!(CONFIG_SCHEMA_VERSION, 3);
+    // 契约 v4：local.device / gpuBackend / gpuLayers（Vulkan 优先，CUDA 可选）。
+    assert_eq!(CONFIG_SCHEMA_VERSION, 4);
 }
 
 #[test]
-fn event_names_are_exactly_the_fourteen_contract_names() {
+fn event_names_are_exactly_the_sixteen_contract_names() {
     let unique: BTreeSet<&str> = EXPECTED_EVENTS.iter().copied().collect();
-    assert_eq!(unique.len(), 14);
+    assert_eq!(unique.len(), 16);
     let expected: BTreeSet<&str> = [
         "overlay:ready",
         "overlay:selection",
@@ -68,6 +72,8 @@ fn event_names_are_exactly_the_fourteen_contract_names() {
         "config:changed",
         "tray:action",
         "engine:status",
+        "translate:progress",
+        "translate:ready",
         "update:status",
     ]
     .into_iter()
@@ -106,7 +112,7 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(keys, expected_keys);
 
     // 关键默认值。
-    assert_eq!(value["schemaVersion"], 3);
+    assert_eq!(value["schemaVersion"], 4);
     assert_eq!(value["app"]["language"], "zh-CN");
     assert_eq!(value["app"]["singleInstance"].as_bool(), Some(true));
     assert_eq!(value["ui"]["theme"], "system");
@@ -121,6 +127,10 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(value["translate"]["targetLang"], "zh-CHS");
     assert_eq!(value["local"]["engine"], "llama.cpp");
     assert_eq!(value["local"]["port"], 39281);
+    // 契约 v4：GPU 计算设备三字段（Vulkan 优先，CUDA 可选）。
+    assert_eq!(value["local"]["device"], "auto");
+    assert_eq!(value["local"]["gpuBackend"], "auto");
+    assert_eq!(value["local"]["gpuLayers"], 99);
     assert_eq!(value["ocr"]["engine"], "rapidocr");
     assert_eq!(value["privacy"]["localOnly"].as_bool(), Some(false));
     assert_eq!(value["history"]["maxEntries"], 1000);
@@ -141,7 +151,7 @@ fn config_partial_json_fills_defaults() {
     // 缺失字段必须用默认值补齐（契约 §16：后端提供默认值）。
     let partial: Config = serde_json::from_str(r#"{"ui":{"theme":"dark"}}"#).unwrap();
     assert_eq!(partial.ui.theme, Theme::Dark);
-    assert_eq!(partial.schema_version, 3);
+    assert_eq!(partial.schema_version, 4);
     assert_eq!(partial.hotkeys.capture, "Ctrl+Q");
     assert_eq!(partial.providers.len(), 1);
 }
@@ -291,6 +301,7 @@ fn task_payloads_match_contract_shape() {
         action: ActionId::Search,
         mode: Mode::Quick,
         engine: "skeleton".to_string(),
+        parent: None,
     };
     let value = serde_json::to_value(&started).unwrap();
     assert_eq!(value["task"], "task-1");
@@ -298,6 +309,7 @@ fn task_payloads_match_contract_shape() {
     assert_eq!(value["action"], "search");
     assert_eq!(value["mode"], "quick");
     assert_eq!(value["engine"], "skeleton");
+    assert!(value["parent"].is_null());
 
     let done = TaskDonePayload {
         task: TaskId::from("task-1"),
@@ -340,11 +352,18 @@ fn selection_and_action_shapes() {
         rect_phys: rect,
         has_text: true,
         preview: "文本".to_string(),
-        boxes: vec![],
+        boxes: vec![OcrBox {
+            text: "文本".to_string(),
+            confidence: 0.9,
+            bbox: rect,
+        }],
     };
     let value = serde_json::to_value(&selection).unwrap();
     assert_eq!(value["rectPhys"]["x"], -10.0);
     assert_eq!(value["hasText"].as_bool(), Some(true));
+    // 契约 v4：OcrBox 的 JSON 键名是 `bbox`（与 TS `OcrBox.bbox`、`CoverBlock.bbox` 一致）。
+    assert_eq!(value["boxes"][0]["bbox"]["width"], 30.0);
+    assert!(value["boxes"][0].get("box").is_none());
 
     let item = ActionItem {
         id: ActionId::Answer,
@@ -498,6 +517,7 @@ fn onboarding_and_model_shapes() {
         sha256: "00".to_string(),
         license: "Apache-2.0".to_string(),
         min_ram_mb: 4096,
+        vram_mb: 1600,
         urls: vec![],
         params: serde_json::json!({"quant":"Q4_K_M"}),
         installed: false,
@@ -507,6 +527,7 @@ fn onboarding_and_model_shapes() {
     let value = serde_json::to_value(&model).unwrap();
     assert_eq!(value["sizeBytes"], 100);
     assert_eq!(value["minRamMB"], 4096);
+    assert_eq!(value["vramMB"], 1600);
     assert_eq!(value["downloadState"], "queued");
 }
 

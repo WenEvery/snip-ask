@@ -5,10 +5,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::config::ConfigView;
+use super::config::{ConfigView, LocalBackend, LocalDevice};
 use super::types::{
-    ActionItem, DownloadState, EngineStatus, FrozenFrameMeta, OcrBox, RectPhys, SessionId,
-    StreamKind, TaskId,
+    ActionItem, CoveredBlock, DownloadState, EngineStatus, FrozenFrameMeta, OcrBox, RectPhys,
+    SessionId, StreamKind, TaskId,
 };
 pub use super::types::{TaskDonePayload, TaskStartedPayload};
 
@@ -41,6 +41,10 @@ pub const EVENT_CONFIG_CHANGED: &str = "config:changed";
 pub const EVENT_TRAY_ACTION: &str = "tray:action";
 /// 本地推理进程状态。
 pub const EVENT_ENGINE_STATUS: &str = "engine:status";
+/// 覆盖翻译进度（契约 v4）。
+pub const EVENT_TRANSLATE_PROGRESS: &str = "translate:progress";
+/// 覆盖翻译完成（契约 v4）。
+pub const EVENT_TRANSLATE_READY: &str = "translate:ready";
 /// 更新检查状态。
 pub const EVENT_UPDATE_STATUS: &str = "update:status";
 
@@ -59,6 +63,8 @@ pub const ALL_EVENTS: &[&str] = &[
     EVENT_CONFIG_CHANGED,
     EVENT_TRAY_ACTION,
     EVENT_ENGINE_STATUS,
+    EVENT_TRANSLATE_PROGRESS,
+    EVENT_TRANSLATE_READY,
     EVENT_UPDATE_STATUS,
 ];
 
@@ -194,12 +200,54 @@ pub struct TrayActionPayload {
     pub id: String,
 }
 
-/// `engine:status` 载荷。
+/// `engine:status` 载荷（契约 v4 扩展：设备 / 后端 / 回退原因 / offload 层数）。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineStatusPayload {
     /// 本地引擎状态。
     pub local: EngineStatus,
+    /// 实际使用的计算设备（`auto`/`cpu`/`gpu` 的**解析结果**仍是这三值之一）。
+    #[serde(default)]
+    pub device: Option<LocalDevice>,
+    /// 实际使用的后端（含 CPU）。
+    #[serde(default)]
+    pub backend: Option<LocalBackend>,
+    /// 回退原因（如「Vulkan 后端未安装，已回退 CPU」）。
+    #[serde(default)]
+    pub fallback_reason: Option<String>,
+    /// 实际 offload 到 GPU 的层数。
+    #[serde(default)]
+    pub offload_layers: Option<u32>,
+    /// 设备名（如 `AMD Radeon RX 7800 XT`）。
+    #[serde(default)]
+    pub device_name: Option<String>,
+    /// 监听端口。
+    #[serde(default)]
+    pub port: Option<u16>,
+}
+
+/// `translate:progress` 载荷（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TranslateProgressPayload {
+    /// 会话 ID。
+    pub session: SessionId,
+    /// 已处理块数。
+    pub done: u32,
+    /// 总块数。
+    pub total: u32,
+}
+
+/// `translate:ready` 载荷（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TranslateReadyPayload {
+    /// 会话 ID。
+    pub session: SessionId,
+    /// 逐块结果。
+    pub blocks: Vec<CoveredBlock>,
+    /// 实际使用的引擎。
+    pub engine: String,
 }
 
 /// 更新状态。
@@ -244,7 +292,7 @@ mod tests {
 
     #[test]
     fn event_names_match_contract() {
-        assert_eq!(ALL_EVENTS.len(), 14);
+        assert_eq!(ALL_EVENTS.len(), 16);
         assert_eq!(EVENT_OVERLAY_READY, "overlay:ready");
         assert_eq!(EVENT_OVERLAY_SELECTION, "overlay:selection");
         assert_eq!(EVENT_OCR_STATUS, "ocr:status");
@@ -258,6 +306,8 @@ mod tests {
         assert_eq!(EVENT_CONFIG_CHANGED, "config:changed");
         assert_eq!(EVENT_TRAY_ACTION, "tray:action");
         assert_eq!(EVENT_ENGINE_STATUS, "engine:status");
+        assert_eq!(EVENT_TRANSLATE_PROGRESS, "translate:progress");
+        assert_eq!(EVENT_TRANSLATE_READY, "translate:ready");
         assert_eq!(EVENT_UPDATE_STATUS, "update:status");
         assert_eq!(IPC_CONTRACT_VERSION, 1);
     }

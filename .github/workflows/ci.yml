@@ -1,11 +1,11 @@
 # 框选 AI · CI（windows-latest）
-# - web： pnpm install → typecheck → build:web → 上传 dist 产物（可选）
+# - web： pnpm install → typecheck → 单测（node --test）→ build:web → 上传 dist 产物（可选）
 # - rust：cargo fmt --check → clippy -D warnings → cargo test
 # - bundle：pnpm tauri build（web + cargo release + NSIS）→ 安装包体积门禁（S-18，≤25 MiB 不含模型）
 #   体积基线 JSON 作为 CI 产物归档，并与 docs/spikes/data/s16_s18/volume_baseline.json 对比记录趋势；
 #   仓库变量 SKIP_BUNDLE_GATE=true 可临时停用该 job（无 NSIS/受限网络的降级路径，风险见
 #   docs/spikes/S-18-安装包体积门禁.md）。
-# 说明：脚手架阶段 CI 首次运行可能因依赖或占位实现未补全而失败，属预期；请以实际输出定位问题。
+# 说明：CI 覆盖 Web 类型/单测/构建、Rust fmt/clippy/test 与安装包体积门禁；失败请以实际输出定位。
 name: CI
 
 on:
@@ -25,7 +25,7 @@ env:
 
 jobs:
   web:
-    name: Web（typecheck + build）
+    name: Web（typecheck + test + build）
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -49,6 +49,9 @@ jobs:
 
       - name: 类型检查
         run: pnpm typecheck
+
+      - name: 前端纯逻辑单测（Node 原生 TS）
+        run: pnpm test
 
       - name: Web 构建
         run: pnpm build:web

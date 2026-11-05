@@ -14,6 +14,9 @@
     "build": "tauri build",
     "build:web": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "test": "node --test src/windows/overlay/translationLayout.test.ts src/windows/result/thread.test.ts",
+    "test:layout": "node --test src/windows/overlay/translationLayout.test.ts",
+    "test:thread": "node --test src/windows/result/thread.test.ts",
     "preview:web": "vite preview --port 1422",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -97,6 +97,20 @@ if (-not $hasPnpm) {
     Invoke-Step -Name "Web 构建" -FilePath "pnpm" -Arguments @("build:web") | Out-Null
 }
 
+# ---------------------------------------------------------------- 前端纯逻辑单测
+# 使用 Node 原生 TypeScript 类型擦除（需 Node ≥ 22.18；开发机/CI 为 Node 24）。
+$nodeTests = @(
+    @{ Name = "覆盖翻译布局单测"; Path = "src/windows/overlay/translationLayout.test.ts" },
+    @{ Name = "连续提问线程单测"; Path = "src/windows/result/thread.test.ts" }
+)
+foreach ($test in $nodeTests) {
+    if (Test-Path -LiteralPath (Join-Path $RepoRoot $test.Path)) {
+        Invoke-Step -Name $test.Name -FilePath "node" -Arguments @("--test", $test.Path) | Out-Null
+    } else {
+        Add-Result -Name $test.Name -Status "SKIP" -Detail ("未找到 {0}" -f $test.Path)
+    }
+}
+
 # ---------------------------------------------------------------- Rust 检查
 
 if (-not $hasCargo) {

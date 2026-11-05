@@ -30,6 +30,7 @@ pub fn entry_to_info(
         sha256: entry.sha256.clone(),
         license: entry.license.clone(),
         min_ram_mb: entry.min_ram_mb,
+        vram_mb: entry.vram_mb,
         urls: entry.urls.clone(),
         params: entry.params.clone(),
         installed,
@@ -127,6 +128,8 @@ mod tests {
         assert!(!infos[1].installed);
         assert_eq!(infos[1].download_state, DownloadState::Queued);
         assert_eq!(installed_count(&infos), 1);
+        // 契约 v4：清单的 vramMB 透传到 ModelInfo（缺省 0，表示不作为 GPU 预算约束）。
+        assert_eq!(infos[0].vram_mb, 0);
     }
 
     #[test]

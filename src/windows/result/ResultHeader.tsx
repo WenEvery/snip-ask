@@ -1,4 +1,4 @@
-/** 结果窗顶栏：拖拽区、动作标题、模式/引擎徽标、AI 生成标注、复制与关闭 */
+/** 结果窗顶栏：拖拽区、动作标题、轮次/模式/引擎徽标、AI 生成标注、复制与关闭 */
 
 import type { Mode } from "@/shared/contract/types";
 
@@ -6,6 +6,8 @@ export interface ResultHeaderProps {
   title: string;
   mode: Mode | null;
   engine: string | null;
+  /** 线程轮数（>1 时显示「第 N 轮」徽标）；0 表示尚未开始。 */
+  round: number;
   browserPreview: boolean;
   canCopy: boolean;
   copied: boolean;
@@ -20,6 +22,7 @@ export function ResultHeader(props: ResultHeaderProps) {
     <header className="result-header" data-tauri-drag-region>
       <div className="result-header-main" data-tauri-drag-region>
         <h1 className="result-title">{props.title}</h1>
+        {props.round > 1 ? <span className="result-chip">第 {props.round} 轮</span> : null}
         {props.mode ? <span className="result-chip">{MODE_LABELS[props.mode]}</span> : null}
         {props.engine ? <span className="result-chip is-mono">{props.engine}</span> : null}
         <span className="result-ai-badge" title="内容由 AI 生成，请自行核实">
@@ -37,7 +40,13 @@ export function ResultHeader(props: ResultHeaderProps) {
         >
           {props.copied ? "已复制" : "复制"}
         </button>
-        <button type="button" className="result-iconbtn" onClick={props.onClose} title="关闭" aria-label="关闭">
+        <button
+          type="button"
+          className="result-iconbtn"
+          onClick={props.onClose}
+          title="关闭"
+          aria-label="关闭"
+        >
           ✕
         </button>
       </div>

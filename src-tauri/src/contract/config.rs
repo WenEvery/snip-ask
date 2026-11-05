@@ -1,10 +1,10 @@
 //! 持久化配置模型（契约 §4）。
 //!
 //! 覆盖内容：
-//! - §4.1 默认配置（Schema v3）与全部子结构；
+//! - §4.1 默认配置（Schema v4）与全部子结构；
 //! - §4.2 枚举字面量与 [`ConfigView`]（providers 换成带密钥状态视图）；
 //! - §4.3 约束校验 [`validate`]；
-//! - 版本迁移 [`migrate`]（1 → 2 → 3，未知字段保留）；
+//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4，未知字段保留）；
 //! - 深合并 [`merge_patch`]；
 //! - 快捷键规范化（`Ctrl+Q` 形式）。
 //!
@@ -19,7 +19,7 @@ use super::errors::{AppError, AppResult};
 use super::types::{ActionId, Mode};
 
 /// 当前配置 Schema 版本。
-pub const CONFIG_SCHEMA_VERSION: u32 = 3;
+pub const CONFIG_SCHEMA_VERSION: u32 = 4;
 
 // ---------------------------------------------------------------------------
 // 枚举（契约 §4.2）
@@ -109,6 +109,114 @@ pub enum LocalEngine {
     /// CTranslate2。
     #[serde(rename = "ct2")]
     Ct2,
+}
+
+/// 计算设备（`local.device`，契约 v4）。
+///
+/// - `Auto`：优先 GPU，不可用（无后端/无设备/显存不足）时自动回退 CPU；
+/// - `Cpu`：强制 CPU（省电/续航/发热策略，或用户显式选择）；
+/// - `Gpu`：要求 GPU，仍不可用时回退 CPU 并在 `engine:status` 标注 `fallbackReason`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LocalDevice {
+    /// 自动（默认）。
+    #[default]
+    Auto,
+    /// 强制 CPU。
+    Cpu,
+    /// 优先 GPU。
+    Gpu,
+}
+
+impl LocalDevice {
+    /// 契约字面量。
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LocalDevice::Auto => "auto",
+            LocalDevice::Cpu => "cpu",
+            LocalDevice::Gpu => "gpu",
+        }
+    }
+
+    /// 是否允许使用 GPU。
+    pub fn allows_gpu(&self) -> bool {
+        !matches!(self, LocalDevice::Cpu)
+    }
+}
+
+/// GPU 后端（`local.gpuBackend`，契约 v4）。
+///
+/// **Vulkan 优先**：`Auto` 的解析顺序是 `Vulkan → CUDA → CPU`。Vulkan 是跨厂商后端
+/// （AMD / Intel / NVIDIA 通用），CUDA 仅作为 NVIDIA 用户的可选组件。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum GpuBackend {
+    /// 自动（Vulkan → CUDA → CPU）。
+    #[default]
+    Auto,
+    /// Vulkan（跨厂商，推荐；AMD/Intel/NVIDIA 均可用）。
+    Vulkan,
+    /// CUDA（NVIDIA 可选组件）。
+    Cuda,
+}
+
+impl GpuBackend {
+    /// 契约字面量。
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GpuBackend::Auto => "auto",
+            GpuBackend::Vulkan => "vulkan",
+            GpuBackend::Cuda => "cuda",
+        }
+    }
+
+    /// 是否为具体后端（非 `Auto`）。
+    pub fn is_concrete(&self) -> bool {
+        !matches!(self, GpuBackend::Auto)
+    }
+}
+
+/// 实际使用的推理后端（含 CPU；配置里的 [`GpuBackend`] 不含 CPU，因为 CPU 是回退结果）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LocalBackend {
+    /// Vulkan（跨厂商）。
+    Vulkan,
+    /// CUDA（NVIDIA）。
+    Cuda,
+    /// CPU。
+    #[default]
+    Cpu,
+}
+
+impl LocalBackend {
+    /// 契约字面量。
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LocalBackend::Vulkan => "vulkan",
+            LocalBackend::Cuda => "cuda",
+            LocalBackend::Cpu => "cpu",
+        }
+    }
+
+    /// 是否为 GPU 后端。
+    pub fn is_gpu(&self) -> bool {
+        !matches!(self, LocalBackend::Cpu)
+    }
+
+    /// 对应的配置枚举（CPU 无对应值，返回 `None`）。
+    pub fn as_gpu_backend(&self) -> Option<GpuBackend> {
+        match self {
+            LocalBackend::Vulkan => Some(GpuBackend::Vulkan),
+            LocalBackend::Cuda => Some(GpuBackend::Cuda),
+            LocalBackend::Cpu => None,
+        }
+    }
+
+    /// 组件目录名（`<backends_dir>/<variant>/`）。
+    pub fn variant(&self) -> &'static str {
+        self.as_str()
+    }
 }
 
 /// 更新通道。
@@ -536,6 +644,12 @@ pub struct LocalPrefs {
     pub port: u16,
     /// 空闲卸载秒数。
     pub idle_unload_sec: u32,
+    /// 计算设备（`auto` / `cpu` / `gpu`，契约 v4）。
+    pub device: LocalDevice,
+    /// GPU 后端（`auto` / `vulkan` / `cuda`，契约 v4；`auto` = Vulkan 优先）。
+    pub gpu_backend: GpuBackend,
+    /// offload 到 GPU 的层数（契约 v4；99 = 全部，0 = 不 offload）。
+    pub gpu_layers: u32,
     /// 未知字段。
     #[serde(flatten)]
     pub extra: serde_json::Map<String, serde_json::Value>,
@@ -548,7 +662,21 @@ impl Default for LocalPrefs {
             model: "hy-mt-1.8b-q4".to_string(),
             port: 39281,
             idle_unload_sec: 600,
+            device: LocalDevice::Auto,
+            gpu_backend: GpuBackend::Auto,
+            gpu_layers: 99,
             extra: serde_json::Map::new(),
+        }
+    }
+}
+
+impl LocalPrefs {
+    /// 实际参与 offload 的层数（`device = cpu` 时恒为 0）。
+    pub fn effective_gpu_layers(&self) -> u32 {
+        if self.device.allows_gpu() {
+            self.gpu_layers
+        } else {
+            0
         }
     }
 }
@@ -1014,6 +1142,23 @@ pub fn validate(config: &Config) -> AppResult<()> {
             "取值范围 [1024,65535]",
         ));
     }
+    if config.local.model.trim().is_empty() {
+        return Err(AppError::invalid_config("local.model", "不能为空"));
+    }
+    // 契约 v4：GPU 层数上限 512（99 = 全部；0 = 不 offload；显存紧张可设 8–24）。
+    if config.local.gpu_layers > 512 {
+        return Err(AppError::invalid_config(
+            "local.gpuLayers",
+            "取值范围 [0,512]",
+        ));
+    }
+    // 契约 v4：idle 卸载上限 30 天（0 = 常驻）。
+    if config.local.idle_unload_sec > 2_592_000 {
+        return Err(AppError::invalid_config(
+            "local.idleUnloadSec",
+            "取值范围 [0,2592000]",
+        ));
+    }
 
     for (menu_name, actions) in [
         ("text", &config.actions.menu.text),
@@ -1212,7 +1357,19 @@ fn migrate_v2_to_v3(value: &mut serde_json::Value) {
     fill_defaults(value, &defaults);
 }
 
-/// 读取任意版本配置 JSON，按 `1 → 2 → 3` 链迁移并校验（未知字段保留）。
+/// v3 → v4：新增 `local.device` / `local.gpuBackend` / `local.gpuLayers`。
+///
+/// 默认值刻意选择「行为不变」的保守值之外的最小破坏：`device=auto` 会在装有 GPU 后端时启用
+/// GPU（研究 §1 的收益点），但**没有下载后端/没有可用设备时会自动回退 CPU**，因此对旧用户
+/// 不会造成启动失败。`gpuBackend=auto` 的解析顺序为 Vulkan → CUDA → CPU。
+fn migrate_v3_to_v4(value: &mut serde_json::Value) {
+    let defaults = serde_json::json!({
+        "local": { "device": "auto", "gpuBackend": "auto", "gpuLayers": 99 }
+    });
+    fill_defaults(value, &defaults);
+}
+
+/// 读取任意版本配置 JSON，按 `1 → 2 → 3 → 4` 链迁移并校验（未知字段保留）。
 pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     let version = value
         .get("schemaVersion")
@@ -1232,7 +1389,12 @@ pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     }
     if current < 3 {
         migrate_v2_to_v3(&mut value);
+        current = 3;
         tracing::debug!(from = 2, to = 3, "配置迁移完成");
+    }
+    if current < 4 {
+        migrate_v3_to_v4(&mut value);
+        tracing::debug!(from = 3, to = 4, "配置迁移完成");
     }
     if let Some(object) = value.as_object_mut() {
         object.insert(
@@ -1254,7 +1416,7 @@ mod tests {
     #[test]
     fn default_matches_contract_json() {
         let expected = serde_json::json!({
-            "schemaVersion": 3,
+            "schemaVersion": 4,
             "app": { "language": "zh-CN", "autostart": false, "singleInstance": true, "startMinimized": true },
             "ui": {
                 "theme": "system",
@@ -1289,7 +1451,10 @@ mod tests {
                 "backend": "cloud", "providerId": "deepseek", "model": "qwen-mt-lite",
                 "targetLang": "zh-CHS", "glossary": []
             },
-            "local": { "engine": "llama.cpp", "model": "hy-mt-1.8b-q4", "port": 39281, "idleUnloadSec": 600 },
+            "local": {
+                "engine": "llama.cpp", "model": "hy-mt-1.8b-q4", "port": 39281, "idleUnloadSec": 600,
+                "device": "auto", "gpuBackend": "auto", "gpuLayers": 99
+            },
             "ocr": { "engine": "rapidocr", "detMaxEdge": 3200, "textThreshold": 0.6, "preserveBoxes": true },
             "privacy": { "allowTextUpload": true, "allowImageUpload": true, "localOnly": false },
             "history": { "enabled": true, "maxEntries": 1000, "retentionDays": 90 },
@@ -1417,7 +1582,7 @@ mod tests {
             "unknownGroup": { "hello": "world" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 3);
+        assert_eq!(config.schema_version, 4);
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.result_window.width, 460.0);
         assert!(config.ui.result_window.pin);
@@ -1427,8 +1592,64 @@ mod tests {
         assert_eq!(config.providers[0].temperature, 0.2);
         assert_eq!(config.modes.deep_budget.max_tokens, 1500);
         assert_eq!(config.local.port, 39281);
+        assert_eq!(config.local.device, LocalDevice::Auto);
+        assert_eq!(config.local.gpu_backend, GpuBackend::Auto);
+        assert_eq!(config.local.gpu_layers, 99);
         assert!(config.advanced.skeleton_mode);
         assert!(config.extra.contains_key("unknownGroup"));
+    }
+
+    #[test]
+    fn migrate_from_v3_adds_gpu_fields_and_keeps_user_values() {
+        let raw = serde_json::json!({
+            "schemaVersion": 3,
+            "local": { "engine": "llama.cpp", "model": "qwen2.5-0.5b-instruct-q4", "port": 39285, "idleUnloadSec": 300 },
+            "translate": { "backend": "local", "model": "qwen-mt-lite", "targetLang": "en" }
+        });
+        let config = migrate(raw).unwrap();
+        assert_eq!(config.schema_version, 4);
+        // 用户已有值保持不变
+        assert_eq!(config.local.model, "qwen2.5-0.5b-instruct-q4");
+        assert_eq!(config.local.port, 39285);
+        assert_eq!(config.local.idle_unload_sec, 300);
+        assert_eq!(config.translate.backend, TranslateBackend::Local);
+        // v4 新字段取默认值
+        assert_eq!(config.local.device, LocalDevice::Auto);
+        assert_eq!(config.local.gpu_backend, GpuBackend::Auto);
+        assert_eq!(config.local.gpu_layers, 99);
+    }
+
+    #[test]
+    fn local_device_and_backend_serialize_as_contract_literals() {
+        let mut config = Config::default();
+        config.local.device = LocalDevice::Gpu;
+        config.local.gpu_backend = GpuBackend::Vulkan;
+        let value = serde_json::to_value(&config).unwrap();
+        assert_eq!(value["local"]["device"], "gpu");
+        assert_eq!(value["local"]["gpuBackend"], "vulkan");
+        assert_eq!(value["local"]["gpuLayers"], 99);
+        // 反序列化：非法枚举值必须被拒绝（由 serde 生成可操作错误）。
+        let mut json = serde_json::to_value(&config).unwrap();
+        json["local"]["gpuBackend"] = serde_json::json!("rocm");
+        assert!(serde_json::from_value::<Config>(json).is_err());
+        // cpu 设备时 effective_gpu_layers 恒为 0
+        config.local.device = LocalDevice::Cpu;
+        assert_eq!(config.local.effective_gpu_layers(), 0);
+        assert!(LocalDevice::Auto.allows_gpu());
+        assert_eq!(GpuBackend::Auto.as_str(), "auto");
+    }
+
+    #[test]
+    fn validate_rejects_gpu_layers_out_of_range() {
+        let mut config = Config::default();
+        config.local.gpu_layers = 513;
+        assert_eq!(validate(&config).unwrap_err().code, "SA-5001");
+        config.local.gpu_layers = 0;
+        validate(&config).expect("0 合法（CPU offload）");
+        config.local.gpu_layers = 24;
+        validate(&config).expect("24 合法（显存降档）");
+        config.local.model = "  ".to_string();
+        assert_eq!(validate(&config).unwrap_err().code, "SA-5001");
     }
 
     #[test]

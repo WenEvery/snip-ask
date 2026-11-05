@@ -12,7 +12,9 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::config::{Cap, FontSize, Language, ResultPosition, Theme, TranslateBackend};
+use super::config::{
+    Cap, FontSize, GpuBackend, Language, LocalBackend, ResultPosition, Theme, TranslateBackend,
+};
 use super::errors::AppError;
 
 /// 会话 ID（UUID v4 小写字符串）。
@@ -226,8 +228,7 @@ pub struct OcrBox {
     pub text: String,
     /// 置信度 0..=1。
     pub confidence: f64,
-    /// 文本行物理矩形（JSON 键名固定为 `box`）。
-    #[serde(rename = "box")]
+    /// 文本行物理矩形（契约 v4 起 JSON 键名为 `bbox`，与 `CoverBlock.bbox` 一致）。
     pub bbox: RectPhys,
 }
 
@@ -287,6 +288,57 @@ pub struct RunActionOptions {
     pub text: Option<String>,
     /// 目标语言覆盖（翻译用）。
     pub target_lang: Option<String>,
+    /// 覆盖式翻译（研究 §2：翻译覆盖原句）；`translate_cover` 命令使用。
+    pub cover: Option<bool>,
+}
+
+/// 覆盖翻译：前端把 OCR 行合并后的段块发给后端（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverBlock {
+    /// 前端生成的稳定 id（`"b0"`、`"b1"`…）。
+    pub id: String,
+    /// 段块原文（多行以 `\n` 连接）。
+    pub text: String,
+    /// 段块外接矩形（物理像素）。
+    pub bbox: RectPhys,
+    /// OCR 置信度（缺省 0）。
+    #[serde(default)]
+    pub confidence: f64,
+}
+
+/// 单块覆盖结果（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoveredBlock {
+    /// 对应 [`CoverBlock::id`]。
+    pub id: String,
+    /// 原文。
+    pub source: String,
+    /// 译文；失败时与原文相同。
+    pub translation: String,
+    /// 该块翻译是否失败（失败时前端保留原文并标红）。
+    pub failed: bool,
+    /// 实际使用的引擎（`skeleton` / 供应商 id / `local`）。
+    pub engine: String,
+}
+
+/// 覆盖翻译整体结果（`translate_cover` 返回 / `translate:ready` 载荷）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverResult {
+    /// 会话 ID。
+    pub session: SessionId,
+    /// 逐块结果（顺序与请求一致）。
+    pub blocks: Vec<CoveredBlock>,
+    /// 实际使用的引擎。
+    pub engine: String,
+    /// 端到端耗时（毫秒）。
+    pub latency_ms: u64,
+    /// 请求块总数。
+    pub total_blocks: u32,
+    /// 成功翻译块数。
+    pub translated_blocks: u32,
 }
 
 /// 流式增量类型。
@@ -369,6 +421,9 @@ pub struct TaskStartedPayload {
     pub mode: Mode,
     /// 实际使用的引擎。
     pub engine: EngineId,
+    /// 父任务：追问/重答时指向上一轮任务；首轮为 `null`（契约 v4）。
+    #[serde(default)]
+    pub parent: Option<TaskId>,
 }
 
 /// `task:done` 事件载荷。
@@ -476,6 +531,9 @@ pub struct ModelInfo {
     /// 建议内存（MB）。
     #[serde(rename = "minRamMB")]
     pub min_ram_mb: u32,
+    /// 推理时显存预算（MB，契约 v4；用于 GPU 是否放得下的判定）。
+    #[serde(rename = "vramMB")]
+    pub vram_mb: u32,
     /// 下载地址（主源 + 镜像）。
     pub urls: Vec<String>,
     /// 扩展参数（量化、上下文等）。
@@ -519,6 +577,9 @@ pub struct ModelManifestEntry {
     /// 建议内存（MB）。
     #[serde(rename = "minRamMB")]
     pub min_ram_mb: u32,
+    /// 推理时显存预算（MB，契约 v4）。
+    #[serde(rename = "vramMB")]
+    pub vram_mb: u32,
     /// 下载地址。
     pub urls: Vec<String>,
     /// 扩展参数。
@@ -554,6 +615,111 @@ pub enum EngineStatus {
     Ready,
     /// 失败。
     Failed,
+}
+
+/// 本地推理后端组件（`backends_list` 元素，契约 v4）。
+///
+/// 主安装包只带 CPU 后端；**Vulkan 后端作为默认 GPU 组件按需下载**（跨 AMD/Intel/NVIDIA），
+/// CUDA 后端作为 NVIDIA 用户的可选组件按需下载。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackendInfo {
+    /// 组件 id：`"vulkan"` / `"cuda"` / `"cpu"`。
+    pub id: String,
+    /// 展示名。
+    pub label: String,
+    /// 对应后端枚举。
+    pub backend: LocalBackend,
+    /// llama.cpp 版本（如 `2.28.2`）。
+    pub version: String,
+    /// 压缩包字节数。
+    pub size_bytes: u64,
+    /// SHA256（校验下载完整性）。
+    pub sha256: String,
+    /// 许可标识（如 `MIT` / `NVIDIA CUDA EULA`）。
+    pub license: String,
+    /// 下载地址（主源 + 镜像）。
+    pub urls: Vec<String>,
+    /// 需要的显卡厂商（`"nvidia"` 表示仅 NVIDIA 可用；Vulkan/CPU 为 `null`）。
+    pub requires_vendor: Option<String>,
+    /// 是否已安装。
+    pub installed: bool,
+    /// 已安装占用字节数。
+    pub installed_bytes: u64,
+    /// 下载状态。
+    pub download_state: DownloadState,
+}
+
+/// GPU 设备（来自 `llama-server --list-devices` 或 DXGI/WMI 兜底，契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuDevice {
+    /// 后端内设备序号（`Vulkan0` → 0）。
+    pub index: u32,
+    /// 设备名（如 `AMD Radeon RX 7800 XT`）。
+    pub name: String,
+    /// 该设备所属后端（Vulkan / CUDA）。
+    pub backend: LocalBackend,
+    /// 显存总量（MiB）。
+    pub vram_total_mb: u64,
+    /// 当前空闲显存（MiB）；未知为 0。
+    pub vram_free_mb: u64,
+    /// 厂商：`nvidia` / `amd` / `intel` / `unknown`。
+    pub vendor: Option<String>,
+    /// 是否虚拟/软件适配器（`Microsoft Basic Render Driver` 等，不计入可用）。
+    pub virtual_adapter: bool,
+}
+
+/// 单个 GPU 后端的可用性（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuBackendStatus {
+    /// 后端（含 CPU 项）。
+    pub backend: LocalBackend,
+    /// 组件（`llama-server.exe`）是否已就位。
+    pub installed: bool,
+    /// `installed` 且 `--list-devices` 能列出非虚拟设备。
+    pub available: bool,
+    /// 可执行文件路径。
+    pub exe_path: Option<String>,
+    /// 版本（`--version` 首行解析）。
+    pub version: Option<String>,
+    /// 不可用原因（面向用户的中文短句）。
+    pub reason: Option<String>,
+}
+
+/// 显存预算结论（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuBudget {
+    /// 需求显存（`model.vramMB + 512`）。
+    pub required_mb: u64,
+    /// 目标设备当前空闲显存。
+    pub available_mb: u64,
+    /// 是否放得下。
+    pub fits: bool,
+}
+
+/// `local_gpu_probe` 返回（契约 v4）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuProbeResult {
+    /// 探测时间（RFC3339）。
+    pub checked_at: String,
+    /// 是否命中 60s 缓存。
+    pub cached: bool,
+    /// 是否存在可用 GPU 后端。
+    pub useable: bool,
+    /// 推荐后端（Vulkan 优先）。
+    pub recommended: Option<GpuBackend>,
+    /// 发现的 GPU 设备。
+    pub devices: Vec<GpuDevice>,
+    /// 三个后端的状态（vulkan / cuda / cpu，顺序固定）。
+    pub backends: Vec<GpuBackendStatus>,
+    /// 显存预算（有可用设备 + 已知模型时给出）。
+    pub budget: Option<GpuBudget>,
+    /// 整体不可用原因。
+    pub issue: Option<String>,
 }
 
 /// `app_stats` 返回（契约 §6 补充结构）。

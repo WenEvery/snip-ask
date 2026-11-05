@@ -57,6 +57,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       sha256: "0".repeat(64),
       license: "Tencent Hunyuan Community License",
       minRamMB: 4096,
+      vramMB: 1600,
       urls: [
         "https://huggingface.co/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/main/hy-mt-1.5-1.8b-q4_k_m.gguf",
         "https://modelscope.cn/models/Tencent-Hunyuan/HY-MT1.5-1.8B-GGUF/resolve/master/hy-mt-1.5-1.8b-q4_k_m.gguf",
@@ -74,6 +75,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       sha256: "0".repeat(64),
       license: "Apache-2.0",
       minRamMB: 8192,
+      vramMB: 3200,
       urls: [
         "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/qwen3-4b-q4_k_m.gguf",
         "https://modelscope.cn/models/Qwen/Qwen3-4B-GGUF/resolve/master/qwen3-4b-q4_k_m.gguf",
@@ -91,6 +93,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       sha256: "0".repeat(64),
       license: "CC-BY-4.0",
       minRamMB: 2048,
+      vramMB: 0,
       urls: [
         "https://huggingface.co/Helsinki-NLP/opus-mt-zh-en/resolve/main/ct2-int8.zip",
         "https://modelscope.cn/models/Helsinki-NLP/opus-mt-zh-en/resolve/master/ct2-int8.zip",

@@ -1,8 +1,13 @@
 /**
- * 结果窗：订阅 task:started / task:delta / task:done / task:error，
- * 增量渲染流式文本，展示用量与来源，支持复制 / 追问 / 重答 / 取消 / 关闭。
+ * 结果窗：线程式多轮视图（契约 v4 / 研究 §3.6）。
  *
- * 浏览器预览（无 Tauri）：600ms 内未收到 task:started 时自动发起一次
+ * - 订阅 `task:started` / `task:delta` / `task:done` / `task:error`，把事件归约为 `turns[]`
+ *   （`task:started.parent == null` → 重置线程；非 null → 追加一轮，旧回答保留）；
+ * - 仅最后一轮流式渲染；历史轮次折叠为摘要（可展开）；错误内联在对应轮次；
+ * - 支持追问 / 重答（清空线程后重跑）/ 取消 / 清空线程 / 关闭；
+ * - 流式期间禁用追问输入（研究 §3.10-7）。
+ *
+ * 浏览器预览（无 Tauri）：600ms 内未收到 `task:started` 时自动发起一次
  * `menu_execute` 走 mock 后端，便于单独预览 `/?window=result`。
  */
 
@@ -12,36 +17,28 @@ import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
 import type {
   ActionId,
-  Mode,
   SelectionResult,
   TaskDeltaPayload,
   TaskDonePayload,
   TaskErrorPayload,
   TaskStartedPayload,
 } from "@/shared/contract/types";
-import { StreamView } from "./StreamView";
-import { SourceList } from "./SourceList";
+import { ThreadView } from "./ThreadView";
 import { ResultHeader } from "./ResultHeader";
 import { ResultFooter } from "./ResultFooter";
+import { fallbackText, fromTaskError, normalizeError, type ResultError } from "./helpers";
 import {
-  fallbackText,
-  formatCost,
-  formatLatency,
-  fromTaskError,
-  normalizeError,
-  type ResultError,
-} from "./helpers";
+  applyDelta,
+  applyDone,
+  applyError,
+  applyStarted,
+  latestTurn,
+  markCancelled,
+  threadIsStreaming,
+  threadPlainText,
+  type ResultTurn,
+} from "./thread";
 import "./result.css";
-
-type Phase = "empty" | "streaming" | "done" | "error" | "cancelled";
-
-interface TaskContext {
-  task: string;
-  session: string;
-  action: ActionId;
-  mode: Mode;
-  engine: string;
-}
 
 const ACTION_TITLES: Record<ActionId, string> = {
   search: "文本搜索",
@@ -52,61 +49,45 @@ const ACTION_TITLES: Record<ActionId, string> = {
 };
 
 export default function ResultWindow() {
-  const [ctx, setCtx] = useState<TaskContext | null>(null);
-  const [phase, setPhase] = useState<Phase>("empty");
-  const [text, setText] = useState("");
-  const [reasoning, setReasoning] = useState("");
-  const [meta, setMeta] = useState<string[]>([]);
-  const [done, setDone] = useState<TaskDonePayload | null>(null);
-  const [error, setError] = useState<ResultError | null>(null);
+  /** 线程：一轮问答一个元素（最后一条才是活动气泡）。 */
+  const [turns, setTurns] = useState<ResultTurn[]>([]);
   const [followup, setFollowup] = useState("");
   const [sending, setSending] = useState(false);
+  /** 追问提交失败（invoke 未产生任务时）内联展示；保留输入便于重试。 */
+  const [submitError, setSubmitError] = useState<ResultError | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const taskIdRef = useRef<string | null>(null);
+  const activeTaskRef = useRef<string | null>(null);
+  /** 待挂到下一轮 user 气泡上的追问文本（`task:started` 到达时消费）。 */
+  const pendingQuestionRef = useRef<string | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const followRef = useRef(true);
 
-  // ── 任务事件 ────────────────────────────────────────────────
+  const latest = latestTurn(turns);
+  const first = turns.length > 0 ? turns[0] : null;
+  const streaming = threadIsStreaming(turns);
+  const busy = streaming || sending;
+
+  // ── 任务事件 → 线程归约 ────────────────────────────────────
   useIpcEvent<TaskStartedPayload>(EVENTS.taskStarted, (payload) => {
-    taskIdRef.current = payload.task;
+    activeTaskRef.current = payload.task;
     followRef.current = true;
-    setCtx({
-      task: payload.task,
-      session: payload.session,
-      action: payload.action,
-      mode: payload.mode,
-      engine: payload.engine,
-    });
-    setText("");
-    setReasoning("");
-    setMeta([]);
-    setDone(null);
-    setError(null);
-    setPhase("streaming");
+    setSubmitError(null);
+    const question = pendingQuestionRef.current ?? "";
+    pendingQuestionRef.current = null;
+    setTurns((current) => applyStarted(current, payload, question));
   });
 
   useIpcEvent<TaskDeltaPayload>(EVENTS.taskDelta, (payload) => {
-    if (payload.task !== taskIdRef.current) return;
-    if (payload.kind === "text") {
-      setText((current) => current + payload.chunk);
-    } else if (payload.kind === "reasoning") {
-      setReasoning((current) => current + payload.chunk);
-    } else {
-      setMeta((current) => [...current, payload.chunk]);
-    }
+    setTurns((current) => applyDelta(current, payload));
   });
 
   useIpcEvent<TaskDonePayload>(EVENTS.taskDone, (payload) => {
-    if (payload.task !== taskIdRef.current) return;
-    setDone(payload);
-    setPhase("done");
+    setTurns((current) => applyDone(current, payload));
   });
 
   useIpcEvent<TaskErrorPayload>(EVENTS.taskError, (payload) => {
-    if (payload.task !== taskIdRef.current) return;
-    setError(fromTaskError(payload));
-    setPhase("error");
+    setTurns((current) => applyError(current, payload, fromTaskError(payload)));
   });
 
   // 浏览器预览用的完整 mock 演示链（真实环境不调用）：
@@ -129,10 +110,9 @@ export default function ResultWindow() {
   useEffect(() => {
     if (isTauri()) return;
     const timer = window.setTimeout(() => {
-      if (taskIdRef.current) return;
+      if (activeTaskRef.current) return;
       void startMockTask().catch((err) => {
-        setError(normalizeError(err));
-        setPhase("error");
+        setSubmitError(normalizeError(err));
       });
     }, 600);
     return () => window.clearTimeout(timer);
@@ -143,7 +123,7 @@ export default function ResultWindow() {
     const element = bodyRef.current;
     if (!element || !followRef.current) return;
     element.scrollTop = element.scrollHeight;
-  }, [text, reasoning, meta, phase]);
+  }, [turns, submitError]);
 
   const onBodyScroll = () => {
     const element = bodyRef.current;
@@ -154,29 +134,30 @@ export default function ResultWindow() {
 
   // ── 操作 ────────────────────────────────────────────────────
   const copyText = useCallback(async () => {
-    if (!text) return;
+    const content = threadPlainText(turns);
+    if (!content) return;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(content);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      const ok = fallbackCopy(text);
+      const ok = fallbackCopy(content);
       setCopied(ok);
       if (!ok) {
-        setError({
+        setSubmitError({
           code: "SA-0000",
           message: "复制失败：剪贴板不可用，请手动选择文本复制。",
           detail: null,
           retryable: false,
           fallback: [],
         });
-        setPhase("error");
       }
     }
-  }, [text]);
+  }, [turns]);
 
-  const close = async () => {
-    const session = ctx?.session;
+  /** 关闭 / 清空线程：结束当前对话（后端 `result_close` 同时清空会话与内存线程）。 */
+  const endConversation = useCallback(async () => {
+    const session = latest?.session;
     if (session) {
       try {
         await ipc.invoke<void>(COMMANDS.resultClose, { session });
@@ -184,21 +165,27 @@ export default function ResultWindow() {
         /* 关闭失败也要隐藏窗口 */
       }
     }
+    pendingQuestionRef.current = null;
+    activeTaskRef.current = null;
+    setTurns([]);
+    setFollowup("");
+    setSubmitError(null);
     try {
       await ipc.invoke<void>(COMMANDS.windowHide, { window: "result" });
     } catch {
       /* mock 环境为 no-op */
     }
-  };
+  }, [latest]);
 
   const rerun = async () => {
-    if (!ctx) return;
-    setError(null);
+    if (!first || busy) return;
+    setSubmitError(null);
     try {
+      // 重答：parent = null → 前端重置线程、后端清空轮次后重跑。
       await ipc.invoke<string>(COMMANDS.menuExecute, {
-        session: ctx.session,
-        action: ctx.action,
-        mode: ctx.mode,
+        session: first.session,
+        action: first.action,
+        mode: first.mode,
       });
     } catch (err) {
       const parsed = normalizeError(err);
@@ -208,116 +195,108 @@ export default function ResultWindow() {
           await startMockTask();
           return;
         } catch (mockErr) {
-          setError(normalizeError(mockErr));
+          setSubmitError(normalizeError(mockErr));
         }
       } else {
-        setError(parsed);
+        setSubmitError(parsed);
       }
-      setPhase("error");
     }
   };
 
   const cancel = async () => {
-    if (!ctx) return;
+    if (!latest) return;
     try {
-      await ipc.invoke<void>(COMMANDS.taskCancel, { task: ctx.task });
-      setPhase("cancelled");
+      await ipc.invoke<void>(COMMANDS.taskCancel, { task: latest.task });
+      // 后端取消后不再推送该任务事件，前端本地把该轮定稿为「已取消」。
+      setTurns((current) => markCancelled(current, latest.task));
     } catch (err) {
-      setError(normalizeError(err));
-      setPhase("error");
+      setSubmitError(normalizeError(err));
     }
   };
 
   const submitFollowup = async () => {
-    if (!ctx || sending) return;
+    if (!latest || busy) return;
     const question = followup.trim();
     if (!question) return;
     setSending(true);
+    setSubmitError(null);
+    pendingQuestionRef.current = question;
     try {
-      await ipc.invoke<string>(COMMANDS.taskFollowup, { task: ctx.task, text: question });
+      // 最近一轮任务 id 仅作校验；后端以当前会话 + 最近任务定位（F1 修复）。
+      await ipc.invoke<string>(COMMANDS.taskFollowup, {
+        task: latest.task,
+        text: question,
+      });
       setFollowup("");
     } catch (err) {
-      setError(normalizeError(err));
-      setPhase("error");
+      pendingQuestionRef.current = null;
+      // 保留输入内容，错误内联提示，便于直接重试（研究 §3.6）。
+      setSubmitError(normalizeError(err));
     } finally {
       setSending(false);
     }
   };
 
-  const title = ctx ? ACTION_TITLES[ctx.action] : "结果";
+  const title = first ? ACTION_TITLES[first.action] : "结果";
 
   return (
     <div className="result-root">
       <div className="result-card">
         <ResultHeader
           title={title}
-          mode={ctx ? ctx.mode : null}
-          engine={ctx ? ctx.engine : null}
+          mode={first ? first.mode : null}
+          engine={latest ? latest.engine : null}
+          round={turns.length}
           browserPreview={!isTauri()}
-          canCopy={Boolean(text)}
+          canCopy={Boolean(threadPlainText(turns))}
           copied={copied}
           onCopy={() => void copyText()}
-          onClose={() => void close()}
+          onClose={() => void endConversation()}
         />
 
         <div className="result-body" ref={bodyRef} onScroll={onBodyScroll}>
-          {phase === "empty" ? (
+          {turns.length === 0 ? (
             <div className="result-empty">
               <p className="result-empty-title">等待框选结果…</p>
               <p className="result-hint">框选屏幕区域并选择动作后，结果会流式显示在这里。</p>
             </div>
-          ) : null}
+          ) : (
+            <ThreadView
+              turns={turns}
+              onSourceError={(err) => setSubmitError(normalizeError(err))}
+            />
+          )}
 
-          {ctx ? (
-            <StreamView text={text} reasoning={reasoning} meta={meta} streaming={phase === "streaming"} />
-          ) : null}
-
-          {phase === "cancelled" ? <p className="result-hint">已取消本次生成。</p> : null}
-
-          {phase === "error" && error ? (
+          {submitError ? (
             <div className="result-error" role="alert">
               <div className="result-error-head">
-                <strong className="result-error-message">{error.message}</strong>
-                <code className="result-error-code">{error.code}</code>
-                {error.retryable ? <span className="result-hint">可重试</span> : null}
+                <strong className="result-error-message">{submitError.message}</strong>
+                <code className="result-error-code">{submitError.code}</code>
+                {submitError.retryable ? <span className="result-hint">可重试</span> : null}
               </div>
-              {error.detail ? <pre className="result-error-detail">{error.detail}</pre> : null}
-              {error.fallback.length > 0 ? (
-                <p className="result-error-fallback">可尝试：{fallbackText(error.fallback)}</p>
+              {submitError.detail ? (
+                <pre className="result-error-detail">{submitError.detail}</pre>
+              ) : null}
+              {submitError.fallback.length > 0 ? (
+                <p className="result-error-fallback">
+                  可尝试：{fallbackText(submitError.fallback)}
+                </p>
               ) : null}
             </div>
           ) : null}
-
-          {done ? (
-            <div className="result-usage">
-              <span>延迟 {formatLatency(done.latencyMs)}</span>
-              <span>输入 {done.usage.inputTokens} tokens</span>
-              <span>输出 {done.usage.outputTokens} tokens</span>
-              <span>费用 {formatCost(done.usage.costEstimate)}</span>
-              <span>引擎 {done.engine}</span>
-            </div>
-          ) : null}
-
-          {done && done.sources.length > 0 ? (
-            <SourceList
-              sources={done.sources}
-              onError={(err) => {
-                setError(normalizeError(err));
-                setPhase("error");
-              }}
-            />
-          ) : null}
         </div>
 
-        {ctx ? (
+        {turns.length > 0 ? (
           <ResultFooter
-            streaming={phase === "streaming"}
+            streaming={streaming}
+            disabled={busy}
             followup={followup}
             sending={sending}
             onFollowupChange={setFollowup}
             onSubmit={() => void submitFollowup()}
             onRerun={() => void rerun()}
             onCancel={() => void cancel()}
+            onClearThread={() => void endConversation()}
           />
         ) : null}
       </div>

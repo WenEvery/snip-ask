@@ -9,12 +9,14 @@
 //! - `hotkey`：快捷键解析、规范化、转 Tauri 插件类型；
 //! - `autostart`：开机自启（插件封装，骨架模式仅改内存状态）；
 //! - `credential`：凭据存储 trait + 内存实现（真实 Credential Manager 为 TODO(real)）；
-//! - `process`：本地推理进程管理 trait + 停用实现。
+//! - `process`：本地推理进程管理 trait + 停用实现；
+//! - `gpu`：GPU 探测（Vulkan 优先；`--list-devices` 判定 + 显存预算 + 60s 缓存）。
 
 pub mod autostart;
 pub mod capture;
 pub mod coords;
 pub mod credential;
+pub mod gpu;
 pub mod hotkey;
 pub mod paths;
 pub mod process;

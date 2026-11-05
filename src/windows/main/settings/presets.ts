@@ -1,6 +1,16 @@
 /** 设置页与引导共用的枚举/预设（本地常量，不改契约） */
 
-import type { ActionId, Cap, Hotkeys, LocalEngine } from "@/shared/contract/types";
+import type {
+  ActionId,
+  Cap,
+  DownloadState,
+  GpuBackend,
+  GpuProbeResult,
+  Hotkeys,
+  LocalBackend,
+  LocalDevice,
+  LocalEngine,
+} from "@/shared/contract/types";
 
 export const ACTION_LABELS: Record<ActionId, string> = {
   search: "文本搜索",
@@ -52,6 +62,116 @@ export const LOCAL_ENGINES: { value: LocalEngine; label: string }[] = [
   { value: "ollama", label: "Ollama（复用本机服务）" },
   { value: "ct2", label: "CTranslate2（低配兜底）" },
 ];
+
+/* ─────────────── 本地 GPU 推理（契约 v4）：计算设备 / 后端组件 ─────────────── */
+
+/** 计算设备选项（`local.device`）。 */
+export const DEVICE_OPTIONS: { value: LocalDevice; label: string; description?: string }[] = [
+  { value: "auto", label: "自动（推荐）", description: "优先 GPU，不可用时自动回退 CPU" },
+  { value: "cpu", label: "CPU", description: "省电、低发热；速度较慢" },
+  { value: "gpu", label: "GPU", description: "显卡加速；显存不足/无可用后端时仍回退 CPU" },
+];
+
+/**
+ * GPU 后端选项（`local.gpuBackend`）。
+ * `auto` 的解析顺序是 Vulkan → CUDA → CPU；**Vulkan 支持 AMD / Intel / NVIDIA**，
+ * CUDA 仅 NVIDIA 可选组件。
+ */
+export const GPU_BACKEND_OPTIONS: {
+  value: GpuBackend;
+  label: string;
+  description?: string;
+}[] = [
+  {
+    value: "auto",
+    label: "自动（Vulkan 优先）",
+    description: "Vulkan → CUDA → CPU",
+  },
+  {
+    value: "vulkan",
+    label: "Vulkan（AMD / Intel / NVIDIA 通用，推荐）",
+    description: "跨厂商，无需额外运行时 DLL",
+  },
+  {
+    value: "cuda",
+    label: "CUDA（NVIDIA 可选组件）",
+    description: "仅 NVIDIA 显卡；需下载 CUDA 组件",
+  },
+];
+
+/** 后端组件下载状态文案（复用 `download:state`）。 */
+export const BACKEND_STATE_LABELS: Record<DownloadState, string> = {
+  queued: "排队中",
+  downloading: "下载中",
+  verifying: "校验中",
+  installed: "已安装",
+  failed: "下载失败",
+  cancelled: "已取消",
+};
+
+/** 实际后端的中文名（含 CPU 回退）。 */
+export const LOCAL_BACKEND_LABELS: Record<LocalBackend, string> = {
+  vulkan: "Vulkan",
+  cuda: "CUDA",
+  cpu: "CPU",
+};
+
+/** 计算设备的中文名。 */
+export const DEVICE_LABELS: Record<LocalDevice, string> = {
+  auto: "自动（推荐）",
+  cpu: "CPU",
+  gpu: "GPU",
+};
+
+/** GPU 后端配置值的中文名。 */
+export const GPU_BACKEND_LABELS: Record<GpuBackend, string> = {
+  auto: "自动（Vulkan 优先）",
+  cuda: "CUDA",
+  vulkan: "Vulkan",
+};
+
+/** MiB → 人类可读（≥1024 MiB 用 GB，保留 1 位小数）。 */
+export function formatMiB(mib: number): string {
+  if (!Number.isFinite(mib) || mib <= 0) return "0 MB";
+  if (mib >= 1024) return `${(mib / 1024).toFixed(1)} GB`;
+  return `${Math.round(mib)} MB`;
+}
+
+/**
+ * GPU 探测结果 → 设置页「设备状态」文案。
+ *
+ * 可用时形如「已检测：AMD Radeon RX 7800 XT（显存 16.0 GB，空闲 14.8 GB，Vulkan 可用，推荐 Vulkan）」；
+ * 不可用时直接使用后端给出的可操作原因（如「未检测到可用 GPU 后端，将使用 CPU」）。
+ */
+export function describeGpuProbe(probe: GpuProbeResult): string {
+  const recommended = probe.recommended;
+  if (!probe.useable || !recommended) {
+    return probe.issue ?? "未检测到可用 GPU，将使用 CPU";
+  }
+  const backend: LocalBackend = recommended === "cuda" ? "cuda" : "vulkan";
+  const device = probe.devices.find((item) => item.backend === backend) ?? probe.devices[0];
+  if (!device) {
+    return probe.issue ?? "未检测到可用 GPU，将使用 CPU";
+  }
+  const vendor =
+    device.vendor === "amd"
+      ? "AMD"
+      : device.vendor === "intel"
+        ? "Intel"
+        : device.vendor === "nvidia"
+          ? "NVIDIA"
+          : "";
+  const name =
+    vendor && !device.name.toLowerCase().includes(vendor.toLowerCase())
+      ? `${vendor} ${device.name}`
+      : device.name;
+  const budget = probe.budget
+    ? `；当前模型需 ${formatMiB(probe.budget.requiredMb)} 显存，${probe.budget.fits ? "显存充足" : "显存可能不足"}`
+    : "";
+  return `已检测：${name}（显存 ${formatMiB(device.vramTotalMb)}，空闲 ${formatMiB(
+    device.vramFreeMb,
+  )}，${LOCAL_BACKEND_LABELS[backend]} 可用，推荐 ${LOCAL_BACKEND_LABELS[backend]}${budget}）`;
+}
 
 export const UPDATE_CHANNELS: { value: string; label: string }[] = [
   { value: "stable", label: "稳定通道（推荐）" },

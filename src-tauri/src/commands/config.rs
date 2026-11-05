@@ -109,7 +109,7 @@ pub async fn config_reset(
 /// 配置热生效副作用（契约 §4.4）：
 /// - `hotkeys.*` / `app.autostart` → 重新注册热键；
 /// - `history.enabled` → 历史仓储开关；
-/// - `local.*` / `translate.backend` → 重启本地引擎（TODO(real)）；
+/// - `local.*` / `translate.backend` → 停止本地引擎（下次按新配置拉起；契约 v4）；
 /// - `advanced.proxy` → 需重启应用（仅标注）。
 pub(crate) fn apply_config_side_effects(app: &AppHandle, state: &AppState, changed: &[String]) {
     if changed.iter().any(|key| key.starts_with("hotkeys.")) {
@@ -126,7 +126,19 @@ pub(crate) fn apply_config_side_effects(app: &AppHandle, state: &AppState, chang
         .iter()
         .any(|key| key.starts_with("local.") || key == "translate.backend")
     {
-        tracing::info!("本地引擎配置变化：TODO(real) 重启推理进程");
+        // 契约 v4：local.* / translate.backend 变更 → 停止本地引擎（下次使用时按新配置自动拉起）。
+        // 同时作废 GPU 探测缓存（模型显存预算/vramMB 可能变化）。
+        state.gpu_probe.invalidate();
+        let engine = state.local_engine.clone();
+        let handle = app.clone();
+        state.set_engine_status(crate::contract::types::EngineStatus::Stopped);
+        tauri::async_runtime::spawn(async move {
+            if let Err(err) = engine.stop().await {
+                tracing::warn!(code = %err.code, "本地引擎停止失败");
+            }
+            crate::events::emit_engine_status_payload(&handle, &engine.snapshot());
+        });
+        tracing::info!("本地引擎配置变化：已请求停止（下次使用按新配置重启）");
     }
     if changed.iter().any(|key| key == "advanced.proxy") {
         tracing::warn!("代理配置变更需重启应用后生效");

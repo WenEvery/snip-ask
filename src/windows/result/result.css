@@ -449,3 +449,154 @@ html:has(.result-root) body {
   border-radius: 999px;
   background: var(--sa-color-border-strong, #3a414b);
 }
+
+/* ───────────── 线程（多轮追问，契约 v4） ───────────── */
+
+.result-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-3, 12px);
+}
+
+.result-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 历史轮次：默认折叠的单行摘要 */
+.result-turn.is-history {
+  padding: 6px 10px;
+  border: 1px solid var(--sa-color-border, #2a3038);
+  border-radius: var(--sa-radius-sm, 8px);
+  background: var(--sa-color-surface-2, #171b21);
+}
+
+.result-turn.is-history[open] {
+  gap: 8px;
+}
+
+.result-turn-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-2, 8px);
+  cursor: pointer;
+  user-select: none;
+  color: var(--sa-color-text-muted, #8b949e);
+  font-size: var(--sa-text-xs, 11px);
+  list-style: none;
+}
+
+.result-turn-summary::-webkit-details-marker {
+  display: none;
+}
+
+.result-turn-summary::before {
+  content: "▸";
+  flex: none;
+  color: var(--sa-color-text-muted, #8b949e);
+}
+
+.result-turn.is-history[open] > .result-turn-summary::before {
+  content: "▾";
+}
+
+.result-turn-index {
+  flex: none;
+  font-weight: 500;
+  color: var(--sa-color-text, #e6e8eb);
+}
+
+.result-turn-brief {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-turn-flag {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: var(--sa-text-xs, 11px);
+}
+
+.result-turn-flag.is-error {
+  color: var(--sa-color-danger, #f85149);
+  border: 1px solid color-mix(in srgb, var(--sa-color-danger, #f85149) 55%, transparent);
+}
+
+.result-turn-flag.is-cancelled {
+  color: var(--sa-color-text-muted, #8b949e);
+  border: 1px solid var(--sa-color-border-strong, #3a414b);
+}
+
+/* 用户追问气泡：右对齐 */
+.result-turn-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  align-self: flex-end;
+  max-width: 92%;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--sa-color-accent, #3b82f6) 40%, transparent);
+  border-radius: var(--sa-radius-sm, 8px);
+  background: color-mix(in srgb, var(--sa-color-accent, #3b82f6) 12%, transparent);
+}
+
+.result-turn-question-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+/* AI 回答气泡 */
+.result-turn-answer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.result-turn-answer > .result-stream,
+.result-turn-answer > .result-error,
+.result-turn-answer > .result-usage,
+.result-turn-answer > .result-sources,
+.result-turn-answer > .result-hint {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-turn-answer > .result-usage {
+  flex-wrap: wrap;
+}
+
+.result-turn-role {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--sa-color-surface-3, #1d232b);
+  color: var(--sa-color-text-muted, #8b949e);
+  font-size: var(--sa-text-xs, 11px);
+  line-height: 1;
+}
+
+.result-turn-role.is-ai {
+  background: var(--sa-color-accent, #3b82f6);
+  color: var(--sa-color-accent-contrast, #ffffff);
+}
+
+.result-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.result-btn:disabled:hover {
+  border-color: var(--sa-color-border-strong, #3a414b);
+  color: var(--sa-color-text-muted, #8b949e);
+}

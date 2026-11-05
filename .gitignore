@@ -89,3 +89,7 @@ $RECYCLE.BIN/
 # ---- 图标必须保留（显式声明，防止误加通配规则时被忽略）----
 !src-tauri/icons/
 !src-tauri/icons/**
+
+# ---- 发行产物（自 v0.1.0 起，安装包与 SHA256 随仓库分发；见 release/README.md）----
+!release/
+!release/**

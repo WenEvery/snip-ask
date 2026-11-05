@@ -16,6 +16,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::app::state::AppState;
 use crate::app::{hotkeys, tray, windows};
+use crate::contract::config::TranslateBackend;
 use crate::contract::errors::{AppError, AppResult};
 use crate::contract::types::EngineStatus;
 use crate::events::emit_engine_status;
@@ -66,8 +67,49 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
     // 7) 本地引擎状态（骨架模式：stopped，不启动进程）
     emit_engine_status(app, EngineStatus::Stopped);
     if !skeleton_mode {
-        // TODO(real): 按 local.* 配置异步启动本地推理进程，并广播 engine:status(starting/ready)。
-        tracing::info!("非骨架模式：本地引擎启动逻辑待接入（TODO(real)）");
+        // 非骨架模式：按 local.* 配置**异步**预热本地引擎（不阻塞启动）。
+        // 只有确实会用本地推理时才预热（翻译后端 = 本地 / 仅本地模式），避免无谓占用显存。
+        let engine_app = app.clone();
+        let _handle = tauri::async_runtime::spawn(async move {
+            let Some(state) = engine_app.try_state::<AppState>() else {
+                return;
+            };
+            let config = state.snapshot_config();
+            let prewarm =
+                config.translate.backend == TranslateBackend::Local || config.privacy.local_only;
+            if !prewarm {
+                tracing::info!("本地引擎预热跳过（未配置本地翻译 / 仅本地模式）");
+                return;
+            }
+            let engine = state.local_engine.clone();
+            state.set_engine_status(EngineStatus::Starting);
+            emit_engine_status(&engine_app, EngineStatus::Starting);
+            match engine.ensure_ready(&engine_app, &config).await {
+                Ok(payload) => {
+                    *state.engine.write() = payload.local;
+                    crate::events::emit_engine_status_payload(&engine_app, &payload);
+                    tracing::info!(
+                        backend = ?payload.backend,
+                        device = ?payload.device,
+                        device_name = ?payload.device_name,
+                        offload = ?payload.offload_layers,
+                        port = ?payload.port,
+                        fallback = ?payload.fallback_reason,
+                        "本地引擎预热完成"
+                    );
+                }
+                Err(err) => {
+                    // 不阻塞启动：任务执行时 `gateway_for` → `ensure_ready` 会重试并返回真实错误。
+                    tracing::warn!(
+                        code = %err.code,
+                        detail = ?err.detail,
+                        "本地引擎预热失败（任务执行时会重试）"
+                    );
+                    *state.engine.write() = EngineStatus::Failed;
+                    emit_engine_status(&engine_app, EngineStatus::Failed);
+                }
+            }
+        });
     }
 
     // 8) 首启引导：未完成时显示主窗口
@@ -121,7 +163,14 @@ pub fn shutdown(app: &AppHandle) -> AppResult<()> {
         .history
         .cleanup(config.history.max_entries, config.history.retention_days);
 
-    // TODO(real): 停止本地推理进程并回收 sidecar。
+    // 停止本地推理进程并回收 sidecar（按 PID/进程树，禁止按镜像名 taskkill）。
+    // 必须在 `AppState` 仍可访问时执行（随后进程退出）。
+    if let Err(err) = state.local_engine.stop_blocking() {
+        tracing::warn!(code = %err.code, "退出前停止本地引擎失败");
+    }
+    *state.engine.write() = EngineStatus::Stopped;
+    emit_engine_status(app, EngineStatus::Stopped);
+
     tracing::info!("框选 AI 已退出");
     Ok(())
 }

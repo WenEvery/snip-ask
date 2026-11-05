@@ -7,12 +7,15 @@
 //! 真实实现以 `// TODO(real): ...` 标注并保持同一 trait。
 
 pub mod action_router;
+pub mod backend_manager;
 pub mod capture_service;
 pub mod config_center;
 pub mod credential_service;
 pub mod diagnostics;
 pub mod history_repo;
 pub mod llm_gateway;
+pub mod local_engine;
+pub mod local_gateway;
 pub mod model_manager;
 pub mod ocr_service;
 pub mod onboarding_service;
