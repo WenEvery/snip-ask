@@ -19,15 +19,16 @@
 
 use std::time::{Duration, Instant};
 
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
 use tauri::{AppHandle, State};
 
 use crate::app::state::AppState;
-use crate::contract::config::{validate, Config, Provider};
+use crate::contract::config::{validate, Config, Provider, ProviderKind};
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
 use crate::contract::events::ConfigChangedPayload;
 use crate::contract::types::{ProviderDraft, TestResult};
 use crate::events::emit_config_changed;
+use crate::services::translator::QwenMtTranslator;
 
 /// 真实连通性测试：连接超时。
 const PROBE_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -73,6 +74,7 @@ pub fn validate_probe_draft(config: &Config, draft: &ProviderDraft) -> AppResult
         name: draft.name.clone(),
         base_url: draft.base_url.clone(),
         model: draft.model.clone(),
+        kind: draft.kind,
         caps: draft.caps.clone(),
         temperature: draft.temperature.unwrap_or(0.2),
         max_tokens: draft.max_tokens.unwrap_or(1024),
@@ -226,7 +228,7 @@ pub async fn probe_provider_detail(
         ));
     }
 
-    let client = Client::builder()
+    let client = crate::platform::http::client_builder_for(base_url)
         .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(options.connect_timeout)
         .timeout(options.request_timeout)
@@ -307,6 +309,121 @@ pub async fn probe_provider(
     )
 }
 
+/// 探测 DashScope Qwen-MT 原生端点（契约 v5：`Provider.kind = qwenMt`）。
+///
+/// 健康检查方式：用一条极短的英译中请求打真实原生端点
+/// （`POST {base}/api/v1/services/aigc/text-generation/generation`），
+/// 校验 HTTP 200 且 `output.choices[0].message.content` 非空。
+/// 该请求会产生极少量翻译 token 费用（可接受；不会泄露 Key）。
+pub async fn probe_qwen_mt_detail(
+    base_url: &str,
+    api_key: &str,
+    preferred_model: Option<&str>,
+    options: ProbeOptions,
+) -> AppResult<ProbeOutcome> {
+    let parsed = url::Url::parse(base_url).map_err(|err| {
+        AppError::invalid_config("providers.baseUrl", format!("不是合法 URL：{err}"))
+    })?;
+    let scheme_ok = parsed.scheme() == "https"
+        || (parsed.scheme() == "http" && parsed.host_str() == Some("127.0.0.1"));
+    if !scheme_ok {
+        return Err(AppError::invalid_config(
+            "providers.baseUrl",
+            "仅允许 https 或 http://127.0.0.1",
+        ));
+    }
+    let model = preferred_model
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .unwrap_or("qwen-mt-lite")
+        .to_string();
+    let endpoint = crate::services::translator::qwen_mt_generation_url(base_url);
+    let body = serde_json::json!({
+        "model": model,
+        "input": { "messages": [{ "role": "user", "content": "Hello" }] },
+        "parameters": {
+            "translation_options": { "source_lang": "English", "target_lang": "Chinese" },
+            "result_format": "message",
+        },
+    });
+    let payload = serde_json::to_string(&body)
+        .map_err(|err| AppError::invalid_config("providers", format!("请求体序列化失败：{err}")))?;
+    let client = crate::platform::http::client_builder_for(base_url)
+        .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION")))
+        .connect_timeout(options.connect_timeout)
+        .timeout(options.request_timeout)
+        .build()
+        .map_err(|err| {
+            AppError::new(
+                ErrorCode::NetworkUnavailable,
+                Some(format!("HTTP 客户端初始化失败：{err}")),
+            )
+        })?;
+    let started = Instant::now();
+    let response = match client
+        .post(&endpoint)
+        .header(reqwest::header::AUTHORIZATION, format!("Bearer {api_key}"))
+        .header(reqwest::header::ACCEPT, "application/json")
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
+        .body(payload)
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(err) => {
+            let latency_ms = elapsed_ms(started);
+            return Ok(ProbeOutcome {
+                result: TestResult {
+                    ok: false,
+                    latency_ms: Some(latency_ms),
+                    model: None,
+                    status: None,
+                    error: Some(QwenMtTranslator::map_transport_error(&err)),
+                },
+                available_models: Vec::new(),
+            });
+        }
+    };
+    let latency_ms = elapsed_ms(started);
+    let status = response.status();
+    let text = response.text().await.unwrap_or_default();
+    if !status.is_success() {
+        return Ok(ProbeOutcome {
+            result: TestResult {
+                ok: false,
+                latency_ms: Some(latency_ms),
+                model: None,
+                status: Some(status.as_u16()),
+                error: Some(QwenMtTranslator::map_http_error(status.as_u16(), &text)),
+            },
+            available_models: Vec::new(),
+        });
+    }
+    // HTTP 200 也可能是 DashScope 业务错误；以原生 status_code/code 判定。
+    match QwenMtTranslator::parse_response(&text) {
+        Ok(_) => Ok(ProbeOutcome {
+            result: TestResult {
+                ok: true,
+                latency_ms: Some(latency_ms),
+                model: Some(model.clone()),
+                status: Some(status.as_u16()),
+                error: None,
+            },
+            available_models: vec![model],
+        }),
+        Err(error) => Ok(ProbeOutcome {
+            result: TestResult {
+                ok: false,
+                latency_ms: Some(latency_ms),
+                model: None,
+                status: Some(status.as_u16()),
+                error: Some(error),
+            },
+            available_models: Vec::new(),
+        }),
+    }
+}
+
 fn elapsed_ms(started: Instant) -> u64 {
     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
@@ -353,16 +470,28 @@ pub async fn provider_test(
             tracing::info!(provider = %draft.id, "供应商连通性测试跳过：未配置 API Key");
             return Ok(missing_api_key_result());
         };
-        let outcome = probe_provider_detail(
-            &draft.base_url,
-            &api_key,
-            Some(draft.model.as_str()),
-            ProbeOptions::default(),
-        )
-        .await?;
+        let outcome = if draft.kind == ProviderKind::QwenMt {
+            // Qwen-MT：原生 `translation_options` 端点健康检查（极短翻译请求）。
+            probe_qwen_mt_detail(
+                &draft.base_url,
+                &api_key,
+                Some(draft.model.as_str()),
+                ProbeOptions::default(),
+            )
+            .await?
+        } else {
+            probe_provider_detail(
+                &draft.base_url,
+                &api_key,
+                Some(draft.model.as_str()),
+                ProbeOptions::default(),
+            )
+            .await?
+        };
         // 只记录脱敏结果（不含 Key / 响应体原文）。
         tracing::info!(
             provider = %draft.id,
+            kind = ?draft.kind,
             host = %host_of(&draft.base_url),
             ok = outcome.result.ok,
             status = ?outcome.result.status,

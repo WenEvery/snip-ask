@@ -62,6 +62,9 @@ portable.flag
 *.sqlite
 *.sqlite3
 
+# ---- 构建期准备的双版本安装包 OCR 资产（onnxruntime.dll / *.onnx，禁止入库）----
+src-tauri/resources/ocr/
+
 # ---- 本地模型（体积大且含第三方许可，禁止入库；由用户按需下载）----
 *.gguf
 *.onnx

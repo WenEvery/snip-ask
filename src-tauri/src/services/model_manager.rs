@@ -114,12 +114,24 @@ impl ModelManager {
         merge_installed(&self.manifest, &installed, &states)
     }
 
-    /// 已安装模型数。
+    /// 已安装 **本地 LLM 模型**数（`app_stats.modelsInstalled` 来源）。
+    ///
+    /// 只统计 LLM 模型：OCR 资产（`params.role == "ocr"`）走 `ocr_status` 的独立就绪状态，
+    /// 不计入该数——否则 slim 版下载 4 个 OCR 资产后计数 +4、full 版（模型内置在
+    /// `resource_dir/ocr/`）却不计入，两种安装包口径不一致。
     pub fn installed_count(&self) -> u32 {
         let installed = self.installed.lock();
+        let llm_installed: HashMap<String, u64> = installed
+            .iter()
+            .filter(|(id, _bytes)| match find_entry(&self.manifest, id) {
+                Some(entry) => !is_ocr_asset(entry),
+                None => true,
+            })
+            .map(|(id, bytes)| (id.clone(), *bytes))
+            .collect();
         installed_count(&merge_installed(
             &self.manifest,
-            &installed,
+            &llm_installed,
             &HashMap::new(),
         ))
     }
@@ -235,7 +247,7 @@ impl ModelManager {
         emit_state(app, id, DownloadState::Verifying);
         tokio::time::sleep(Duration::from_millis(DOWNLOAD_STEP_MS)).await;
 
-        // 写入空的 .installed 标记（契约 §12）。
+        // 写入空的 .installed 标记（契约 §12；标记固定在 `<models_dir>/<id>/`）。
         let dir = self.models_dir.join(id);
         if let Err(err) = std::fs::create_dir_all(&dir) {
             tracing::warn!(error = %err, model = %id, "创建模型目录失败");
@@ -259,12 +271,17 @@ impl ModelManager {
         self.set_state(id, DownloadState::Downloading);
         emit_state(app, id, DownloadState::Downloading);
 
-        let dir = self.models_dir.join(id);
-        if let Err(err) = std::fs::create_dir_all(&dir) {
-            tracing::warn!(error = %err, model = %id, "创建模型目录失败");
-            self.set_state(id, DownloadState::Failed);
-            emit_state(app, id, DownloadState::Failed);
-            return;
+        // 数据文件目录：OCR 资产统一 `<models_dir>/ocr/`，其余 `<models_dir>/<id>/`；
+        // `.installed` 标记始终在 `<models_dir>/<id>/`（与 scan_installed 一致）。
+        let payload_dir = entry_dir(&self.models_dir, &entry);
+        let marker_dir = self.models_dir.join(id);
+        for dir in [&payload_dir, &marker_dir] {
+            if let Err(err) = std::fs::create_dir_all(dir) {
+                tracing::warn!(error = %err, model = %id, dir = %dir.display(), "创建模型目录失败");
+                self.set_state(id, DownloadState::Failed);
+                emit_state(app, id, DownloadState::Failed);
+                return;
+            }
         }
 
         let hash_skipped = is_placeholder_sha256(&entry.sha256);
@@ -276,11 +293,12 @@ impl ModelManager {
             );
         }
 
-        let filename = download_filename(&entry);
-        let dest = dir.join(&filename);
+        let filename = manifest_filename(&entry);
+        let dest = entry_payload_path(&self.models_dir, &entry);
         tracing::info!(
             model = %id,
             file = %filename,
+            dest = %dest.display(),
             size = entry.size_bytes,
             urls = entry.urls.len(),
             "开始真实下载（HTTP Range 断点续传）"
@@ -365,7 +383,7 @@ impl ModelManager {
                     );
                 }
                 // 写入空的 .installed 标记（保持与 scan_installed / 契约 §12 兼容）。
-                if let Err(err) = std::fs::write(dir.join(".installed"), b"") {
+                if let Err(err) = std::fs::write(marker_dir.join(".installed"), b"") {
                     tracing::warn!(error = %err, model = %id, "写入 .installed 标记失败");
                     self.set_state(id, DownloadState::Failed);
                     emit_state(app, id, DownloadState::Failed);
@@ -400,14 +418,24 @@ impl ModelManager {
     }
 
     /// 删除已安装模型（清单中不存在返回 `SA-4001`）。
+    ///
+    /// - 标记目录 `<models_dir>/<id>/` 整体删除；
+    /// - 数据文件按 [`entry_payload_path`] 删除（OCR 资产在共享的 `<models_dir>/ocr/` 下，
+    ///   只删本条目文件，不影响其它 OCR 资产）。
     pub fn remove(&self, id: &str) -> AppResult<()> {
-        if find_entry(&self.manifest, id).is_none() {
-            return Err(model_missing_error(id));
-        }
+        let entry = find_entry(&self.manifest, id)
+            .cloned()
+            .ok_or_else(|| model_missing_error(id))?;
         let dir = self.models_dir.join(id);
         if dir.is_dir() {
             std::fs::remove_dir_all(&dir).map_err(|err| {
                 AppError::io_failed(format!("删除模型 {} 失败：{err}", dir.display()))
+            })?;
+        }
+        let payload = entry_payload_path(&self.models_dir, &entry);
+        if payload.is_file() {
+            std::fs::remove_file(&payload).map_err(|err| {
+                AppError::io_failed(format!("删除模型文件 {} 失败：{err}", payload.display()))
             })?;
         }
         self.installed.lock().remove(id);
@@ -535,6 +563,47 @@ pub fn download_filename(entry: &ModelManifestEntry) -> String {
             })
         })
         .unwrap_or_else(|| format!("{}.bin", entry.id))
+}
+
+/// 条目是否为 OCR 资产（`params.role == "ocr"`，契约 v5 / spec §4）。
+pub fn is_ocr_asset(entry: &ModelManifestEntry) -> bool {
+    entry.params.get("role").and_then(serde_json::Value::as_str) == Some("ocr")
+}
+
+/// 条目预期的落盘文件名：优先清单 `params.fileName`（OCR 资产固定名），否则取 URL 末段。
+///
+/// OCR 镜像 URL 的文件名与运行期固定名不同（如 ModelScope 的 `*_mobile.onnx`），
+/// 因此下载必须用 `params.fileName` 落盘，[`crate::services::ocr_onnx`] 才能按固定名解析。
+pub fn manifest_filename(entry: &ModelManifestEntry) -> String {
+    entry
+        .params
+        .get("fileName")
+        .and_then(serde_json::Value::as_str)
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| download_filename(entry))
+}
+
+/// 条目数据文件所在目录：
+/// - OCR 资产统一放 `<models_dir>/ocr/`（slim 下载、运行期解析约定）；
+/// - 其余模型沿用 `<models_dir>/<id>/`。
+pub fn entry_dir(models_dir: &Path, entry: &ModelManifestEntry) -> PathBuf {
+    if is_ocr_asset(entry) {
+        models_dir.join("ocr")
+    } else {
+        models_dir.join(&entry.id)
+    }
+}
+
+/// 条目数据文件完整路径。
+pub fn entry_payload_path(models_dir: &Path, entry: &ModelManifestEntry) -> PathBuf {
+    entry_dir(models_dir, entry).join(manifest_filename(entry))
+}
+
+/// 安装标记路径（始终 `<models_dir>/<id>/.installed`，与 [`scan_installed`] 一致）。
+pub fn entry_marker_path(models_dir: &Path, entry: &ModelManifestEntry) -> PathBuf {
+    models_dir.join(&entry.id).join(".installed")
 }
 
 /// 真实下载：镜像回退 + 断点续传 + 流式 SHA256 + 大小校验。
@@ -1101,13 +1170,21 @@ fn emit_state(app: &AppHandle, id: &str, state: DownloadState) {
 
 /// 扫描 `<models_dir>/<id>/.installed`。
 ///
-/// 注意：只认 `.installed` 标记，`.partial` / 未完成文件不计入已安装。
+/// 注意：
+/// - 只认 `.installed` 标记，`.partial` / 未完成文件不计入已安装；
+/// - OCR 资产（`params.role == "ocr"`）额外要求数据文件存在于
+///   [`entry_payload_path`]（共享 `<models_dir>/ocr/` 目录），避免「标记还在但文件被删」
+///   被误判为已安装。
 pub fn scan_installed(models_dir: &Path, manifest: &ModelManifest) -> HashMap<String, u64> {
     let mut installed = HashMap::new();
     for entry in &manifest.models {
-        if models_dir.join(&entry.id).join(".installed").is_file() {
-            installed.insert(entry.id.clone(), entry.size_bytes);
+        if !entry_marker_path(models_dir, entry).is_file() {
+            continue;
         }
+        if is_ocr_asset(entry) && !entry_payload_path(models_dir, entry).is_file() {
+            continue;
+        }
+        installed.insert(entry.id.clone(), entry.size_bytes);
     }
     installed
 }
@@ -1144,14 +1221,27 @@ mod tests {
         let manager = manager();
         let infos = manager.list();
         assert!(!infos.is_empty());
-        // 清单 4 条（phase 2 增补极小模型；顺序保持既有条目在前、极小模型在末尾）。
-        assert_eq!(infos.len(), 4);
+        // 清单 8 条（phase 2 增补极小模型 4 条 + v1.0.0 增补 4 条 OCR 资产，顺序保持既有条目在前）。
+        assert_eq!(infos.len(), 8);
         assert_eq!(infos[0].id, "hy-mt-1.8b-q4");
         assert!(infos.iter().all(|info| !info.installed));
         assert_eq!(manager.installed_count(), 0);
         assert!(!manager.is_installed("hy-mt-1.8b-q4"));
         assert!(manager.entry("hy-mt-1.8b-q4").is_some());
         assert!(manager.entry("qwen2.5-0.5b-instruct-q4").is_some());
+        for id in ["ocr-det", "ocr-rec", "ocr-cls", "ocr-dict"] {
+            let entry = manager.entry(id).unwrap_or_else(|| panic!("清单缺少 {id}"));
+            assert_eq!(
+                entry.kind,
+                Some(crate::contract::types::ModelKind::Onnx),
+                "{id} kind 应为 onnx"
+            );
+            assert_eq!(entry.params["role"], "ocr");
+            assert!(
+                entry.params["fileName"].is_string(),
+                "{id} 缺 params.fileName"
+            );
+        }
         assert!(manager.entry("nope").is_none());
     }
 
@@ -1212,11 +1302,15 @@ mod tests {
     fn tiny_model_entry_metadata_matches_verified_manifest() {
         // task-9：极小模型条目是引导页三档选择依赖的数据契约，字段/顺序/URL 均需锁定。
         let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
-        // 追加在末尾，保持既有顺序（models[0] 不变）。
-        assert_eq!(manifest.models.len(), 4);
+        // 追加在末尾，保持既有顺序（models[0] 不变；v1.0.0 的 4 条 OCR 资产追加到最后）。
+        assert_eq!(manifest.models.len(), 8);
         assert_eq!(manifest.models[0].id, "hy-mt-1.8b-q4");
         assert_eq!(
-            manifest.models.last().map(|entry| entry.id.as_str()),
+            manifest
+                .models
+                .iter()
+                .find(|entry| entry.id == "qwen2.5-0.5b-instruct-q4")
+                .map(|entry| entry.id.as_str()),
             Some("qwen2.5-0.5b-instruct-q4")
         );
 
@@ -1308,5 +1402,192 @@ mod tests {
         manager.remove(&id).unwrap();
         assert!(!manager.is_installed(&id));
         assert!(!dir.exists());
+    }
+
+    // ───────── OCR 资产（v1.0.0 / spec §4） ─────────
+
+    #[test]
+    fn ocr_assets_use_fixed_filename_and_shared_ocr_dir() {
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+        let models_dir = Path::new("C:/tmp/models");
+        let expected = [
+            ("ocr-det", "ch_PP-OCRv4_det_infer.onnx"),
+            ("ocr-rec", "ch_PP-OCRv4_rec_infer.onnx"),
+            ("ocr-cls", "ch_ppocr_mobile_v2.0_cls_infer.onnx"),
+            ("ocr-dict", "ppocr_keys_v1.txt"),
+        ];
+        for (id, file_name) in expected {
+            let entry = find_entry(&manifest, id).unwrap();
+            assert!(is_ocr_asset(entry), "{id} 应标记 role=ocr");
+            // 镜像 URL 文件名与运行期固定名不同（ModelScope `*_mobile.onnx`），
+            // 落盘必须使用 params.fileName。
+            assert_eq!(manifest_filename(entry), file_name);
+            assert_eq!(
+                entry_payload_path(models_dir, entry),
+                models_dir.join("ocr").join(file_name)
+            );
+            assert_eq!(
+                entry_marker_path(models_dir, entry),
+                models_dir.join(id).join(".installed")
+            );
+        }
+        // 非 OCR 条目保持 `<models_dir>/<id>/<url 文件名>`。
+        let gguf = find_entry(&manifest, "hy-mt-1.8b-q4").unwrap();
+        assert!(!is_ocr_asset(gguf));
+        assert_eq!(
+            entry_payload_path(models_dir, gguf),
+            models_dir
+                .join("hy-mt-1.8b-q4")
+                .join("HY-MT1.5-1.8B-Q4_K_M.gguf")
+        );
+    }
+
+    #[test]
+    fn ocr_manifest_entries_have_verified_real_hashes_and_mirrors() {
+        // 清单数据是 slim 下载 / full 打包 / ocr_status 的共同事实来源，锁定真实值。
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+        let expected = [
+            (
+                "ocr-det",
+                4_745_517u64,
+                "d2a7720d45a54257208b1e13e36a8479894cb74155a5efe29462512d42f49da9",
+            ),
+            (
+                "ocr-rec",
+                10_857_958,
+                "48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b",
+            ),
+            (
+                "ocr-cls",
+                585_532,
+                "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+            ),
+            (
+                "ocr-dict",
+                26_250,
+                "a1c84d9bdb9ab29043c58896224d32941783eb821629618416dcb08f12886492",
+            ),
+        ];
+        for (id, size, sha) in expected {
+            let entry = find_entry(&manifest, id).unwrap();
+            assert_eq!(entry.size_bytes, size, "{id} 清单大小");
+            assert_eq!(entry.sha256, sha, "{id} 清单 sha256");
+            assert!(
+                !is_placeholder_sha256(&entry.sha256),
+                "{id} sha256 必须是真实值"
+            );
+            assert!(entry.urls.len() >= 2, "{id} 至少 2 个镜像 URL");
+            for url in &entry.urls {
+                assert!(
+                    url.starts_with("https://"),
+                    "{id} 下载 URL 必须 https：{url}"
+                );
+            }
+            assert_eq!(entry.params["verified"], true, "{id} params.verified");
+        }
+    }
+
+    #[test]
+    fn scan_installed_requires_ocr_payload_file() {
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+        let root = std::env::temp_dir().join(format!("snip-ask-models-{}", uuid::Uuid::new_v4()));
+        let entry = find_entry(&manifest, "ocr-det").unwrap();
+        std::fs::create_dir_all(entry_marker_path(&root, entry).parent().unwrap()).unwrap();
+        std::fs::write(entry_marker_path(&root, entry), b"").unwrap();
+        // 只有 .installed 标记、没有数据文件 → 不算已安装。
+        assert!(!scan_installed(&root, &manifest).contains_key("ocr-det"));
+        // 数据文件到位后算已安装。
+        std::fs::create_dir_all(entry_payload_path(&root, entry).parent().unwrap()).unwrap();
+        std::fs::write(entry_payload_path(&root, entry), b"fake").unwrap();
+        assert!(scan_installed(&root, &manifest).contains_key("ocr-det"));
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn remove_ocr_asset_keeps_other_ocr_files() {
+        let manager = manager();
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+        let det = find_entry(&manifest, "ocr-det").unwrap();
+        let rec = find_entry(&manifest, "ocr-rec").unwrap();
+        for entry in [det, rec] {
+            std::fs::create_dir_all(
+                entry_marker_path(manager.models_dir(), entry)
+                    .parent()
+                    .unwrap(),
+            )
+            .unwrap();
+            std::fs::write(entry_marker_path(manager.models_dir(), entry), b"").unwrap();
+            std::fs::create_dir_all(
+                entry_payload_path(manager.models_dir(), entry)
+                    .parent()
+                    .unwrap(),
+            )
+            .unwrap();
+            std::fs::write(entry_payload_path(manager.models_dir(), entry), b"fake").unwrap();
+        }
+        manager.refresh_installed();
+        assert!(manager.is_installed("ocr-det"));
+        manager.remove("ocr-det").unwrap();
+        assert!(!manager.is_installed("ocr-det"));
+        assert!(!entry_payload_path(manager.models_dir(), det).exists());
+        // 其它 OCR 资产不受影响。
+        assert!(manager.is_installed("ocr-rec"));
+        assert!(entry_payload_path(manager.models_dir(), rec).is_file());
+        let _ = std::fs::remove_dir_all(manager.models_dir());
+    }
+
+    #[test]
+    fn installed_count_excludes_ocr_assets() {
+        // `app_stats.modelsInstalled` 只统计本地 LLM 模型；OCR 资产走 ocr_status，
+        // 避免 slim（下载 4 个 OCR 资产 +4）与 full（内置不计）口径不一致。
+        let manager = manager();
+        let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
+
+        let llm = find_entry(&manifest, "hy-mt-1.8b-q4").unwrap();
+        std::fs::create_dir_all(
+            entry_marker_path(manager.models_dir(), llm)
+                .parent()
+                .unwrap(),
+        )
+        .unwrap();
+        std::fs::write(entry_marker_path(manager.models_dir(), llm), b"").unwrap();
+
+        let det = find_entry(&manifest, "ocr-det").unwrap();
+        std::fs::create_dir_all(
+            entry_marker_path(manager.models_dir(), det)
+                .parent()
+                .unwrap(),
+        )
+        .unwrap();
+        std::fs::write(entry_marker_path(manager.models_dir(), det), b"").unwrap();
+        std::fs::create_dir_all(
+            entry_payload_path(manager.models_dir(), det)
+                .parent()
+                .unwrap(),
+        )
+        .unwrap();
+        std::fs::write(entry_payload_path(manager.models_dir(), det), b"fake").unwrap();
+
+        manager.refresh_installed();
+        assert!(manager.is_installed("hy-mt-1.8b-q4"));
+        assert!(manager.is_installed("ocr-det"));
+        assert_eq!(
+            manager.installed_count(),
+            1,
+            "OCR 资产不应计入 modelsInstalled"
+        );
+        // models_list 仍必须包含 OCR 条目（前端按 kind 过滤展示），只是不计数。
+        let infos = manager.list();
+        assert!(
+            infos
+                .iter()
+                .any(|info| info.id == "ocr-det" && info.installed),
+            "models_list 必须包含已安装的 OCR 条目"
+        );
+
+        manager.remove("hy-mt-1.8b-q4").unwrap();
+        manager.refresh_installed();
+        assert_eq!(manager.installed_count(), 0);
+        let _ = std::fs::remove_dir_all(manager.models_dir());
     }
 }

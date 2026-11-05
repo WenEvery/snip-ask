@@ -61,7 +61,8 @@ export type LocalDevice = "auto" | "cpu" | "gpu";
 export type GpuBackend = "auto" | "vulkan" | "cuda";
 /** 实际使用的推理后端（含 CPU；配置里的 gpuBackend 不含 cpu，因为 CPU 是回退结果）。 */
 export type LocalBackend = "vulkan" | "cuda" | "cpu";
-export type UpdateChannel = "stable" | "preview";
+/** 供应商 API 类型（契约 v5）：OpenAI 兼容 Chat Completions / DashScope Qwen-MT 翻译 API。 */
+export type ProviderKind = "openAiCompatible" | "qwenMt";
 export type Cap = "vision" | "search" | "thinking" | "translate";
 
 export interface AppPrefs {
@@ -115,6 +116,8 @@ export interface Provider {
   name: string;
   baseUrl: string;
   model: string;
+  /** API 类型（契约 v5；默认 OpenAI 兼容）。 */
+  kind: ProviderKind;
   caps: Cap[];
   temperature: number;
   maxTokens: number;
@@ -194,7 +197,6 @@ export interface HistoryPrefs {
 
 export interface AdvancedPrefs {
   proxy: string | null;
-  updateChannel: UpdateChannel;
   telemetry: boolean;
   skeletonMode: boolean;
 }
@@ -310,6 +312,8 @@ export interface ProviderDraft {
   name: string;
   baseUrl: string;
   model: string;
+  /** API 类型（可选：缺省 = OpenAI 兼容）。 */
+  kind?: ProviderKind;
   caps: Cap[];
   apiKey: string | null;
   temperature?: number;
@@ -438,6 +442,10 @@ export type EngineStatus = "stopped" | "starting" | "ready" | "failed";
 export interface Stats {
   version: string;
   contractVersion: number;
+  /** 版本类型：`full`（内置 OCR 模型版）/ `slim`（安装后下载版）/ `dev`（开发构建）。 */
+  edition: string;
+  /** OCR 是否就绪（运行时 + 模型）。 */
+  ocrReady: boolean;
   uptimeSec: number;
   memoryMb: number;
   activeSession: SessionId | null;
@@ -540,12 +548,60 @@ export interface TranslateReadyPayload {
   engine: string;
 }
 
-export type UpdateState = "idle" | "checking" | "available" | "downloading" | "ready" | "error";
 
-export interface UpdateStatusPayload {
-  state: UpdateState;
-  version?: string;
-  error?: string;
+/* ─────────────────── 自定义 / OCR 状态 / 历史线程（契约 v5） ─────────────────── */
+
+/** `open_path` 的白名单目录类型。 */
+export type OpenPathKind =
+  "config" | "prompts" | "models" | "logs" | "backends" | "data" | "docs";
+
+/** OCR 资产状态（`ocr_status`）。 */
+export interface OcrAssetStatus {
+  id: string;
+  name: string;
+  installed: boolean;
+  bundled: boolean;
+  sizeBytes: number;
+  sha256: string;
+}
+
+/** `ocr_status` 返回（契约 v5）。 */
+export interface OcrStatus {
+  ready: boolean;
+  bundled: boolean;
+  runtimeReady: boolean;
+  runtimePath: string | null;
+  assets: OcrAssetStatus[];
+  missing: string[];
+  message: string | null;
+}
+
+/** 历史会话摘要（`history_list`）。 */
+export interface HistorySession {
+  session: SessionId;
+  startedAt: number;
+  title: string;
+  action: ActionId | null;
+  turns: number;
+  engine: string | null;
+}
+
+/** 历史问答轮次（`history_thread`）。 */
+export interface HistoryTurn {
+  task: TaskId;
+  action: ActionId;
+  mode: Mode;
+  question: string;
+  answer: string;
+  engine: string | null;
+  status: "done" | "error" | "cancelled";
+  createdAt: number;
+}
+
+/** `history_thread` 返回（契约 v5）。 */
+export interface HistoryThread {
+  session: HistorySession;
+  turns: HistoryTurn[];
 }
 
 /* ───────────────────────── §8 错误模型 ───────────────────────── */

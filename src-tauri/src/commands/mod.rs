@@ -24,11 +24,20 @@
 //! 31. `local_engine_status` / 32. `local_engine_start` / 33. `local_engine_stop`
 //! 34. `backends_list` / 35. `backends_download` / 36. `backends_cancel` / 37. `backends_remove`
 //! 38. `translate_cover`（覆盖式翻译，结构化块输入输出）
+//!
+//! 契约 v5 新增（39–43，v1.0.0；自动更新已移除）：
+//! 39. `open_path`（打开配置 / 提示词 / 模型 / 日志 / 后端 / 安装文档目录）
+//! 40. `ocr_status`（真实 OCR 资产与运行时就绪状态）
+//! 41. `history_list` / 42. `history_thread` / 43. `history_clear`（历史会话与线程）
+//!
+//! 契约 v5 同时删除：`update:status` 事件、`advanced.updateChannel` 配置字段与
+//! `updater_service`（用户决策：不提供自动更新，改为鼓励自行修改 / 重新安装）。
 
 pub mod action;
 pub mod capture;
 pub mod config;
 pub mod cover;
+pub mod history;
 pub mod local;
 pub mod models;
 pub mod onboarding;
@@ -42,6 +51,7 @@ pub use action::{menu_execute, result_close, task_cancel, task_followup};
 pub use capture::{capture_cancel, capture_freeze};
 pub use config::{config_export, config_get, config_import, config_patch, config_reset};
 pub use cover::translate_cover;
+pub use history::{history_clear, history_list, history_thread};
 pub use local::{
     backends_cancel, backends_download, backends_list, backends_remove, local_engine_start,
     local_engine_status, local_engine_stop, local_gpu_probe,
@@ -50,6 +60,8 @@ pub use models::{models_cancel, models_download, models_list, models_remove};
 pub use onboarding::{onboarding_finish, onboarding_state, onboarding_update};
 pub use provider::provider_test;
 pub use selection::{selection_commit, selection_reset};
-pub use system::{app_quit, app_stats, hotkey_probe, open_external, set_autostart};
+pub use system::{
+    app_quit, app_stats, hotkey_probe, ocr_status, open_external, open_path, set_autostart,
+};
 pub use translate::translate_test;
 pub use window::{window_hide, window_show};

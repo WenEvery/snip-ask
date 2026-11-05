@@ -43,6 +43,7 @@ import {
   TextInput,
 } from "../parts";
 import { ModelLibrary } from "../components/ModelLibrary";
+import { OcrStatusCard } from "../../ocr/OcrStatusCard";
 import type { SectionProps } from "../types";
 
 /** 后端组件 id（`download:*` 事件按 `model` 字段区分组件与模型）。 */
@@ -253,6 +254,13 @@ export function TranslateSection(props: SectionProps) {
             { value: "local", label: "本地（离线）", description: "隐私好，需下载模型" },
           ]}
         />
+      </Panel>
+
+      <Panel
+        title="本地 OCR（框选识别）"
+        description="框选后的文字识别在本机完成，不联网。运行时随包内置；精简版（slim）的 OCR 模型在首次使用时下载。"
+      >
+        <OcrStatusCard />
       </Panel>
 
       {translate.backend === "cloud" ? (

@@ -1,57 +1,50 @@
 /** 引导页内置预设（静态文案参考可行性报告 §2.4.3 / §3.2.6） */
 
-import type { Cap, Language, Mode, TranslateBackend } from "@/shared/contract/types";
+import type { Cap, Language, Mode, ProviderKind, TranslateBackend } from "@/shared/contract/types";
 
 export interface OnboardingProviderPreset {
   id: string;
   name: string;
   baseUrl: string;
   model: string;
+  kind: ProviderKind;
   caps: Cap[];
   note: string;
 }
 
-/** 报告 §2.4.3 的供应商预设 */
+/**
+ * 引导页供应商预设（契约 v5 §3.1：三条，顺序与默认 provider 一致）。
+ *
+ * 与设置页 `PROVIDER_PRESETS` 保持同一事实：DeepSeek 默认启用；DashScope 仅翻译
+ * （`kind: "qwenMt"`，需 DashScope Key）；通用 OpenAI 兼容需自填 Base URL。
+ */
 export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
   {
     id: "deepseek",
     name: "DeepSeek",
     baseUrl: "https://api.deepseek.com",
     model: "deepseek-flash",
-    caps: ["vision", "thinking"],
-    note: "文本+视觉（deepseek-flash，实测可识别截图）；无联网搜索 API；默认思考会显著推高首字延迟",
+    kind: "openAiCompatible",
+    caps: ["vision", "search", "thinking"],
+    note: "默认推荐：文本 + 视觉（deepseek-flash）+ 真实联网搜索（Search/Fetch API）",
   },
   {
-    id: "openai",
-    name: "OpenAI",
+    id: "dashscope",
+    name: "DashScope（Qwen-MT 翻译）",
+    baseUrl: "https://dashscope.aliyuncs.com",
+    model: "qwen-mt-lite",
+    kind: "qwenMt",
+    caps: ["translate"],
+    note: "专用翻译 API：填入 DashScope Key 后可在设置中启用（仅翻译，不参与搜索/视觉）",
+  },
+  {
+    id: "generic-openai",
+    name: "通用 OpenAI 兼容",
     baseUrl: "https://api.openai.com",
     model: "gpt-4o-mini",
-    caps: ["vision", "search", "thinking"],
-    note: "OpenAI 兼容接口",
-  },
-  {
-    id: "qwen",
-    name: "通义千问",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    model: "qwen-mt-lite",
-    caps: ["vision", "translate"],
-    note: "Qwen-MT 专用翻译模型",
-  },
-  {
-    id: "ollama",
-    name: "Ollama（本地）",
-    baseUrl: "http://127.0.0.1:11434/v1",
-    model: "qwen2.5:7b",
-    caps: [],
-    note: "本机服务，无需 Key",
-  },
-  {
-    id: "custom",
-    name: "自定义",
-    baseUrl: "https://",
-    model: "",
-    caps: [],
-    note: "任意 OpenAI 兼容端点",
+    kind: "openAiCompatible",
+    caps: ["vision", "search", "thinking", "translate"],
+    note: "任意 OpenAI 兼容端点：可自定义 Base URL 与模型（仅 https 或 127.0.0.1）",
   },
 ];
 

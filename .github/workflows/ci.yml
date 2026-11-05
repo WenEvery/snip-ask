@@ -1,11 +1,14 @@
 # 框选 AI · CI（windows-latest）
 # - web： pnpm install → typecheck → 单测（node --test）→ build:web → 上传 dist 产物（可选）
 # - rust：cargo fmt --check → clippy -D warnings → cargo test
-# - bundle：pnpm tauri build（web + cargo release + NSIS）→ 安装包体积门禁（S-18，≤25 MiB 不含模型）
-#   体积基线 JSON 作为 CI 产物归档，并与 docs/spikes/data/s16_s18/volume_baseline.json 对比记录趋势；
-#   仓库变量 SKIP_BUNDLE_GATE=true 可临时停用该 job（无 NSIS/受限网络的降级路径，风险见
+# - bundle：准备 OCR 资产（SHA256 校验）→ 构建 slim + full 两个 NSIS 安装包（scripts/build-installers.ps1）
+#   → 双体积门禁（slim ≤ 25 MiB、full ≤ 60 MiB；体积基线 JSON 归档）
+#   → 归档安装包与 SHA256SUMS.txt。
+#   说明：CI 只做构建与体积门禁，不做真实安装/启动/卸载冒烟（需要真实桌面会话，由本地
+#   `scripts/build-installers.ps1` 默认冒烟 + .verify/v1/installer/ 证据覆盖）。
+#   仓库变量 SKIP_BUNDLE_GATE=true 可临时停用 bundle job（无 NSIS/受限网络的降级路径，风险见
 #   docs/spikes/S-18-安装包体积门禁.md）。
-# 说明：CI 覆盖 Web 类型/单测/构建、Rust fmt/clippy/test 与安装包体积门禁；失败请以实际输出定位。
+# workflow_dispatch 允许手动触发（发布前手动跑一次双版本构建）。
 name: CI
 
 on:
@@ -13,6 +16,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 # 同一分支的旧任务自动取消，节省 CI 时间
 concurrency:
@@ -92,9 +96,9 @@ jobs:
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
   bundle:
-    name: Release bundle（NSIS 体积门禁）
+    name: Release bundles（slim + full，体积门禁）
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     # 降级路径：仓库变量 SKIP_BUNDLE_GATE=true 时跳过（本地已验证；CI 无 NSIS/网络受限时的风险见记录 §遗留）。
     if: ${{ vars.SKIP_BUNDLE_GATE != 'true' }}
     steps:
@@ -125,23 +129,45 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # RELEASE profile 已配置 lto=true / codegen-units=1 / opt-level="s" / strip=true / panic="abort"
-      # （src-tauri/Cargo.toml），冷构建在 GitHub runner 上约 10–20 分钟；首次运行若因 NSIS 下载失败，
-      # 可用 SKIP_BUNDLE_GATE=true 临时放行，并在 docs/spikes/S-18-安装包体积门禁.md 记录风险。
-      - name: 生产构建（web + cargo release + NSIS）
-        run: pnpm tauri build
+      # （src-tauri/Cargo.toml），冷构建在 GitHub runner 上约 10–20 分钟/版本。
+      - name: 准备 OCR 资产（本机缓存 → manifest 镜像 → 官方镜像，SHA256 强校验）
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fetch-ocr-assets.ps1
+
+      - name: 构建双版本安装包（slim + full；含 edition 注入与内置体积门禁）
+        shell: powershell
         env:
           CI: true
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installers.ps1 -SkipSmoke
 
-      - name: 体积门禁（NSIS 安装包 ≤ 25 MiB，不含模型）
+      - name: 按版本拆分安装包（供遗留 S-18 体积门禁脚本分别检查）
         shell: powershell
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -ThresholdMiB 25 -BaselineOut .verify/ci/volume_baseline.json -BaselineRef docs/spikes/data/s16_s18/volume_baseline.json
+          New-Item -ItemType Directory -Force -Path .verify/ci/slim, .verify/ci/full | Out-Null
+          Copy-Item release/SnipAsk_*_x64-setup.exe -Destination .verify/ci/slim/ -Force
+          Copy-Item release/SnipAsk_*_x64-full-setup.exe -Destination .verify/ci/full/ -Force
 
-      - name: 归档体积基线（失败也归档，便于定位）
+      - name: 体积门禁（slim ≤ 25 MiB，不含模型）
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -BundleDir .verify/ci/slim -ThresholdMiB 25 -BaselineOut .verify/ci/volume_baseline.json -BaselineRef docs/spikes/data/s16_s18/volume_baseline.json
+
+      - name: 体积门禁（full ≤ 60 MiB，内置 OCR 模型）
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -BundleDir .verify/ci/full -ThresholdMiB 60 -BaselineOut .verify/ci/volume_baseline_full.json
+
+      - name: 归档双版本安装包 + 校验和 + 构建证据
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-size-baseline
-          path: .verify/ci/volume_baseline.json
+          name: installers-slim-full
+          path: |
+            release/SnipAsk_*-setup.exe
+            release/SHA256SUMS.txt
+            .verify/v1/installer/build-summary.json
+            .verify/v1/installer/ocr-assets.json
+            .verify/v1/installer/logs/**
+            .verify/ci/volume_baseline*.json
           if-no-files-found: warn
           retention-days: 30

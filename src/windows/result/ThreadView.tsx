@@ -10,6 +10,7 @@ import { summarize } from "./thread";
 import { StreamView } from "./StreamView";
 import { SourceList } from "./SourceList";
 import { fallbackText, formatCost, formatLatency } from "./helpers";
+import { engineLabel, engineTitle } from "../shared/engineLabel";
 
 export interface ThreadViewProps {
   turns: ResultTurn[];
@@ -126,7 +127,7 @@ function TurnBody(props: {
           <span>输入 {turn.done.usage.inputTokens} tokens</span>
           <span>输出 {turn.done.usage.outputTokens} tokens</span>
           <span>费用 {formatCost(turn.done.usage.costEstimate)}</span>
-          <span>引擎 {turn.done.engine}</span>
+          <span title={engineTitle(turn.done.engine)}>引擎 {engineLabel(turn.done.engine)}</span>
         </div>
       ) : null}
 

@@ -7,11 +7,14 @@ Copyright 2026 框选 AI (Snip Ask) contributors
 说明：
 - 版本以发布包内的 Cargo.lock / pnpm-lock.yaml 为准；下表为开发阶段的主要组件清单，
   正式发布前必须由维护者按依赖树补齐完整清单、版权行与许可原文。
-- 「模型」类资源不随安装包分发，由用户在应用内按需下载；其许可与使用限制以模型卡
+- 「模型」类资源：**OCR 模型（det/rec/cls + 字典）在 full 版随安装包分发，slim 版由用户首次使用时下载**；
+  本地翻译模型（GGUF）不随安装包分发，由用户在应用内按需下载。其许可与使用限制以模型卡
   （model card）和官方许可原文为准，下载界面与本地模型管理页会展示对应许可。
+- **v1.0.0 不含任何自动更新组件**（无 `tauri-plugin-updater`），升级方式为覆盖安装或源码构建。
 
 一、运行时与框架（随包分发）
 - Tauri 2（tauri / tauri-build / tauri-runtime / tauri-utils） — MIT OR Apache-2.0
+- Tauri 插件：single-instance / global-shortcut / autostart / opener — MIT OR Apache-2.0
 - Microsoft Edge WebView2 Runtime — Microsoft 软件许可条款（由系统或安装器提供）
 - React / React DOM — MIT
 - tokio — MIT
@@ -22,6 +25,11 @@ Copyright 2026 框选 AI (Snip Ask) contributors
 - uuid — Apache-2.0 OR MIT
 - reqwest — MIT OR Apache-2.0
 - url — MIT OR Apache-2.0
+- keyring（Windows Credential Manager 封装） — MIT OR Apache-2.0
+- windows（Win32 API 绑定，BitBlt/捕获） — MIT OR Apache-2.0
+- rusqlite + SQLite（bundled） — MIT / Public Domain
+- png（PNG 编码） — MIT OR Apache-2.0
+- base64 / sha2 / hex / dirs / parking_lot / once_cell / async-trait — MIT OR Apache-2.0
 
 二、构建期工具（不随包分发）
 - Vite — MIT
@@ -29,16 +37,17 @@ Copyright 2026 框选 AI (Snip Ask) contributors
 - pnpm — MIT
 - ESLint / Prettier 生态（若启用） — MIT
 
-三、本地 OCR
+三、本地 OCR（full 版随包 / slim 版首次下载）
 - RapidOCR（推理封装与后处理） — Apache-2.0
-- ONNX Runtime — MIT
-- PP-OCR 系列检测/识别模型（通过 RapidOCR 分发） — Apache-2.0
+- ONNX Runtime 1.31.1（`onnxruntime.dll`，两个版本均随包） — MIT
+- PaddleOCR PP-OCRv4 检测/识别/方向分类模型（`ch_PP-OCRv4_det_infer.onnx` /
+  `ch_PP-OCRv4_rec_infer.onnx` / `ch_ppocr_mobile_v2.0_cls_infer.onnx`）与 `ppocr_keys_v1.txt` — Apache-2.0
+- 说明：OCR 模型来源、SHA256 与镜像记录在 `resources/models.manifest.json`；slim 版首次使用 OCR 时下载。
 
 四、本地推理与数据
-- llama.cpp — MIT
-- CTranslate2 — MIT
+- llama.cpp（Vulkan/CUDA/CPU 后端组件，按需下载） — MIT
+- CTranslate2（预留，当前未接入） — MIT
 - SQLite（bundled） — Public Domain
-- ron（配置序列化候选） — MIT OR Apache-2.0
 
 五、本地翻译模型（按需下载，不随包分发）
 - HY-MT1.5-1.8B（腾讯混元） — Tencent Hunyuan Community License

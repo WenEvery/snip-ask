@@ -6,29 +6,29 @@
 use std::collections::BTreeSet;
 
 use snip_ask_lib::contract::config::{
-    Cap, Config, ConfigView, FontSize, Language, LocalEngine, ResultPosition, SearchMode, Theme,
-    TranslateBackend, UpdateChannel, CONFIG_SCHEMA_VERSION,
+    Cap, Config, ConfigView, FontSize, Language, LocalEngine, ProviderKind, ResultPosition,
+    SearchMode, Theme, TranslateBackend, CONFIG_SCHEMA_VERSION,
 };
 use snip_ask_lib::contract::errors::{AppError, ErrorCode};
 use snip_ask_lib::contract::events::{
     DownloadProgressPayload, DownloadStatePayload, MenuReadyPayload, OcrStatusPayload,
     OcrStatusState, OverlayReadyPayload, OverlaySelectionPayload, TaskDeltaPayload,
-    TaskErrorPayload, TaskStartedPayload, TrayActionPayload, UpdateState, UpdateStatusPayload,
-    EVENT_CONFIG_CHANGED, EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE, EVENT_ENGINE_STATUS,
-    EVENT_MENU_READY, EVENT_OCR_STATUS, EVENT_OVERLAY_READY, EVENT_OVERLAY_SELECTION,
-    EVENT_TASK_DELTA, EVENT_TASK_DONE, EVENT_TASK_ERROR, EVENT_TASK_STARTED,
-    EVENT_TRANSLATE_PROGRESS, EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION, EVENT_UPDATE_STATUS,
-    IPC_CONTRACT_VERSION,
+    TaskErrorPayload, TaskStartedPayload, TrayActionPayload, EVENT_CONFIG_CHANGED,
+    EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE, EVENT_ENGINE_STATUS, EVENT_MENU_READY,
+    EVENT_OCR_STATUS, EVENT_OVERLAY_READY, EVENT_OVERLAY_SELECTION, EVENT_TASK_DELTA,
+    EVENT_TASK_DONE, EVENT_TASK_ERROR, EVENT_TASK_STARTED, EVENT_TRANSLATE_PROGRESS,
+    EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION, IPC_CONTRACT_VERSION,
 };
 use snip_ask_lib::contract::types::{
-    ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta, HotkeyStatus,
-    Mode, ModelInfo, ModelKind, OcrBox, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
+    ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta,
+    HistorySession, HistoryThread, HistoryTurn, HotkeyStatus, Mode, ModelInfo, ModelKind,
+    OcrAssetStatus, OcrBox, OcrStatus, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
     SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload, TaskId, TestResult,
     TokenUsage, WindowLabel,
 };
 
-/// 契约 §7 的 16 个事件名（顺序即契约表顺序；v4 新增 translate:progress / translate:ready）。
-const EXPECTED_EVENTS: [&str; 16] = [
+/// 契约 §7 的 15 个事件名（顺序即契约表顺序；v5 移除 update:status）。
+const EXPECTED_EVENTS: [&str; 15] = [
     EVENT_OVERLAY_READY,
     EVENT_OVERLAY_SELECTION,
     EVENT_OCR_STATUS,
@@ -44,20 +44,19 @@ const EXPECTED_EVENTS: [&str; 16] = [
     EVENT_ENGINE_STATUS,
     EVENT_TRANSLATE_PROGRESS,
     EVENT_TRANSLATE_READY,
-    EVENT_UPDATE_STATUS,
 ];
 
 #[test]
 fn contract_version_is_one() {
     assert_eq!(IPC_CONTRACT_VERSION, 1);
-    // 契约 v4：local.device / gpuBackend / gpuLayers（Vulkan 优先，CUDA 可选）。
-    assert_eq!(CONFIG_SCHEMA_VERSION, 4);
+    // 契约 v5：配置 schema 5（去 updateChannel / Provider.kind / 骨架模式默认关闭）。
+    assert_eq!(CONFIG_SCHEMA_VERSION, 5);
 }
 
 #[test]
-fn event_names_are_exactly_the_sixteen_contract_names() {
+fn event_names_are_exactly_the_fifteen_contract_names() {
     let unique: BTreeSet<&str> = EXPECTED_EVENTS.iter().copied().collect();
-    assert_eq!(unique.len(), 16);
+    assert_eq!(unique.len(), 15);
     let expected: BTreeSet<&str> = [
         "overlay:ready",
         "overlay:selection",
@@ -74,7 +73,6 @@ fn event_names_are_exactly_the_sixteen_contract_names() {
         "engine:status",
         "translate:progress",
         "translate:ready",
-        "update:status",
     ]
     .into_iter()
     .collect();
@@ -112,7 +110,7 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(keys, expected_keys);
 
     // 关键默认值。
-    assert_eq!(value["schemaVersion"], 4);
+    assert_eq!(value["schemaVersion"], 5);
     assert_eq!(value["app"]["language"], "zh-CN");
     assert_eq!(value["app"]["singleInstance"].as_bool(), Some(true));
     assert_eq!(value["ui"]["theme"], "system");
@@ -122,7 +120,12 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(value["actions"]["menu"]["text"][0], "search");
     assert_eq!(value["actions"]["defaultAction"], serde_json::Value::Null);
     assert_eq!(value["providers"][0]["id"], "deepseek");
+    assert_eq!(value["providers"][0]["kind"], "openAiCompatible");
     assert_eq!(value["providers"][0]["caps"][0], "vision");
+    assert_eq!(value["providers"][1]["id"], "dashscope");
+    assert_eq!(value["providers"][1]["kind"], "qwenMt");
+    assert_eq!(value["providers"][1]["enabled"].as_bool(), Some(false));
+    assert_eq!(value["providers"].as_array().unwrap().len(), 3);
     assert_eq!(value["search"]["mode"], "browser");
     assert_eq!(value["translate"]["targetLang"], "zh-CHS");
     assert_eq!(value["local"]["engine"], "llama.cpp");
@@ -134,7 +137,8 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(value["ocr"]["engine"], "rapidocr");
     assert_eq!(value["privacy"]["localOnly"].as_bool(), Some(false));
     assert_eq!(value["history"]["maxEntries"], 1000);
-    assert_eq!(value["advanced"]["skeletonMode"].as_bool(), Some(true));
+    assert_eq!(value["advanced"]["skeletonMode"].as_bool(), Some(false));
+    assert!(value["advanced"].get("updateChannel").is_none());
     assert_eq!(value["translate"]["glossary"].as_array().unwrap().len(), 0);
 }
 
@@ -151,9 +155,9 @@ fn config_partial_json_fills_defaults() {
     // 缺失字段必须用默认值补齐（契约 §16：后端提供默认值）。
     let partial: Config = serde_json::from_str(r#"{"ui":{"theme":"dark"}}"#).unwrap();
     assert_eq!(partial.ui.theme, Theme::Dark);
-    assert_eq!(partial.schema_version, 4);
+    assert_eq!(partial.schema_version, 5);
     assert_eq!(partial.hotkeys.capture, "Ctrl+Q");
-    assert_eq!(partial.providers.len(), 1);
+    assert_eq!(partial.providers.len(), 3);
 }
 
 #[test]
@@ -173,7 +177,7 @@ fn config_view_providers_have_key_status_fields() {
 
 #[test]
 fn config_enums_serialize_with_contract_literals() {
-    let cases: [(serde_json::Value, &str); 9] = [
+    let cases: [(serde_json::Value, &str); 10] = [
         (serde_json::to_value(Language::EnUs).unwrap(), "en-US"),
         (serde_json::to_value(Theme::Dark).unwrap(), "dark"),
         (serde_json::to_value(FontSize::Lg).unwrap(), "lg"),
@@ -191,8 +195,12 @@ fn config_enums_serialize_with_contract_literals() {
             "llama.cpp",
         ),
         (
-            serde_json::to_value(UpdateChannel::Preview).unwrap(),
-            "preview",
+            serde_json::to_value(ProviderKind::QwenMt).unwrap(),
+            "qwenMt",
+        ),
+        (
+            serde_json::to_value(ProviderKind::OpenAiCompatible).unwrap(),
+            "openAiCompatible",
         ),
         (serde_json::to_value(Cap::Thinking).unwrap(), "thinking"),
     ];
@@ -220,10 +228,6 @@ fn base_types_use_contract_literals() {
         "cancelled"
     );
     assert_eq!(serde_json::to_value(EngineStatus::Ready).unwrap(), "ready");
-    assert_eq!(
-        serde_json::to_value(UpdateState::Checking).unwrap(),
-        "checking"
-    );
     assert_eq!(
         serde_json::to_value(OcrStatusState::Scanning).unwrap(),
         "scanning"
@@ -467,14 +471,7 @@ fn event_payload_shapes() {
     };
     assert_eq!(serde_json::to_value(&tray).unwrap()["id"], "capture");
 
-    let update = UpdateStatusPayload {
-        state: UpdateState::Idle,
-        version: None,
-        error: None,
-    };
-    let value = serde_json::to_value(&update).unwrap();
-    assert_eq!(value["state"], "idle");
-    assert!(value["version"].is_null());
+    assert!(value.get("updateChannel").is_none());
 }
 
 #[test]
@@ -534,8 +531,10 @@ fn onboarding_and_model_shapes() {
 #[test]
 fn stats_and_overlay_types_camel_case() {
     let stats = Stats {
-        version: "0.1.0".to_string(),
+        version: "1.0.0".to_string(),
         contract_version: 1,
+        edition: "full".to_string(),
+        ocr_ready: true,
         uptime_sec: 5,
         memory_mb: 0,
         active_session: None,
@@ -546,6 +545,8 @@ fn stats_and_overlay_types_camel_case() {
     };
     let value = serde_json::to_value(&stats).unwrap();
     assert_eq!(value["contractVersion"], 1);
+    assert_eq!(value["edition"], "full");
+    assert_eq!(value["ocrReady"].as_bool(), Some(true));
     assert_eq!(value["uptimeSec"], 5);
     assert_eq!(value["memoryMb"], 0);
     assert_eq!(value["activeSession"], serde_json::Value::Null);
@@ -579,4 +580,56 @@ fn ids_are_transparent_strings() {
     );
     let task: TaskId = serde_json::from_str("\"task-1\"").unwrap();
     assert_eq!(task.as_str(), "task-1");
+}
+
+#[test]
+fn ocr_status_and_history_types_serialize() {
+    let status = OcrStatus {
+        ready: true,
+        bundled: false,
+        runtime_ready: true,
+        runtime_path: Some("C:/Program Files/SnipAsk/ocr/onnxruntime.dll".to_string()),
+        assets: vec![OcrAssetStatus {
+            id: "ocr-det".to_string(),
+            name: "OCR 检测模型".to_string(),
+            installed: true,
+            bundled: false,
+            size_bytes: 4_745_517,
+            sha256: "d2a7".to_string(),
+        }],
+        missing: Vec::new(),
+        message: None,
+    };
+    let value = serde_json::to_value(&status).unwrap();
+    assert_eq!(value["ready"].as_bool(), Some(true));
+    assert_eq!(value["runtimeReady"].as_bool(), Some(true));
+    assert_eq!(value["assets"][0]["id"], "ocr-det");
+    assert_eq!(value["missing"].as_array().unwrap().len(), 0);
+
+    let session = HistorySession {
+        session: SessionId::from("s-1"),
+        started_at: 1_700_000_000_000,
+        title: "什么是框选 AI？".to_string(),
+        action: Some(ActionId::Answer),
+        turns: 2,
+        engine: Some("deepseek".to_string()),
+    };
+    let thread = HistoryThread {
+        session: session.clone(),
+        turns: vec![HistoryTurn {
+            task: TaskId::from("t-1"),
+            action: ActionId::Answer,
+            mode: Mode::Quick,
+            question: "问题".to_string(),
+            answer: "回答".to_string(),
+            engine: Some("deepseek".to_string()),
+            status: "done".to_string(),
+            created_at: 1_700_000_000_001,
+        }],
+    };
+    let value = serde_json::to_value(&thread).unwrap();
+    assert_eq!(value["session"]["startedAt"], 1_700_000_000_000i64);
+    assert_eq!(value["session"]["turns"], 2);
+    assert_eq!(value["turns"][0]["action"], "answer");
+    assert_eq!(value["turns"][0]["status"], "done");
 }

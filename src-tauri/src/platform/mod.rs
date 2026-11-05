@@ -18,5 +18,6 @@ pub mod coords;
 pub mod credential;
 pub mod gpu;
 pub mod hotkey;
+pub mod http;
 pub mod paths;
 pub mod process;

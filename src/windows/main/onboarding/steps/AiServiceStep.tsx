@@ -40,13 +40,16 @@ export function AiServiceStep(props: StepProps) {
       name: preset?.name ?? "自定义",
       baseUrl: ai.baseUrl.trim(),
       model: ai.model.trim(),
+      kind: preset?.kind ?? "openAiCompatible",
       caps: preset?.caps ?? [],
       apiKey: apiKey.trim() ? apiKey.trim() : null,
     };
     setTesting(true);
     setNote(null);
     try {
-      const testResult = await ipc.invoke<TestResult>(COMMANDS.providerTest, { draft: draftProvider });
+      const testResult = await ipc.invoke<TestResult>(COMMANDS.providerTest, {
+        draft: draftProvider,
+      });
       setResult(testResult);
       if (testResult.ok) updateAi({ tested: true });
     } catch (err) {
@@ -60,7 +63,8 @@ export function AiServiceStep(props: StepProps) {
     <div className="ob-step">
       <h2 className="ob-step-title">连接一个 AI 服务</h2>
       <p className="ob-hint">
-        所有云端能力均为 BYOK（自带 Key），Key 只存 Windows 凭据管理器，不会进入配置文件。没有 Key 也可以先跳过。
+        所有云端能力均为 BYOK（自带 Key），Key 只存 Windows 凭据管理器，不会进入配置文件。没有 Key
+        也可以先跳过。
       </p>
 
       <div className="ob-presets">
@@ -111,7 +115,12 @@ export function AiServiceStep(props: StepProps) {
       </div>
 
       <div className="ob-inline">
-        <button type="button" className="ob-btn ob-btn-primary" disabled={testing} onClick={() => void testConnection()}>
+        <button
+          type="button"
+          className="ob-btn ob-btn-primary"
+          disabled={testing}
+          onClick={() => void testConnection()}
+        >
           {testing ? "测试中…" : "测试连接"}
         </button>
         {ai.tested ? <span className="ob-tag is-ok">已通过测试</span> : null}

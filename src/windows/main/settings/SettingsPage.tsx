@@ -20,6 +20,7 @@ import { AiProvidersSection } from "./sections/AiProvidersSection";
 import { TranslateSection } from "./sections/TranslateSection";
 import { ActionsHotkeysSection } from "./sections/ActionsHotkeysSection";
 import { AdvancedSection } from "./sections/AdvancedSection";
+import { AboutSection } from "./sections/AboutSection";
 import "./settings.css";
 
 const NAV: { id: SectionId; label: string; hint: string }[] = [
@@ -29,6 +30,7 @@ const NAV: { id: SectionId; label: string; hint: string }[] = [
   { id: "translate", label: "翻译", hint: "云端 / 本地 / 术语表" },
   { id: "actions", label: "动作与热键", hint: "菜单 / 热键 / 搜索" },
   { id: "advanced", label: "高级", hint: "预算 / 代理 / 运行信息" },
+  { id: "about", label: "自定义与关于", hint: "版本 / 目录 / 文档" },
 ];
 
 const SECTION_ALIASES: Record<string, SectionId> = {
@@ -47,6 +49,11 @@ const SECTION_ALIASES: Record<string, SectionId> = {
   hotkey: "actions",
   advanced: "advanced",
   advance: "advanced",
+  about: "about",
+  custom: "about",
+  customize: "about",
+  docs: "about",
+  version: "about",
 };
 
 function resolveSection(initial?: string): SectionId {
@@ -87,7 +94,11 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
 
   const dirty = draft !== null && baseline !== null ? hasChanges(baseline, draft) : false;
   const tone = error ? "error" : dirty ? "draft" : status === "ok" ? "ok" : "idle";
-  const statusLabel = error ? STATUS_TEXT.error : dirty ? STATUS_TEXT.draft : statusText ?? STATUS_TEXT[tone];
+  const statusLabel = error
+    ? STATUS_TEXT.error
+    : dirty
+      ? STATUS_TEXT.draft
+      : (statusText ?? STATUS_TEXT[tone]);
 
   const resetAll = async () => {
     setResetting(true);
@@ -171,11 +182,14 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
 
         <div className="settings-content">
           {section === "general" ? <GeneralSection key="general" {...sectionProps} /> : null}
-          {section === "appearance" ? <AppearanceSection key="appearance" {...sectionProps} /> : null}
+          {section === "appearance" ? (
+            <AppearanceSection key="appearance" {...sectionProps} />
+          ) : null}
           {section === "ai" ? <AiProvidersSection key="ai" {...sectionProps} /> : null}
           {section === "translate" ? <TranslateSection key="translate" {...sectionProps} /> : null}
           {section === "actions" ? <ActionsHotkeysSection key="actions" {...sectionProps} /> : null}
           {section === "advanced" ? <AdvancedSection key="advanced" {...sectionProps} /> : null}
+          {section === "about" ? <AboutSection key="about" {...sectionProps} /> : null}
         </div>
       </div>
     </div>

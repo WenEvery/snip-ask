@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "resources": {
+      "resources/ocr/onnxruntime.dll": "ocr/onnxruntime.dll",
+      "resources/ocr/ch_PP-OCRv4_det_infer.onnx": "ocr/ch_PP-OCRv4_det_infer.onnx",
+      "resources/ocr/ch_PP-OCRv4_rec_infer.onnx": "ocr/ch_PP-OCRv4_rec_infer.onnx",
+      "resources/ocr/ch_ppocr_mobile_v2.0_cls_infer.onnx": "ocr/ch_ppocr_mobile_v2.0_cls_infer.onnx",
+      "resources/ocr/ppocr_keys_v1.txt": "ocr/ppocr_keys_v1.txt",
+      "../docs/README.md": "docs/README.md",
+      "../docs/自定义指南.md": "docs/自定义指南.md",
+      "../LICENSE": "docs/LICENSE",
+      "../NOTICE": "docs/NOTICE",
+      "../SECURITY.md": "docs/SECURITY.md",
+      "../PRIVACY.md": "docs/PRIVACY.md"
+    }
+  }
+}

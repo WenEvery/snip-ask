@@ -454,6 +454,9 @@ pub struct ProviderDraft {
     pub base_url: String,
     /// 模型名。
     pub model: String,
+    /// API 类型（契约 v5；缺省 = OpenAI 兼容）。
+    #[serde(default)]
+    pub kind: super::config::ProviderKind,
     /// 能力列表。
     pub caps: Vec<Cap>,
     /// 明文 API Key（仅命令入参，绝不落盘 / 不出现在出参）。
@@ -730,6 +733,10 @@ pub struct Stats {
     pub version: String,
     /// IPC 契约版本。
     pub contract_version: u32,
+    /// 版本类型：`full`（内置 OCR 模型版）/ `slim`（安装后下载版）/ `dev`（开发构建）。
+    pub edition: String,
+    /// OCR 是否就绪（运行时 + 模型）。
+    pub ocr_ready: bool,
     /// 运行时长（秒）。
     pub uptime_sec: u64,
     /// 内存占用（MB）；骨架模式返回 0。
@@ -744,6 +751,94 @@ pub struct Stats {
     pub models_installed: u32,
     /// 是否骨架模式。
     pub skeleton_mode: bool,
+}
+
+/// OCR 资产状态（契约 v5）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OcrAssetStatus {
+    /// 资产 id（`ocr-det` / `ocr-rec` / `ocr-cls` / `ocr-dict`）。
+    pub id: String,
+    /// 展示名。
+    pub name: String,
+    /// 是否已安装（数据目录或随包资源）。
+    pub installed: bool,
+    /// 是否来自随包资源（full 版为 true）。
+    pub bundled: bool,
+    /// 文件大小（字节）。
+    pub size_bytes: u64,
+    /// SHA256。
+    pub sha256: String,
+}
+
+/// `ocr_status` 返回（契约 v5）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OcrStatus {
+    /// 运行时 + 全部模型可用。
+    pub ready: bool,
+    /// 全部模型来自随包资源（full 版）。
+    pub bundled: bool,
+    /// ONNX Runtime 运行时是否可用。
+    pub runtime_ready: bool,
+    /// 运行时 DLL 路径（诊断用）。
+    pub runtime_path: Option<String>,
+    /// 各资产状态。
+    pub assets: Vec<OcrAssetStatus>,
+    /// 缺失资产 id。
+    pub missing: Vec<String>,
+    /// 面向用户的可操作提示。
+    pub message: Option<String>,
+}
+
+/// 历史会话摘要（契约 v5）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistorySession {
+    /// 会话 id。
+    pub session: SessionId,
+    /// 开始时间（Unix 毫秒）。
+    pub started_at: i64,
+    /// 首轮问题摘要（≤60 字符）。
+    pub title: String,
+    /// 首轮动作。
+    pub action: Option<ActionId>,
+    /// 轮数。
+    pub turns: u32,
+    /// 最近一轮引擎。
+    pub engine: Option<String>,
+}
+
+/// 历史问答轮次（契约 v5）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryTurn {
+    /// 任务 id。
+    pub task: TaskId,
+    /// 动作。
+    pub action: ActionId,
+    /// 模式。
+    pub mode: Mode,
+    /// 问题。
+    pub question: String,
+    /// 回答全文。
+    pub answer: String,
+    /// 引擎。
+    pub engine: Option<String>,
+    /// 状态：`done` / `error` / `cancelled`。
+    pub status: String,
+    /// 时间（Unix 毫秒）。
+    pub created_at: i64,
+}
+
+/// `history_thread` 返回（契约 v5）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryThread {
+    /// 会话摘要。
+    pub session: HistorySession,
+    /// 轮次列表（按时间正序）。
+    pub turns: Vec<HistoryTurn>,
 }
 
 /// 首启引导状态（契约 §9）。

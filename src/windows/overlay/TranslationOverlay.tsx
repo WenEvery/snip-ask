@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button, Spinner } from "../../components/ui";
 import type { CoveredBlock, FrozenFrameMeta, OcrBox, RectPhys } from "../../shared/contract/types";
+import { engineLabel, engineTitle } from "../shared/engineLabel";
 import {
   estimateTextWidth,
   mergeLines,
@@ -372,9 +373,9 @@ export function TranslationOverlay({
               </span>
             </>
           ) : (
-            <span>
+            <span title={engineTitle(engine)}>
               已覆盖 {plan.total} 块{plan.bubbleCount > 0 ? ` · 气泡 ${plan.bubbleCount}` : ""}
-              {engine ? ` · 引擎 ${engine}` : ""}
+              {engine ? ` · 引擎 ${engineLabel(engine)}` : ""}
             </span>
           )}
         </span>
@@ -413,7 +414,8 @@ export function TranslationOverlay({
           className="translation-toolbar__meta"
           title="覆盖翻译只作用于框选 AI 自己的冻结画面，不修改目标应用"
         >
-          仅覆盖本窗口冻结画面
+          仅覆盖本窗口冻结画面 · 帧 {frame.width}×{frame.height}
+          {frame.dataUrl ? "（真实帧）" : "（无帧）"}
         </span>
 
         <div className="translation-toolbar__actions">

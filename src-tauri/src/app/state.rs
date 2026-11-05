@@ -15,7 +15,8 @@ use crate::contract::types::{EngineStatus, OnboardingState, SessionId};
 use crate::domain::session::{SessionPhase, SessionStore};
 use crate::domain::task::TaskStore;
 use crate::domain::turn::TurnStore;
-use crate::platform::credential::{CredentialStore, InMemoryCredentialStore};
+use crate::platform::capture::FrozenFrame;
+use crate::platform::credential::{default_store, CredentialStore};
 use crate::platform::gpu::GpuProbeCache;
 use crate::platform::paths::AppPaths;
 use crate::services::action_router::RoutedAction;
@@ -67,11 +68,21 @@ pub struct AppState {
     pub started_at: Instant,
     /// 热键是否暂停。
     pub paused: AtomicBool,
+    /// 当前冻结帧（真实捕获含 BGRA 像素与 PNG data URL；T2/T3 共用）。
+    pub frozen: RwLock<Option<FrozenFrame>>,
 }
 
 impl AppState {
-    /// 初始化应用状态：加载配置 / 引导 / 历史 / 凭据 / 模型清单。
+    /// 初始化应用状态（真实 Windows Credential Manager 凭据存储）。
     pub fn initialize(paths: AppPaths) -> AppResult<Self> {
+        Self::initialize_with(paths, default_store())
+    }
+
+    /// 以给定凭据存储初始化（单测 / 无 Credential Manager 时的降级路径）。
+    pub fn initialize_with(
+        paths: AppPaths,
+        credentials: Arc<dyn CredentialStore>,
+    ) -> AppResult<Self> {
         paths.ensure()?;
 
         let config_center = ConfigCenter::new(paths.clone());
@@ -84,8 +95,12 @@ impl AppState {
         }
 
         let onboarding = OnboardingService::new(&paths).load();
-        let credentials: Arc<dyn CredentialStore> = Arc::new(InMemoryCredentialStore::new());
         let history = HistoryRepo::open(&paths, loaded.config.history.enabled);
+        // 启动时按历史保留策略清理一次（shutdown 也会清理）。
+        history.cleanup(
+            loaded.config.history.max_entries,
+            loaded.config.history.retention_days,
+        );
         let models = ModelManager::load(&paths)?;
         // S-08：把配置里的骨架模式注入模型管理器（默认 true = 保持原骨架下载行为；
         // skeletonMode=false 时才走真实 HTTP Range 下载 + 校验）。
@@ -101,8 +116,15 @@ impl AppState {
             config_center,
             credentials,
             history,
-            // 骨架模式：占位 OCR 引擎（真实 RapidOCR 引擎见 ocr_service 的 TODO(real)）。
-            ocr: OcrPipeline::with_skeleton(),
+            // 非骨架模式：真实 RapidOCR ONNX 引擎（懒加载；缺模型不阻塞启动，首次 OCR 报可操作错误）。
+            ocr: if skeleton_mode {
+                OcrPipeline::with_skeleton()
+            } else {
+                let assets = crate::services::ocr_onnx::OcrAssets::resolve(&paths.models_dir);
+                OcrPipeline::with_real(Box::new(crate::services::ocr_onnx::OnnxOcrEngine::new(
+                    assets,
+                )))
+            },
             models,
             backends: BackendManager::new(paths.clone()),
             gpu_probe: Arc::new(GpuProbeCache::new()),
@@ -111,6 +133,7 @@ impl AppState {
             engine: RwLock::new(EngineStatus::Stopped),
             started_at: Instant::now(),
             paused: AtomicBool::new(false),
+            frozen: RwLock::new(None),
         })
     }
 
@@ -170,6 +193,21 @@ impl AppState {
     /// 设置热键暂停标记。
     pub fn set_paused(&self, paused: bool) {
         self.paused.store(paused, Ordering::SeqCst);
+    }
+
+    /// 保存冻结帧（真实捕获帧；overlay / OCR / 图片搜索共用）。
+    pub fn set_frozen_frame(&self, frame: FrozenFrame) {
+        *self.frozen.write() = Some(frame);
+    }
+
+    /// 读取当前冻结帧（克隆；BGRA 用 Arc 共享，克隆成本低）。
+    pub fn frozen_frame(&self) -> Option<FrozenFrame> {
+        self.frozen.read().clone()
+    }
+
+    /// 清空冻结帧（关闭会话 / 取消捕获时调用）。
+    pub fn clear_frozen_frame(&self) {
+        *self.frozen.write() = None;
     }
 
     /// 凭据服务（复用同一存储）。
@@ -248,6 +286,7 @@ impl AppState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::platform::credential::InMemoryCredentialStore;
 
     fn temp_paths() -> AppPaths {
         let root = std::env::temp_dir().join(format!("snip-ask-state-{}", uuid::Uuid::new_v4()));
@@ -260,19 +299,24 @@ mod tests {
         .unwrap()
     }
 
+    fn test_state(paths: AppPaths) -> AppState {
+        AppState::initialize_with(paths, Arc::new(InMemoryCredentialStore::new())).unwrap()
+    }
+
     #[test]
     fn initialize_loads_defaults() {
         let paths = temp_paths();
-        let state = AppState::initialize(paths.clone()).unwrap();
-        assert!(state.is_skeleton());
-        // S-08：骨架模式开关必须同步注入模型管理器（默认 true）。
+        let state = test_state(paths.clone());
+        // v5：默认走真实能力（skeletonMode = false），骨架模式仅作调试开关。
+        assert!(!state.is_skeleton());
+        // S-08：骨架模式开关必须同步注入模型管理器。
         assert_eq!(state.is_skeleton(), state.models.is_skeleton_mode());
         assert_eq!(state.session_phase(), SessionPhase::Idle);
         assert_eq!(state.active_session_id(), None);
         assert_eq!(state.active_task_count(), 0);
         assert_eq!(state.engine_status(), EngineStatus::Stopped);
         assert!(!state.is_paused());
-        assert_eq!(state.snapshot_config().schema_version, 4);
+        assert_eq!(state.snapshot_config().schema_version, 5);
         assert!(!state.onboarding.lock().completed);
         assert!(paths.config_file.is_file());
         assert!(state.history.is_enabled());
@@ -283,9 +327,9 @@ mod tests {
     #[tokio::test]
     async fn config_view_reports_no_keys_initially() {
         let paths = temp_paths();
-        let state = AppState::initialize(paths.clone()).unwrap();
+        let state = test_state(paths.clone());
         let view = state.config_view().await;
-        assert_eq!(view.providers.len(), 1);
+        assert_eq!(view.providers.len(), 3);
         assert!(!view.providers[0].has_key);
         assert!(view.providers[0].key_mask.is_none());
         let _ = std::fs::remove_dir_all(&paths.data_dir);

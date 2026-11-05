@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import type {
   Provider,
   ProviderDraft,
+  ProviderKind,
   ProviderView,
   TestResult,
 } from "@/shared/contract/types";
@@ -24,6 +25,11 @@ import {
 } from "../parts";
 import { ProviderEditor } from "../components/ProviderEditor";
 import type { SectionProps } from "../types";
+
+const PROVIDER_KIND_LABELS: Record<ProviderKind, string> = {
+  openAiCompatible: "OpenAI 兼容",
+  qwenMt: "Qwen-MT 翻译",
+};
 
 function uniqueProviderId(base: string, providers: ProviderView[]): string {
   const used = new Set(providers.map((provider) => provider.id));
@@ -67,6 +73,7 @@ export function AiProvidersSection(props: SectionProps) {
       name: preset.name,
       baseUrl: preset.baseUrl,
       model: preset.model,
+      kind: preset.kind,
       caps: [...preset.caps],
       temperature: preset.temperature,
       maxTokens: preset.maxTokens,
@@ -100,6 +107,7 @@ export function AiProvidersSection(props: SectionProps) {
       name: provider.name,
       baseUrl: provider.baseUrl,
       model: provider.model,
+      kind: provider.kind,
       caps: provider.caps,
       apiKey: apiKey ? apiKey : null,
       temperature: provider.temperature,
@@ -217,10 +225,22 @@ export function AiProvidersSection(props: SectionProps) {
                 <span>·</span>
                 <span className="sa-mono">{provider.model || "未填写模型"}</span>
                 <span>·</span>
-                <span>能力：{provider.caps.length ? provider.caps.map((cap) => CAP_LABELS[cap]).join(" / ") : "无"}</span>
+                <StatusTag tone={provider.kind === "qwenMt" ? "warn" : "neutral"}>
+                  {PROVIDER_KIND_LABELS[provider.kind]}
+                </StatusTag>
+                <span>
+                  能力：
+                  {provider.caps.length
+                    ? provider.caps.map((cap) => CAP_LABELS[cap]).join(" / ")
+                    : "无"}
+                </span>
               </p>
               {testResults[provider.id] && !expanded ? (
-                <p className={testResults[provider.id].ok ? "sa-testline is-ok" : "sa-testline is-bad"}>
+                <p
+                  className={
+                    testResults[provider.id].ok ? "sa-testline is-ok" : "sa-testline is-bad"
+                  }
+                >
                   上次测试：{testResults[provider.id].ok ? "连接成功" : "连接失败"}
                 </p>
               ) : null}
@@ -242,7 +262,10 @@ export function AiProvidersSection(props: SectionProps) {
         })}
       </Panel>
 
-      <Panel title="动作绑定" description="脚手架阶段所有动作共用默认供应商；按动作单独绑定模型为后续版本能力。">
+      <Panel
+        title="动作绑定"
+        description="脚手架阶段所有动作共用默认供应商；按动作单独绑定模型为后续版本能力。"
+      >
         <InfoRow
           label="默认供应商"
           value={defaultProvider ? `${defaultProvider.name} / ${defaultProvider.model}` : "未配置"}

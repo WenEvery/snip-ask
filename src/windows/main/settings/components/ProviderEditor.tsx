@@ -1,9 +1,21 @@
 /** AI 服务 · 单个供应商编辑表单（字段直接写回配置草稿，密钥只随测试连接提交） */
 
-import type { Cap, Provider, ProviderView, TestResult } from "@/shared/contract/types";
+import type {
+  Cap,
+  Provider,
+  ProviderKind,
+  ProviderView,
+  TestResult,
+} from "@/shared/contract/types";
 import { Button } from "@/components/ui";
 import { ALL_CAPS, CAP_LABELS } from "../presets";
-import { Field, NumberField, StatusTag, TextInput } from "../parts";
+import { Field, NumberField, SelectField, StatusTag, TextInput } from "../parts";
+
+/** 契约 v5：供应商 API 类型（`openAiCompatible` 默认 / `qwenMt` 专用翻译 API）。 */
+const PROVIDER_KIND_OPTIONS: { value: ProviderKind; label: string }[] = [
+  { value: "openAiCompatible", label: "OpenAI 兼容（Chat Completions）" },
+  { value: "qwenMt", label: "DashScope Qwen-MT（专用翻译）" },
+];
 
 export interface ProviderEditorProps {
   provider: ProviderView;
@@ -61,14 +73,27 @@ export function ProviderEditor(props: ProviderEditorProps) {
         hint="OpenAI 兼容端点；本地服务请用 http://127.0.0.1:端口"
         onChange={(baseUrl) => props.onChange({ baseUrl: baseUrl.trim() })}
       />
-      <TextInput
-        label="模型名"
-        value={provider.model}
-        placeholder="deepseek-flash"
-        error={provider.model.trim() ? undefined : "模型名不能为空"}
-        monospace
-        onChange={(model) => props.onChange({ model: model.trim() })}
-      />
+      <div className="sa-grid-2">
+        <SelectField
+          label="API 类型"
+          value={provider.kind}
+          options={PROVIDER_KIND_OPTIONS}
+          hint="OpenAI 兼容走 /chat/completions；Qwen-MT 走 DashScope 原生 translation_options（仅翻译）"
+          onChange={(value) =>
+            props.onChange({
+              kind: value === "qwenMt" ? "qwenMt" : "openAiCompatible",
+            })
+          }
+        />
+        <TextInput
+          label="模型名"
+          value={provider.model}
+          placeholder="deepseek-flash"
+          error={provider.model.trim() ? undefined : "模型名不能为空"}
+          monospace
+          onChange={(model) => props.onChange({ model: model.trim() })}
+        />
+      </div>
       <TextInput
         label="API Key"
         value={props.apiKey}
@@ -142,7 +167,9 @@ function TestResultBlock(props: { result: TestResult }) {
         {error?.code ? `${error.code} · ` : ""}
         {error?.message ?? `HTTP ${result.status ?? "无响应"}`}
       </span>
-      {error?.fallback.length ? <span className="sa-field-hint">可尝试：{error.fallback.join("、")}</span> : null}
+      {error?.fallback.length ? (
+        <span className="sa-field-hint">可尝试：{error.fallback.join("、")}</span>
+      ) : null}
     </div>
   );
 }

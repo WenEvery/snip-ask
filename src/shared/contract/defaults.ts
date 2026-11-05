@@ -34,7 +34,7 @@ export const defaultHotkeys: Hotkeys = {
 
 /** 契约 §4.1：首次运行写入磁盘的配置 */
 export const defaultConfig: Config = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   app: {
     language: "zh-CN",
     autostart: false,
@@ -69,10 +69,33 @@ export const defaultConfig: Config = {
       name: "DeepSeek",
       baseUrl: "https://api.deepseek.com",
       model: "deepseek-flash",
+      kind: "openAiCompatible",
       caps: ["vision", "search", "thinking"],
       temperature: 0.2,
       maxTokens: 1024,
       enabled: true,
+    },
+    {
+      id: "dashscope",
+      name: "DashScope（Qwen-MT 翻译）",
+      baseUrl: "https://dashscope.aliyuncs.com",
+      model: "qwen-mt-lite",
+      kind: "qwenMt",
+      caps: ["translate"],
+      temperature: 0.2,
+      maxTokens: 1024,
+      enabled: false,
+    },
+    {
+      id: "generic-openai",
+      name: "通用 OpenAI 兼容",
+      baseUrl: "https://api.openai.com",
+      model: "gpt-4o-mini",
+      kind: "openAiCompatible",
+      caps: ["vision", "search", "thinking", "translate"],
+      temperature: 0.2,
+      maxTokens: 1024,
+      enabled: false,
     },
   ],
   modes: {
@@ -113,9 +136,8 @@ export const defaultConfig: Config = {
   history: { enabled: true, maxEntries: 1000, retentionDays: 90 },
   advanced: {
     proxy: null,
-    updateChannel: "stable",
     telemetry: false,
-    skeletonMode: true,
+    skeletonMode: false,
   },
 };
 

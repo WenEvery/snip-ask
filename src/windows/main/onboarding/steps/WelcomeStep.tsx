@@ -2,6 +2,7 @@
 
 import type { StepProps } from "../types";
 import { LANGUAGES } from "../presets";
+import { OcrStatusCard } from "../../ocr/OcrStatusCard";
 
 const CAPABILITIES = [
   { title: "搜索", description: "框选文字或图片，立刻得到结论与来源" },
@@ -24,7 +25,8 @@ export function WelcomeStep(props: StepProps) {
       </div>
 
       <div className="ob-notice">
-        Ctrl+Q 会注册为系统级全局快捷键，可能占用其他软件的相同组合键；如冲突可在后续步骤或设置中修改。
+        Ctrl+Q
+        会注册为系统级全局快捷键，可能占用其他软件的相同组合键；如冲突可在后续步骤或设置中修改。
       </div>
 
       <div className="ob-capabilities">
@@ -34,6 +36,18 @@ export function WelcomeStep(props: StepProps) {
             <span className="ob-capability-desc">{capability.description}</span>
           </div>
         ))}
+      </div>
+
+      <div className="ob-block">
+        <h3 className="ob-block-title">本地 OCR 状态</h3>
+        <p className="ob-hint">
+          框选后的文字识别在本机完成，不联网。精简版（slim）首次使用 OCR 时会下载约 16 MB 的
+          det/rec/cls/dict 模型；也可以稍后在「设置 → 翻译」中下载。
+        </p>
+        <OcrStatusCard
+          compact
+          note="缺少模型时可直接在此下载，或先跳过引导稍后下载；读取失败不影响继续配置。"
+        />
       </div>
 
       <div className="ob-block">

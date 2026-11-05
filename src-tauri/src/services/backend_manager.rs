@@ -551,7 +551,13 @@ pub async fn download_and_install(
     let work_dir = install_dir.join(DOWNLOAD_DIR);
     std::fs::create_dir_all(&work_dir)?;
     let total: u64 = archives.iter().map(|archive| archive.size_bytes).sum();
-    let client = build_client()?;
+    let client = build_client(
+        archives
+            .iter()
+            .flat_map(|archive| archive.urls.iter())
+            .map(String::as_str)
+            .next(),
+    )?;
     // 组件下载通常配置「官方主源 + 镜像」：主源不可达时快速切换镜像，减少等待。
     let retry = RetryPolicy {
         max_retries_per_url: 1,
@@ -633,8 +639,17 @@ pub async fn download_and_install(
 }
 
 /// 构造真实下载用 HTTP 客户端。
-fn build_client() -> Result<reqwest::Client, BackendInstallError> {
-    reqwest::Client::builder()
+///
+/// 首个下载地址为回环（测试 mock server / 本地镜像）时绕过系统代理，
+/// 避免本机系统代理不绕过 127.0.0.1 导致下载被代理拦截（见 `platform::http`）。
+fn build_client(first_url: Option<&str>) -> Result<reqwest::Client, BackendInstallError> {
+    let builder = match first_url {
+        Some(url) if crate::platform::http::is_loopback_url(url) => {
+            reqwest::Client::builder().no_proxy()
+        }
+        _ => reqwest::Client::builder(),
+    };
+    builder
         .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(CONNECT_TIMEOUT)
         // 单次请求总时长上限（大组件最多 680 MB）。

@@ -38,7 +38,11 @@ pub const CLOUD_REQUEST_TIMEOUT: Duration = Duration::from_secs(300);
 /// 快速模式最大输出 token（`LlmRequest` 不携带供应商温度/上限，取契约默认档位）。
 pub const QUICK_MAX_TOKENS: u32 = 1024;
 /// 深度模式最大输出 token。
-pub const DEEP_MAX_TOKENS: u32 = 1500;
+///
+/// v1.0.0：从 1500 提升到 4096。DeepSeek 深度模式默认开启 thinking，思考 token 会挤占
+/// max_tokens 预算；T3 真实 E2E 实测 1500 时偶发正文为空 / 来源段被截断。4096 给
+/// 「思考 + 正文 + 来源」留足空间（快速模式仍走 1024 且显式关闭 thinking）。
+pub const DEEP_MAX_TOKENS: u32 = 4096;
 /// 默认温度。
 pub const DEFAULT_TEMPERATURE: f64 = 0.2;
 /// 错误 detail 中保留的上游响应体长度上限。
@@ -109,7 +113,7 @@ impl HttpLlmGateway {
         } else {
             CLOUD_REQUEST_TIMEOUT
         };
-        reqwest::Client::builder()
+        crate::platform::http::client_builder_for(&self.base_url)
             .connect_timeout(Duration::from_secs(15))
             .timeout(timeout)
             .build()

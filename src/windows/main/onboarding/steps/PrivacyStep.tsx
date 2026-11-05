@@ -1,4 +1,4 @@
-/** 引导第 5 步：隐私与完成 —— 上传开关、隐私同意、更新通道说明与配置摘要 */
+/** 引导第 5 步：隐私与完成 —— 上传开关、隐私同意、数据目录说明与配置摘要 */
 
 import type { Mode } from "@/shared/contract/types";
 import type { StepProps } from "../types";
@@ -25,7 +25,8 @@ export function PrivacyStep(props: StepProps) {
     onEdit({ privacy: { ...privacy, ...patch } });
 
   const provider = draft.ai
-    ? ONBOARDING_PROVIDERS.find((item) => item.id === draft.ai?.providerId)?.name ?? draft.ai.providerId
+    ? (ONBOARDING_PROVIDERS.find((item) => item.id === draft.ai?.providerId)?.name ??
+      draft.ai.providerId)
     : null;
   const aiSummary = draft.ai
     ? `${provider ?? "自定义"} / ${draft.ai.model || "未填写模型"}${draft.ai.tested ? "（已测试）" : ""}`
@@ -46,7 +47,8 @@ export function PrivacyStep(props: StepProps) {
     <div className="ob-step">
       <h2 className="ob-step-title">隐私与完成</h2>
       <p className="ob-hint">
-        框选 AI 默认只在本机处理；只有你主动触发云端动作时，才会把对应文本/图片发送给你自己配置的模型服务。
+        框选 AI
+        默认只在本机处理；只有你主动触发云端动作时，才会把对应文本/图片发送给你自己配置的模型服务。
       </p>
 
       <div className="ob-block">
@@ -90,18 +92,24 @@ export function PrivacyStep(props: StepProps) {
             </span>
           </span>
         </label>
-        {privacy.agreed ? null : <p className="ob-warn">勾选同意后才能「完成并进入」；也可以直接跳过引导。</p>}
+        {privacy.agreed ? null : (
+          <p className="ob-warn">勾选同意后才能「完成并进入」；也可以直接跳过引导。</p>
+        )}
       </div>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">数据目录与更新</h3>
+        <h3 className="ob-block-title">数据目录与自定义</h3>
         <p className="ob-line">
           <span>数据目录</span>
           <code className="ob-code">%APPDATA%\SnipAsk</code>
         </p>
         <p className="ob-line">
-          <span>更新通道</span>
-          <span>稳定通道（完成后可在 设置 → 高级 中切换为预览通道）</span>
+          <span>自定义</span>
+          <span>提示词 / 术语表 / 配置 / 模型 / 本地引擎均可按《自定义指南》修改</span>
+        </p>
+        <p className="ob-line">
+          <span>更新方式</span>
+          <span>本软件不会自动更新：升级请手动下载新安装包覆盖安装（配置与历史保留）</span>
         </p>
       </div>
 

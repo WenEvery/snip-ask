@@ -8,6 +8,14 @@ use crate::contract::types::{EngineStatus, SessionId, Stats};
 /// 应用版本（`CARGO_PKG_VERSION`）。
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// 版本类型：`full`（内置 OCR 模型版）/ `slim`（安装后下载版）/ `dev`（开发构建）。
+///
+/// 由 `scripts/build-installers.ps1` 在编译期通过 `SNIP_ASK_EDITION` 注入。
+pub const APP_EDITION: &str = match option_env!("SNIP_ASK_EDITION") {
+    Some(value) => value,
+    None => "dev",
+};
+
 /// 收集诊断信息。
 pub fn collect(
     active_session: Option<SessionId>,
@@ -16,10 +24,13 @@ pub fn collect(
     models_installed: u32,
     skeleton_mode: bool,
     uptime_sec: u64,
+    ocr_ready: bool,
 ) -> Stats {
     Stats {
         version: APP_VERSION.to_string(),
         contract_version: IPC_CONTRACT_VERSION,
+        edition: APP_EDITION.to_string(),
+        ocr_ready,
         uptime_sec,
         memory_mb: memory_mb(),
         active_session,
@@ -50,9 +61,12 @@ mod tests {
             3,
             true,
             42,
+            false,
         );
         assert_eq!(stats.version, env!("CARGO_PKG_VERSION"));
         assert_eq!(stats.contract_version, 1);
+        assert_eq!(stats.edition, "dev");
+        assert!(!stats.ocr_ready);
         assert_eq!(stats.uptime_sec, 42);
         assert_eq!(stats.memory_mb, 0);
         assert_eq!(stats.active_tasks, 2);

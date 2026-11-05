@@ -312,6 +312,19 @@ impl OcrPipeline {
         Self::new(Arc::new(SkeletonOcrEngine))
     }
 
+    /// 真实 OCR 流水线（契约 v5 / spec §3.4）。
+    ///
+    /// 引擎为 [`crate::services::ocr_onnx::OnnxOcrEngine`]（或测试用 fake）；流水线本身只负责
+    /// det 缓存 / 选区过滤 / rec-only，与引擎实现无关。
+    pub fn with_real(engine: Box<dyn OcrEngine>) -> Self {
+        Self::new(Arc::from(engine))
+    }
+
+    /// 当前引擎（供诊断 / 测试断言使用）。
+    pub fn engine(&self) -> &Arc<dyn OcrEngine> {
+        &self.engine
+    }
+
     /// 整屏检测缓存（只读访问，供观察/测试）。
     pub fn cache(&self) -> &OcrCache {
         &self.cache
@@ -447,11 +460,8 @@ mod tests {
     }
 
     fn frame(width: u32, height: u32) -> FrozenFrame {
-        FrozenFrame {
-            width,
-            height,
-            data_url: None,
-        }
+        // T2 起 `FrozenFrame` 增加 `bgra: Option<Arc<Vec<u8>>>`；骨架帧无像素数据。
+        FrozenFrame::skeleton(width, height)
     }
 
     // ───────── det 像素预算（S-02） ─────────

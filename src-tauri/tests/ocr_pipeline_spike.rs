@@ -26,11 +26,8 @@ fn rect(x: f64, y: f64, width: f64, height: f64) -> RectPhys {
 }
 
 fn frame(width: u32, height: u32) -> FrozenFrame {
-    FrozenFrame {
-        width,
-        height,
-        data_url: None,
-    }
+    // v1.0.0：T2 为 `FrozenFrame` 增加 `bgra`（真实像素）字段；骨架帧用官方构造函数。
+    FrozenFrame::skeleton(width, height)
 }
 
 fn ocr_box(text: &str, confidence: f64, bbox: RectPhys) -> OcrBox {

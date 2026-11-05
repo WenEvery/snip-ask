@@ -262,8 +262,13 @@ fn prepare_blocks_drops_blank_and_rejects_invalid() {
 
 #[test]
 fn cache_model_reflects_engine_selection() {
+    // v1.0.0：默认走真实能力（skeletonMode=false，云端翻译 qwen-mt-lite）。
     let config = Config::default();
-    // 默认骨架模式
+    assert_eq!(cache_model(&config), "qwen-mt-lite");
+
+    // 骨架调试模式下缓存键固定为 skeleton。
+    let mut config = Config::default();
+    config.advanced.skeleton_mode = true;
     assert_eq!(cache_model(&config), "skeleton");
 
     let mut config = Config::default();

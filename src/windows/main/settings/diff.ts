@@ -43,6 +43,8 @@ function sanitizeProviders(value: unknown): unknown {
       name: provider.name,
       baseUrl: provider.baseUrl,
       model: provider.model,
+      // 契约 v5：Provider.kind（OpenAI 兼容 / Qwen-MT），漏掉会被后端按默认值覆盖。
+      kind: provider.kind,
       caps: provider.caps,
       temperature: provider.temperature,
       maxTokens: provider.maxTokens,

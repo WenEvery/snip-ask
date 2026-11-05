@@ -6,7 +6,7 @@
 /** 契约版本：出现在 `Stats.contractVersion` */
 export const IPC_CONTRACT_VERSION = 1;
 
-/** §6 命令表：38 个命令（契约 v4 追加 30–38） */
+/** §6 命令表：43 个命令（契约 v5 追加 39–43） */
 export const COMMANDS = {
   captureFreeze: "capture_freeze",
   captureCancel: "capture_cancel",
@@ -47,11 +47,17 @@ export const COMMANDS = {
   backendsCancel: "backends_cancel",
   backendsRemove: "backends_remove",
   translateCover: "translate_cover",
+  // —— 契约 v5：自定义目录 / OCR 状态 / 历史线程（新增） ——
+  openPath: "open_path",
+  ocrStatus: "ocr_status",
+  historyList: "history_list",
+  historyThread: "history_thread",
+  historyClear: "history_clear",
 } as const;
 
 export type CommandName = (typeof COMMANDS)[keyof typeof COMMANDS];
 
-/** §7 事件表：16 个事件（v4 新增 translate:progress / translate:ready） */
+/** §7 事件表：15 个事件（v5 移除 update:status；v4 新增 translate:progress / translate:ready） */
 export const EVENTS = {
   overlayReady: "overlay:ready",
   overlaySelection: "overlay:selection",
@@ -68,7 +74,6 @@ export const EVENTS = {
   engineStatus: "engine:status",
   translateProgress: "translate:progress",
   translateReady: "translate:ready",
-  updateStatus: "update:status",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];

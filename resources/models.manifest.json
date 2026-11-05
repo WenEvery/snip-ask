@@ -1,7 +1,7 @@
 {
   "version": 1,
   "verified": false,
-  "notes": "模型清单（S-08 于 2026-11-04 按 ModelScope 官方仓库文件列表核对，2026-11-05 phase 2 增补极小模型）：hy-mt-1.8b-q4、qwen3-4b-q4 与 qwen2.5-0.5b-instruct-q4 的文件名/大小/SHA256 已核实（真实 Range 请求返回 206 + Content-Range；见 docs/spikes/S-08-模型下载断点续传与校验.md）。opus-mt-zh-en 对应仓库当前没有 Ct2 产物（仅有 pytorch_model.bin 等），故 urls 置空，待官方发布 ct2-int8 后补齐 URL 与 SHA256。top-level verified=false 表示仍存在未核验条目（当前仅 opus-mt-zh-en），不能据此认定全部清单可信。模型文件不随安装包分发，由用户按需下载。",
+  "notes": "模型清单（S-08 于 2026-11-04 按 ModelScope 官方仓库文件列表核对，2026-11-05 phase 2 增补极小模型；2026-11-06 v1.0.0 增补 4 条 OCR 资产）：hy-mt-1.8b-q4、qwen3-4b-q4、qwen2.5-0.5b-instruct-q4 与 4 条 OCR 资产（ocr-det/ocr-rec/ocr-cls/ocr-dict）的文件名/大小/SHA256 已核实（真实 Range 请求返回 206 + Content-Range；OCR 资产两个独立镜像均全量下载并核对 SHA256 一致，见 .verify/v1/ocr/assets-verify.json）。opus-mt-zh-en 对应仓库当前没有 Ct2 产物（仅有 pytorch_model.bin 等），故 urls 置空，待官方发布 ct2-int8 后补齐 URL 与 SHA256。top-level verified=false 表示仍存在未核验条目（当前仅 opus-mt-zh-en），不能据此认定全部清单可信。模型文件不随安装包分发，由用户按需下载；OCR 资产在 slim 版按需下载，在 full 版随安装包内置（resource_dir/ocr/），下载/内置均为固定文件名（params.fileName）。",
   "models": [
     {
       "id": "hy-mt-1.8b-q4",
@@ -84,6 +84,97 @@
         "promptProfile": "translate-minimal",
         "qualityNote": "S-05 实测（2026-11-05）：需配合精简翻译提示词（resources/prompts/translate_minimal.md），否则会复述原文；200 字 P95 3.21s，译文质量一般（适合短句/轻度使用，长文建议云端或普通模型）。",
         "verifiedBy": "S-08 phase 2：ModelScope 文件列表 API + Range bytes=0-1023 → 206 Content-Range bytes 0-1023/491400032，X-Linked-ETag 与 sha256 一致（原始数据 .verify/spikes/S-08/）"
+      }
+    },
+    {
+      "id": "ocr-det",
+      "name": "OCR 检测模型（PP-OCRv4 det，ONNX）",
+      "kind": "onnx",
+      "sizeBytes": 4745517,
+      "sha256": "d2a7720d45a54257208b1e13e36a8479894cb74155a5efe29462512d42f49da9",
+      "license": "Apache-2.0",
+      "minRamMB": 256,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv4/det/ch_PP-OCRv4_det_mobile.onnx",
+        "https://hf-mirror.com/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_det_infer.onnx"
+      ],
+      "params": {
+        "fileName": "ch_PP-OCRv4_det_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "verified": true,
+        "verifiedBy": "T1 2026-11-06：ModelScope 与 hf-mirror 两镜像全量下载 SHA256 均等于清单值；两镜像 Range bytes=0-1023 均返回 206（原始数据 .verify/v1/ocr/assets-verify.json）。镜像源文件名含 _mobile 后缀，落盘用 params.fileName 固定名。"
+      }
+    },
+    {
+      "id": "ocr-rec",
+      "name": "OCR 识别模型（PP-OCRv4 rec，ONNX）",
+      "kind": "onnx",
+      "sizeBytes": 10857958,
+      "sha256": "48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b",
+      "license": "Apache-2.0",
+      "minRamMB": 512,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv4/rec/ch_PP-OCRv4_rec_mobile.onnx",
+        "https://hf-mirror.com/SWHL/RapidOCR/resolve/main/PP-OCRv4/ch_PP-OCRv4_rec_infer.onnx"
+      ],
+      "params": {
+        "fileName": "ch_PP-OCRv4_rec_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "dictFile": "ppocr_keys_v1.txt",
+        "verified": true,
+        "verifiedBy": "T1 2026-11-06：ModelScope 与 hf-mirror 两镜像全量下载 SHA256 均等于清单值；两镜像 Range bytes=0-1023 均返回 206（.verify/v1/ocr/assets-verify.json）。"
+      }
+    },
+    {
+      "id": "ocr-cls",
+      "name": "OCR 方向分类模型（PP-OCR mobile cls，ONNX）",
+      "kind": "onnx",
+      "sizeBytes": 585532,
+      "sha256": "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+      "license": "Apache-2.0",
+      "minRamMB": 128,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv4/cls/ch_ppocr_mobile_v2.0_cls_mobile.onnx",
+        "https://hf-mirror.com/SWHL/RapidOCR/resolve/main/PP-OCRv1/ch_ppocr_mobile_v2.0_cls_infer.onnx"
+      ],
+      "params": {
+        "fileName": "ch_ppocr_mobile_v2.0_cls_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "clsThresh": 0.9,
+        "verified": true,
+        "verifiedBy": "T1 2026-11-06：ModelScope 与 hf-mirror 两镜像全量下载 SHA256 均等于清单值；两镜像 Range bytes=0-1023 均返回 206（.verify/v1/ocr/assets-verify.json）。"
+      }
+    },
+    {
+      "id": "ocr-dict",
+      "name": "OCR 识别字典（ppocr_keys_v1）",
+      "kind": "onnx",
+      "sizeBytes": 26250,
+      "sha256": "a1c84d9bdb9ab29043c58896224d32941783eb821629618416dcb08f12886492",
+      "license": "Apache-2.0",
+      "minRamMB": 1,
+      "vramMB": 0,
+      "urls": [
+        "https://cdn.jsdelivr.net/gh/PaddlePaddle/PaddleOCR@24f06d1a1b018d90c3c16bf49e966f988f55d98d/ppocr/utils/ppocr_keys_v1.txt",
+        "https://ghproxy.net/https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/24f06d1a1b018d90c3c16bf49e966f988f55d98d/ppocr/utils/ppocr_keys_v1.txt"
+      ],
+      "params": {
+        "fileName": "ppocr_keys_v1.txt",
+        "role": "ocr",
+        "format": "text",
+        "lines": 6623,
+        "encoding": "utf-8",
+        "verified": true,
+        "verifiedBy": "T1 2026-11-06：内容等于 rec ONNX metadata `character` 字段提取结果（6623 行 + 末尾换行，26,250 B）；两镜像全量下载 SHA256 一致，Range bytes=0-1023 均返回 206（.verify/v1/ocr/assets-verify.json）。URL pin 到 PaddleOCR commit 24f06d1a。"
       }
     }
   ]

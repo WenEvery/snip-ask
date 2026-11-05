@@ -9,7 +9,7 @@
 //! 6. 注册全局热键；
 //! 7. 预创建隐藏窗口（result；overlay 惰性）；
 //! 8. 按需启动本地引擎（骨架模式不启动）；
-//! 9. 后台更新检查（不阻塞启动）。
+//! 9. （v1.0.0 已移除自动更新：不再做任何更新检查）。
 
 use once_cell::sync::OnceCell;
 use tauri::{AppHandle, Manager};
@@ -21,7 +21,6 @@ use crate::contract::errors::{AppError, AppResult};
 use crate::contract::types::EngineStatus;
 use crate::events::emit_engine_status;
 use crate::platform::paths::AppPaths;
-use crate::services::updater_service;
 use tracing_subscriber::EnvFilter;
 
 /// 日志 WorkerGuard（进程生命周期内保持存活，保证文件日志落盘）。
@@ -31,6 +30,26 @@ static LOG_GUARD: OnceCell<tracing_appender::non_blocking::WorkerGuard> = OnceCe
 pub fn setup(app: &mut AppHandle) -> AppResult<()> {
     // 1) 路径
     let paths = AppPaths::resolve()?;
+
+    // 1.5) 真实 OCR 运行期资源：注入 resource_dir，并在任何 ONNX 会话创建前定位 onnxruntime.dll。
+    //      slim / full 安装包都把 dll 放在 <install_dir>\ocr\；开发模式可回退 SNIP_ASK_OCR_DIR。
+    let resource_dir = app.path().resource_dir().ok();
+    if let Some(dir) = resource_dir.as_deref() {
+        crate::services::ocr_onnx::set_resource_dir(dir);
+    }
+    let ocr_assets = crate::services::ocr_onnx::OcrAssets::resolve(&paths.models_dir);
+    match crate::services::ocr_onnx::set_ort_dylib_path(&ocr_assets) {
+        Some(runtime) => tracing::info!(
+            runtime = %runtime.display(),
+            ready = ocr_assets.is_ready(),
+            missing = ?ocr_assets.missing(),
+            "OCR 资源已定位"
+        ),
+        None => tracing::warn!(
+            missing = ?ocr_assets.missing(),
+            "未找到 ONNX Runtime 运行时（OCR 将不可用；slim/full 安装包应随包提供 ocr/onnxruntime.dll）"
+        ),
+    }
 
     // 2) 日志（必须早于配置加载失败分支）
     init_logging(&paths);
@@ -118,12 +137,6 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
             tracing::warn!(code = %err.code, "显示首启引导窗口失败");
         }
     }
-
-    // 9) 后台更新检查（不阻塞启动）
-    let update_app = app.clone();
-    let _handle = tauri::async_runtime::spawn(async move {
-        updater_service::check_once(&update_app).await;
-    });
 
     tracing::info!("框选 AI 初始化完成（skeletonMode = {skeleton_mode}）");
     Ok(())

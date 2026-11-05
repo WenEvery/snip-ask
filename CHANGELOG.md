@@ -8,13 +8,140 @@
 
 ### 计划中
 
-- 真实能力接入（剩余）：Win32 `BitBlt`/WGC 捕获、RapidOCR/ONNX 推理、云端 OpenAI 兼容网关与 DeepSeek Search/Fetch、
-  Qwen-MT、Ollama/CTranslate2 本地引擎、Windows Credential Manager。
-- 追加需求遗留验证：**AMD / Intel 实机 GPU**（Vulkan 路径已论证厂商无关、本批未实测）、8GB 内存机降档提示（S-13）、
-  真实流式首字（TTFT）补测、受保护内容（DRM）下的覆盖翻译。
-- 发布工程：代码签名（EV/OV 证书）、`tauri-plugin-updater` 更新通道、默认安装目录改为
-  `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）、卸载时可选删除本地数据。
+- 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）、
+  卸载时可选删除本地数据。**自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
+- 遗留验证：**AMD / Intel 实机 GPU**（Vulkan 路径已论证厂商无关、本机未实测）、8GB 内存机降档提示（S-13）、
+  DashScope Qwen-MT 真实翻译（本机无 Key）、受保护内容（DRM）下的覆盖翻译、真实流式 TTFT 补测。
 - 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。
+- UI 打磨：结果窗 Markdown 渲染、多语言（`en-US` 预留）、无障碍键盘路径、主题自定义导入导出。
+
+## [1.0.0] - 2026-11-06（真实可用版本）
+
+> v1.0.0 把 v0.1.0 的「骨架模式 MVP」升级为完整可用的真实产品：真实捕获、真实本地 OCR、云端与本地推理、
+> 凭据、历史持久化、双安装包，并**彻底移除自动更新**、新增《自定义指南》。核心决策见
+> [ADR-0007 双安装包](docs/adr/0007-dual-installer-editions.md)、[ADR-0008 移除自动更新](docs/adr/0008-remove-auto-update.md)、
+> [ADR-0009 真实捕获与 OCR](docs/adr/0009-real-capture-ocr.md)。
+
+### 契约 v5（配置 / 命令 / 事件 / 类型）
+
+- **配置 Schema v4 → v5**：删除 `UpdateChannel` 与 `advanced.updateChannel`（迁移主动移除旧键）；
+  `advanced.skeletonMode` 迁移为 **`false`**（默认走真实能力，仍可手动改回调试）；新增
+  `providers[].kind`（`"openAiCompatible"` / `"qwenMt"`）；默认 providers 改为三条
+  （`deepseek` 启用 / `dashscope`（qwenMt）禁用 / `generic-openai` 禁用）；迁移链 **1→2→3→4→5**。
+- **新增 5 命令（39–43）**：`open_path`（白名单目录）、`ocr_status`（OCR 就绪状态）、
+  `history_list` / `history_thread` / `history_clear`（历史持久化）；命令总数 **43**。
+- **删除事件 `update:status`**，事件总数 **15**；`Stats` 追加 `edition`（`full`/`slim`/`dev`）与 `ocrReady`。
+- 新增结构 `OcrStatus` / `OcrAssetStatus` / `HistorySession` / `HistoryTurn` / `HistoryThread`；
+  `models.manifest.json` 增加 4 条 OCR 资产（`kind:"onnx"`、`role:"ocr"`、真实 sha256/size/镜像）。
+- `IPC_CONTRACT_VERSION` 保持 **1**（纯增量 + 纯删除 + 配置迁移）。
+
+### 真实捕获（Win32 BitBlt）
+
+- `platform/capture.rs` 真实捕获虚拟桌面物理像素外接矩形（`GetDC(NULL)` + `CreateDIBSection` +
+  `BitBlt(SRCCOPY|CAPTUREBLT)`，支持负原点与混合 DPI），产出原始 BGRA（供 OCR）与 PNG data URL（供 overlay）。
+- 黑屏/空帧判定按**目标区域**（选区切片/显示器切片）计算，DRM / 受保护内容返回 `SA-1001`
+  （retryable，fallback `["wgc","retry"]`）并给出可操作提示，不崩溃；WGC 不作主路径
+  （S-09 已证 BitBlt 与 WGC 像素级一致、且 WGC 不能绕过 DRM）。
+
+### 真实本地 OCR（RapidOCR PP-OCRv4 / ONNX Runtime）
+
+- 新增真实 ONNX 引擎（`ort` `load-dynamic`）：det/rec/cls 三模型 + `ppocr_keys_v1.txt` 字典；
+  启动时把解析到的 `onnxruntime.dll` 写入 `ORT_DYLIB_PATH`（必须在创建 session 前）。
+- 整屏 det 采用**双约束像素预算**（长边 ≤ `ocr.detMaxEdge`(3200) 且 ≤3.0Mpx，绝不放大）；选区采用
+  **整屏 det 缓存 → 过滤 + rec-only**（P95 596ms ≤ 800ms），缓存缺失/无命中回退 det+rec；
+  文字存在判定按 `det≥0.6 + 面积≥400px² + 行高≤70px + 行数≥1`（S-11：误判 2.0%/漏判 0%）。
+- 资产解析顺序：随包 `<resource_dir>\ocr\` → `%LOCALAPPDATA%\SnipAsk\models\ocr\` → `runtime\` →
+  开发钩子 `SNIP_ASK_OCR_DIR`；`ocr_status` 暴露运行时/模型/缺失项，设置页与「自定义与关于」展示。
+
+### 云端推理 / 搜索 / 翻译
+
+- **DeepSeek**：真实 OpenAI 兼容流式 SSE（Chat / 视觉，短任务显式关闭 thinking）；官方
+  `POST /v1/tools/search` + `POST /v1/tools/fetch` 真实检索/抓取并映射为 `SourceRef`；图片搜索四阶段
+  （视觉识别 → 检索词 → Search → deep 并发 Fetch → 摘要流式输出）。
+- **DashScope Qwen-MT**：`kind="qwenMt"` 走原生 `translation_options`（含术语干预 `terms`）；
+  本机无 Key，真实翻译未验收（协议级/单测覆盖）。
+- **通用 OpenAI 兼容**：自定义 `baseUrl`（https 或 `http://127.0.0.1[:port]`）+ 模型；`provider_test`
+  真实连通性与契约 §8.2 错误映射。
+- 翻译回退链（云端 provider 之间、云端↔本地）与 `engine` 如实标注；覆盖翻译真实链路统一经
+  `AppState::gateway_for`（骨架 → 本地 → 云端）。
+
+### 凭据与历史持久化
+
+- **Windows Credential Manager**（`keyring` crate，`windows-native`，service `SnipAsk`，user = provider id）
+  替换内存模拟；`InMemoryCredentialStore` 仅保留给单测/骨架；密钥不落盘、不进日志/事件。
+- 新增 `migrations/002_messages.sql`（`messages` 表）与 `services/history_repo.rs` 真实读写：
+  成功任务记录 user/assistant 消息；`history_list`（按 `startedAt` 倒序）/`history_thread`/`history_clear`；
+  `history.enabled=false` 不写；启动按 `maxEntries`/`retentionDays` 清理；重启后可浏览历史会话与完整线程。
+
+### 双安装包与去自动更新
+
+- 新增 `scripts/fetch-ocr-assets.ps1`（OCR 资产准备：本机缓存 → manifest 镜像，SHA256 + 大小强校验）
+  与 `scripts/build-installers.ps1`（slim/full 构建：`SNIP_ASK_EDITION` 编译期注入、体积门禁、真实安装/启动/卸载冒烟、归档与 SHA256）。
+- 新增 `src-tauri/tauri.slim.conf.json` / `tauri.full.conf.json`；产物命名
+  `SnipAsk_1.0.0_x64-setup.exe`（slim）/`SnipAsk_1.0.0_x64-full-setup.exe`（full）；
+  体积门禁 **slim ≤ 25 MiB、full ≤ 60 MiB**；安装包内随附 `docs/`。
+  最终归档产物（2026-11-06，`release/`）：
+  - slim **7,772,978 B（7.41 MiB）**，SHA256 `180dc72d5821ec2b1618e1322ca0ef6ea23d72d02b3896ede3748fbbda68c7c5`；
+  - full **22,564,103 B（21.52 MiB）**，SHA256 `3097ed9d3226587a04a0e0382757dd52a9d8aec5faa4cf62d3534f8827034db6`（含 4 个 OCR 模型/字典）。
+  两版安装包 `NotSigned`、版本 `1.0.0`；构建时间 2026-11-06 01:40:28→01:46:39。
+  终版安装冒烟 PASS：slim 安装目录 9 文件 / 27,367,523 B（exe+uninstall+`ocr\onnxruntime.dll`+docs×6，无模型），
+  启动 6s 存活可见（WS ≈38.0MB、显示「精简版·真实能力 / 缺少 4 个 OCR 模型」），卸载干净；
+  full 安装目录 13 文件 / 43,582,815 B（+det/rec/cls/dict，SHA256 与源一致），显示「完整版·真实能力 / OCR 已就绪」，
+  卸载干净；用户真实数据冒烟后 `restored=true`。证据见 `.verify/v1/installer/` 与 `SUMMARY.md`。
+- **彻底移除自动更新**：不再有 updater 插件/服务、`advanced.updateChannel`、更新通道 UI、`update:status` 事件；
+  升级方式改为覆盖安装或源码构建（[ADR-0008](docs/adr/0008-remove-auto-update.md)）。
+
+### 自定义与文档
+
+- 新增 [`docs/自定义指南.md`](docs/自定义指南.md)（核心交付）：不自动更新与升级方式、提示词覆盖（6 个模板 + 变量规则）、
+  术语表（`translate.glossary`）、配置 Schema v5 字段速查、本地模型/后端替换与调试钩子、Ollama/OpenAI 兼容接入、
+  full/slim 差异与 OCR 资产手动放置、5+ 可照抄示例、从源码构建双安装包、升级/回滚/备份。
+- 新增 `docs/README.md`（文档索引，随安装包分发）；设置页新增「自定义与关于」（版本/版本类型/OCR 状态/
+  `open_path` 目录入口/无自动更新说明）。
+- 新增 ADR-0007/0008/0009 并更新 ADR 索引；契约文档升 v5；实施架构 / 开发指南 / 技术验证清单 / README /
+  SECURITY / PRIVACY / NOTICE 同步到 v1.0.0。
+
+### 修复
+
+- **本地回环请求不再被系统代理拦截**（产品修复）：统一 HTTP 客户端构建（`platform/http.rs`）对 `127.0.0.1`
+  显式直连（不继承系统代理），本地 llama-server、自定义 `http://127.0.0.1[:port]` 供应商与回环测试不再被代理影响；
+  修复了「本机系统代理不绕过 127.0.0.1」导致的下载/云端 mock loopback 测试假失败（含单测覆盖）。
+- `model_download_spike` / `cloud_*` 等回环测试随之恢复全绿（`cargo test --all-targets`）。
+
+### 验收与门禁（2026-11-06）
+
+- **最终门禁（Lead 统一执行，全绿）**：`cargo fmt --check` PASS（0）；`cargo clippy --all-targets -- -D warnings`
+  PASS（0 warning）；`cargo test --all-targets` **479 passed / 0 failed / 20 ignored**（340 lib 单测；真实 OCR
+  推理集成 22.4s；local engine 真机 Vulkan/CPU 2 项；cloud mock/协议；model_download 12 项 Range/断点/杀进程；
+  history 重启恢复 4 项；capture 2 项仅 ignored 需真实桌面）；`pnpm typecheck` 0；`pnpm test` **48/48**
+  （含 OCR status 8 + history format 8）；`pnpm build:web` 0。
+  双安装包最终体积/SHA256 与冒烟结论见 `release/README.md` 与 `.verify/verify-v1.0.0/SUMMARY.md`。
+- **真机 E2E**：真实框选 → 真实 OCR → 云端 DeepSeek 回答 / 本地 GGUF 回答 / 覆盖翻译；
+  双安装包静默安装/启动/卸载冒烟、体积与 SHA256 归档。
+- **app 级 E2E（cloud/local 两阶段，`ok=true`，已验收）**：
+  - cloud：真实捕获 → 真实选区 OCR（hasText=true、5 行、5402ms）→ 翻译（deepseek 1470ms）/
+    AI 搜索（deepseek 2892ms）/ 图片搜索（deepseek 10036ms）→ `translate_cover`（全部块成功、4326ms）→
+    `history_list`（3 会话）/ `history_thread`（3 轮）；`provider_test` 200、`ocr_status` ready、`app_stats` v1.0.0。
+  - local：`SNIP_ASK_BACKENDS_DIR` + `SNIP_ASK_MODEL_PATH`（qwen2.5-1.5b-instruct-q4）→ 引擎 ready /
+    device gpu / backend **vulkan** / offload 29 层 / RTX 4060 Laptop；本地翻译 engine=local、747ms。
+  - **如实标注**：local 译文含 1 行提示词残留（`Term List…`），属 S-14 本地小模型格式保持问题，
+    **不作为翻译质量验收通过**；云端翻译无此问题。
+  - E2E 为 debug 构建（applab 隔离）；release 安装包由 T5 冒烟覆盖（启动/OCR 就绪/卸载）。
+- **真实 OCR 推理证据**（`.verify/v1/ocr/`）：7 个真实用例（5 张真实渲染截图 + 真实桌面面板 + 真实整虚拟桌面），
+  2890 字符字符准确率 **98.13%**（≥95% 目标达成；分用例最低代码页 95.75%，真实桌面面板 100%，
+  整虚拟桌面已知行召回 7/8）；4 条 OCR 资产双镜像 SHA256 + Range 206 核验；局限（近似 unclip 导致
+  较 Python rapidocr 低 ~1.2pp）如实记录。
+- **真实捕获证据**（`.verify/v1/capture/`）：真实 BitBlt 冻结帧 3640×1920（混合 DPI 双屏），
+  BGRA 27,955,200 B / PNG 1,911,402 B，帧几何与 Win32 虚拟桌面一致（副屏无关内容已脱敏）。
+- **如实标注的遗留**：AMD / Intel 真机 GPU 未测（Vulkan 厂商无关论证）；安装包无代码签名（SmartScreen 提示属预期）；
+  本机无 DashScope Key（Qwen-MT 真实翻译未验收）；8GB 降档提示缺失（S-13）；S-19 真人走查 BLOCKED；
+  覆盖翻译真实 OCR/翻译质量与 S-12/S-14 质量缺口按既有记录保留。
+
+### 行为变更
+
+- 升级用户（schema v4）首次启动后 `advanced.skeletonMode` 自动变为 `false`（走真实能力）；如需联调可手动改回 `true`。
+- 应用不再提供任何更新检查行为；升级需手动覆盖安装新版包。
+- 新增 `Stats.edition` / `Stats.ocrReady` 字段；新增 5 命令、删除 1 事件（详见契约 v5）。
 
 ## [0.1.0] - 2026-11-05（收尾发布）
 

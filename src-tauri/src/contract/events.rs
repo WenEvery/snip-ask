@@ -45,8 +45,6 @@ pub const EVENT_ENGINE_STATUS: &str = "engine:status";
 pub const EVENT_TRANSLATE_PROGRESS: &str = "translate:progress";
 /// 覆盖翻译完成（契约 v4）。
 pub const EVENT_TRANSLATE_READY: &str = "translate:ready";
-/// 更新检查状态。
-pub const EVENT_UPDATE_STATUS: &str = "update:status";
 
 /// 全部事件名（顺序与契约 §7 一致），供测试与前端名称表核对。
 pub const ALL_EVENTS: &[&str] = &[
@@ -65,7 +63,6 @@ pub const ALL_EVENTS: &[&str] = &[
     EVENT_ENGINE_STATUS,
     EVENT_TRANSLATE_PROGRESS,
     EVENT_TRANSLATE_READY,
-    EVENT_UPDATE_STATUS,
 ];
 
 /// `overlay:ready` 载荷。
@@ -250,36 +247,6 @@ pub struct TranslateReadyPayload {
     pub engine: String,
 }
 
-/// 更新状态。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UpdateState {
-    /// 空闲。
-    Idle,
-    /// 检查中。
-    Checking,
-    /// 有可用更新。
-    Available,
-    /// 下载中。
-    Downloading,
-    /// 就绪待安装。
-    Ready,
-    /// 出错。
-    Error,
-}
-
-/// `update:status` 载荷。
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateStatusPayload {
-    /// 状态。
-    pub state: UpdateState,
-    /// 版本号。
-    pub version: Option<String>,
-    /// 错误信息。
-    pub error: Option<String>,
-}
-
 /// 任务相关事件复用 [`super::types`] 的载荷。
 pub type TaskStarted = TaskStartedPayload;
 /// 任务完成事件载荷别名。
@@ -292,7 +259,7 @@ mod tests {
 
     #[test]
     fn event_names_match_contract() {
-        assert_eq!(ALL_EVENTS.len(), 16);
+        assert_eq!(ALL_EVENTS.len(), 15);
         assert_eq!(EVENT_OVERLAY_READY, "overlay:ready");
         assert_eq!(EVENT_OVERLAY_SELECTION, "overlay:selection");
         assert_eq!(EVENT_OCR_STATUS, "ocr:status");
@@ -308,7 +275,6 @@ mod tests {
         assert_eq!(EVENT_ENGINE_STATUS, "engine:status");
         assert_eq!(EVENT_TRANSLATE_PROGRESS, "translate:progress");
         assert_eq!(EVENT_TRANSLATE_READY, "translate:ready");
-        assert_eq!(EVENT_UPDATE_STATUS, "update:status");
         assert_eq!(IPC_CONTRACT_VERSION, 1);
     }
 
@@ -350,13 +316,6 @@ mod tests {
         };
         let value = serde_json::to_value(&payload).unwrap();
         assert_eq!(value["kind"], "text");
-
-        let payload = UpdateStatusPayload {
-            state: UpdateState::Idle,
-            version: None,
-            error: None,
-        };
-        assert_eq!(serde_json::to_value(&payload).unwrap()["state"], "idle");
 
         let payload = TaskDonePayload {
             task: TaskId::from("t-1"),

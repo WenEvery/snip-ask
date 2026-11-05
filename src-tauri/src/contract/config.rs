@@ -1,10 +1,10 @@
 //! 持久化配置模型（契约 §4）。
 //!
 //! 覆盖内容：
-//! - §4.1 默认配置（Schema v4）与全部子结构；
+//! - §4.1 默认配置（Schema v5）与全部子结构；
 //! - §4.2 枚举字面量与 [`ConfigView`]（providers 换成带密钥状态视图）；
 //! - §4.3 约束校验 [`validate`]；
-//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4，未知字段保留）；
+//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4 → 5，未知字段保留）；
 //! - 深合并 [`merge_patch`]；
 //! - 快捷键规范化（`Ctrl+Q` 形式）。
 //!
@@ -19,7 +19,7 @@ use super::errors::{AppError, AppResult};
 use super::types::{ActionId, Mode};
 
 /// 当前配置 Schema 版本。
-pub const CONFIG_SCHEMA_VERSION: u32 = 4;
+pub const CONFIG_SCHEMA_VERSION: u32 = 5;
 
 // ---------------------------------------------------------------------------
 // 枚举（契约 §4.2）
@@ -219,15 +219,19 @@ impl LocalBackend {
     }
 }
 
-/// 更新通道。
+/// 供应商 API 类型（契约 v5）。
+///
+/// - `openAiCompatible`：OpenAI 兼容 Chat Completions（`/v1/chat/completions`），
+///   同时适用于 DeepSeek、通用 OpenAI 兼容服务与本地 llama-server；
+/// - `qwenMt`：DashScope 原生 Qwen-MT 翻译 API（`translation_options`）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum UpdateChannel {
-    /// 稳定通道。
+#[serde(rename_all = "camelCase")]
+pub enum ProviderKind {
+    /// OpenAI 兼容（默认）。
     #[default]
-    Stable,
-    /// 预览通道。
-    Preview,
+    OpenAiCompatible,
+    /// DashScope Qwen-MT 专用翻译 API。
+    QwenMt,
 }
 
 /// 模型能力。
@@ -439,6 +443,8 @@ pub struct Provider {
     pub base_url: String,
     /// 模型名。
     pub model: String,
+    /// API 类型（契约 v5；默认 OpenAI 兼容）。
+    pub kind: ProviderKind,
     /// 能力。
     pub caps: Vec<Cap>,
     /// 温度。
@@ -459,6 +465,7 @@ impl Default for Provider {
             name: String::new(),
             base_url: String::new(),
             model: String::new(),
+            kind: ProviderKind::OpenAiCompatible,
             caps: Vec::new(),
             temperature: 0.2,
             max_tokens: 1024,
@@ -480,6 +487,8 @@ pub struct ProviderView {
     pub base_url: String,
     /// 模型名。
     pub model: String,
+    /// API 类型（契约 v5；默认 OpenAI 兼容）。
+    pub kind: ProviderKind,
     /// 能力。
     pub caps: Vec<Cap>,
     /// 温度。
@@ -505,6 +514,7 @@ impl ProviderView {
             name: provider.name.clone(),
             base_url: provider.base_url.clone(),
             model: provider.model.clone(),
+            kind: provider.kind,
             caps: provider.caps.clone(),
             temperature: provider.temperature,
             max_tokens: provider.max_tokens,
@@ -768,11 +778,9 @@ impl Default for HistoryPrefs {
 pub struct AdvancedPrefs {
     /// 代理（需重启应用）。
     pub proxy: Option<String>,
-    /// 更新通道。
-    pub update_channel: UpdateChannel,
     /// 遥测（默认关闭，且不实现）。
     pub telemetry: bool,
-    /// 骨架模式（默认开启）。
+    /// 骨架模式（调试开关；v1.0.0 默认关闭，走真实捕获/OCR/LLM）。
     pub skeleton_mode: bool,
     /// 未知字段。
     #[serde(flatten)]
@@ -783,9 +791,8 @@ impl Default for AdvancedPrefs {
     fn default() -> Self {
         Self {
             proxy: None,
-            update_channel: UpdateChannel::Stable,
             telemetry: false,
-            skeleton_mode: true,
+            skeleton_mode: false,
             extra: serde_json::Map::new(),
         }
     }
@@ -846,17 +853,44 @@ impl Default for Config {
             ui: UiPrefs::default(),
             hotkeys: Hotkeys::default(),
             actions: ActionPrefs::default(),
-            providers: vec![Provider {
-                id: "deepseek".to_string(),
-                name: "DeepSeek".to_string(),
-                base_url: "https://api.deepseek.com".to_string(),
-                model: "deepseek-flash".to_string(),
-                caps: vec![Cap::Vision, Cap::Search, Cap::Thinking],
-                temperature: 0.2,
-                max_tokens: 1024,
-                enabled: true,
-                extra: serde_json::Map::new(),
-            }],
+            providers: vec![
+                Provider {
+                    id: "deepseek".to_string(),
+                    name: "DeepSeek".to_string(),
+                    base_url: "https://api.deepseek.com".to_string(),
+                    model: "deepseek-flash".to_string(),
+                    kind: ProviderKind::OpenAiCompatible,
+                    caps: vec![Cap::Vision, Cap::Search, Cap::Thinking],
+                    temperature: 0.2,
+                    max_tokens: 1024,
+                    enabled: true,
+                    extra: serde_json::Map::new(),
+                },
+                Provider {
+                    id: "dashscope".to_string(),
+                    name: "DashScope（Qwen-MT 翻译）".to_string(),
+                    base_url: "https://dashscope.aliyuncs.com".to_string(),
+                    model: "qwen-mt-lite".to_string(),
+                    kind: ProviderKind::QwenMt,
+                    caps: vec![Cap::Translate],
+                    temperature: 0.2,
+                    max_tokens: 1024,
+                    enabled: false,
+                    extra: serde_json::Map::new(),
+                },
+                Provider {
+                    id: "generic-openai".to_string(),
+                    name: "通用 OpenAI 兼容".to_string(),
+                    base_url: "https://api.openai.com".to_string(),
+                    model: "gpt-4o-mini".to_string(),
+                    kind: ProviderKind::OpenAiCompatible,
+                    caps: vec![Cap::Vision, Cap::Search, Cap::Thinking, Cap::Translate],
+                    temperature: 0.2,
+                    max_tokens: 1024,
+                    enabled: false,
+                    extra: serde_json::Map::new(),
+                },
+            ],
             modes: ModesPrefs::default(),
             search: SearchPrefs::default(),
             translate: TranslatePrefs::default(),
@@ -1369,7 +1403,19 @@ fn migrate_v3_to_v4(value: &mut serde_json::Value) {
     fill_defaults(value, &defaults);
 }
 
-/// 读取任意版本配置 JSON，按 `1 → 2 → 3 → 4` 链迁移并校验（未知字段保留）。
+/// v4 → v5：移除已删除的 `advanced.updateChannel` 更新通道；把历史默认值
+/// `advanced.skeletonMode = true` 升为 `false`（v1.0.0 默认走真实能力，用户仍可手动改回）。
+fn migrate_v4_to_v5(value: &mut serde_json::Value) {
+    if let Some(advanced) = value
+        .get_mut("advanced")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        advanced.remove("updateChannel");
+        advanced.insert("skeletonMode".to_string(), serde_json::json!(false));
+    }
+}
+
+/// 读取任意版本配置 JSON，按 `1 → 2 → 3 → 4 → 5` 链迁移并校验（未知字段保留）。
 pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     let version = value
         .get("schemaVersion")
@@ -1394,7 +1440,12 @@ pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     }
     if current < 4 {
         migrate_v3_to_v4(&mut value);
+        current = 4;
         tracing::debug!(from = 3, to = 4, "配置迁移完成");
+    }
+    if current < 5 {
+        migrate_v4_to_v5(&mut value);
+        tracing::debug!(from = 4, to = 5, "配置迁移完成");
     }
     if let Some(object) = value.as_object_mut() {
         object.insert(
@@ -1416,7 +1467,7 @@ mod tests {
     #[test]
     fn default_matches_contract_json() {
         let expected = serde_json::json!({
-            "schemaVersion": 4,
+            "schemaVersion": 5,
             "app": { "language": "zh-CN", "autostart": false, "singleInstance": true, "startMinimized": true },
             "ui": {
                 "theme": "system",
@@ -1437,11 +1488,27 @@ mod tests {
                 "defaultMode": "quick",
                 "autoCopy": false
             },
-            "providers": [{
-                "id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com",
-                "model": "deepseek-flash", "caps": ["vision", "search", "thinking"],
-                "temperature": 0.2, "maxTokens": 1024, "enabled": true
-            }],
+            "providers": [
+                {
+                    "id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com",
+                    "model": "deepseek-flash", "kind": "openAiCompatible",
+                    "caps": ["vision", "search", "thinking"],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": true
+                },
+                {
+                    "id": "dashscope", "name": "DashScope（Qwen-MT 翻译）",
+                    "baseUrl": "https://dashscope.aliyuncs.com", "model": "qwen-mt-lite",
+                    "kind": "qwenMt", "caps": ["translate"],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": false
+                },
+                {
+                    "id": "generic-openai", "name": "通用 OpenAI 兼容",
+                    "baseUrl": "https://api.openai.com", "model": "gpt-4o-mini",
+                    "kind": "openAiCompatible",
+                    "caps": ["vision", "search", "thinking", "translate"],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": false
+                }
+            ],
             "modes": {
                 "search": "quick", "imageSearch": "quick", "translate": "quick", "answer": "quick",
                 "deepBudget": { "search": 3, "fetch": 2, "maxTokens": 1500 }
@@ -1458,7 +1525,7 @@ mod tests {
             "ocr": { "engine": "rapidocr", "detMaxEdge": 3200, "textThreshold": 0.6, "preserveBoxes": true },
             "privacy": { "allowTextUpload": true, "allowImageUpload": true, "localOnly": false },
             "history": { "enabled": true, "maxEntries": 1000, "retentionDays": 90 },
-            "advanced": { "proxy": null, "updateChannel": "stable", "telemetry": false, "skeletonMode": true }
+            "advanced": { "proxy": null, "telemetry": false, "skeletonMode": false }
         });
         assert_eq!(serde_json::to_value(Config::default()).unwrap(), expected);
         validate(&Config::default()).expect("默认配置必须通过校验");
@@ -1582,7 +1649,7 @@ mod tests {
             "unknownGroup": { "hello": "world" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 4);
+        assert_eq!(config.schema_version, 5);
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.result_window.width, 460.0);
         assert!(config.ui.result_window.pin);
@@ -1595,7 +1662,15 @@ mod tests {
         assert_eq!(config.local.device, LocalDevice::Auto);
         assert_eq!(config.local.gpu_backend, GpuBackend::Auto);
         assert_eq!(config.local.gpu_layers, 99);
-        assert!(config.advanced.skeleton_mode);
+        assert!(
+            !config.advanced.skeleton_mode,
+            "v5 迁移必须关闭历史默认开启的骨架模式"
+        );
+        assert!(
+            !config.advanced.extra.contains_key("updateChannel"),
+            "v5 迁移必须移除 updateChannel"
+        );
+        assert_eq!(config.providers[0].kind, ProviderKind::OpenAiCompatible);
         assert!(config.extra.contains_key("unknownGroup"));
     }
 
@@ -1607,7 +1682,7 @@ mod tests {
             "translate": { "backend": "local", "model": "qwen-mt-lite", "targetLang": "en" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 4);
+        assert_eq!(config.schema_version, 5);
         // 用户已有值保持不变
         assert_eq!(config.local.model, "qwen2.5-0.5b-instruct-q4");
         assert_eq!(config.local.port, 39285);
@@ -1687,5 +1762,41 @@ mod tests {
         assert!(is_valid_hotkey(""));
         assert!(is_valid_hotkey("Win+Shift+S"));
         assert!(!is_valid_hotkey("Ctrl++Q"));
+    }
+
+    #[test]
+    fn migrate_from_v4_removes_update_channel_and_disables_skeleton() {
+        let raw = serde_json::json!({
+            "schemaVersion": 4,
+            "advanced": { "proxy": null, "updateChannel": "preview", "telemetry": true, "skeletonMode": true }
+        });
+        let config = migrate(raw).unwrap();
+        assert_eq!(config.schema_version, 5);
+        assert!(!config.advanced.skeleton_mode);
+        assert!(config.advanced.telemetry);
+        assert!(!config.advanced.extra.contains_key("updateChannel"));
+        let value = serde_json::to_value(&config).unwrap();
+        assert!(value["advanced"].get("updateChannel").is_none());
+    }
+
+    #[test]
+    fn provider_kind_serializes_and_defaults_to_openai_compatible() {
+        let config = Config::default();
+        assert_eq!(config.providers[0].kind, ProviderKind::OpenAiCompatible);
+        assert_eq!(config.providers[1].kind, ProviderKind::QwenMt);
+        let value = serde_json::to_value(&config).unwrap();
+        assert_eq!(value["providers"][0]["kind"], "openAiCompatible");
+        assert_eq!(value["providers"][1]["kind"], "qwenMt");
+        // 旧配置缺 kind → 默认 OpenAI 兼容（前向兼容）
+        let raw = serde_json::json!({
+            "schemaVersion": 5,
+            "providers": [{ "id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com", "model": "deepseek-flash" }]
+        });
+        let config = migrate(raw).unwrap();
+        assert_eq!(config.providers[0].kind, ProviderKind::OpenAiCompatible);
+        // 非法 kind 被 serde 拒绝
+        let mut json = serde_json::to_value(Config::default()).unwrap();
+        json["providers"][0]["kind"] = serde_json::json!("anthropic");
+        assert!(serde_json::from_value::<Config>(json).is_err());
     }
 }

@@ -10,6 +10,7 @@ import type {
   LocalBackend,
   LocalDevice,
   LocalEngine,
+  ProviderKind,
 } from "@/shared/contract/types";
 
 export const ACTION_LABELS: Record<ActionId, string> = {
@@ -173,11 +174,6 @@ export function describeGpuProbe(probe: GpuProbeResult): string {
   )}，${LOCAL_BACKEND_LABELS[backend]} 可用，推荐 ${LOCAL_BACKEND_LABELS[backend]}${budget}）`;
 }
 
-export const UPDATE_CHANNELS: { value: string; label: string }[] = [
-  { value: "stable", label: "稳定通道（推荐）" },
-  { value: "preview", label: "预览通道（可能不稳定）" },
-];
-
 export const DEFAULT_HOTKEYS: Hotkeys = {
   capture: "Ctrl+Q",
   wordGrab: "",
@@ -195,63 +191,53 @@ export interface ProviderPreset {
   name: string;
   baseUrl: string;
   model: string;
+  kind: ProviderKind;
   caps: Cap[];
   temperature: number;
   maxTokens: number;
   note: string;
 }
 
-/** 契约 §4.1 的 DeepSeek 默认 + 报告 §2.4.3 的预设供应商 */
+/**
+ * 供应商预设（契约 v5 §3.1：三条，顺序固定，与 Rust 默认 provider 一致）。
+ *
+ * - `deepseek`：OpenAI 兼容，默认启用；Chat + Search/Fetch（DeepSeek 官方工具 API）；
+ * - `dashscope`：`kind: "qwenMt"`，DashScope Qwen-MT **专用翻译**原生端点（默认停用，填 Key 后启用）；
+ * - `generic-openai`：通用 OpenAI 兼容（自定义 Base URL，默认停用）。
+ */
 export const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     id: "deepseek",
     name: "DeepSeek",
     baseUrl: "https://api.deepseek.com",
     model: "deepseek-flash",
+    kind: "openAiCompatible",
     caps: ["vision", "search", "thinking"],
     temperature: 0.2,
     maxTokens: 1024,
-    note: "默认推荐，支持视觉与联网搜索",
+    note: "默认推荐：Chat + 真实联网搜索（Search/Fetch API），支持视觉识别",
   },
   {
-    id: "openai",
-    name: "OpenAI",
+    id: "dashscope",
+    name: "DashScope（Qwen-MT 翻译）",
+    baseUrl: "https://dashscope.aliyuncs.com",
+    model: "qwen-mt-lite",
+    kind: "qwenMt",
+    caps: ["translate"],
+    temperature: 0.2,
+    maxTokens: 1024,
+    note: "专用翻译 API（DashScope 原生 translation_options），仅用于翻译；需填写 DashScope Key",
+  },
+  {
+    id: "generic-openai",
+    name: "通用 OpenAI 兼容",
     baseUrl: "https://api.openai.com",
     model: "gpt-4o-mini",
-    caps: ["vision", "search", "thinking"],
+    kind: "openAiCompatible",
+    caps: ["vision", "search", "thinking", "translate"],
     temperature: 0.2,
     maxTokens: 1024,
-    note: "OpenAI 兼容接口",
-  },
-  {
-    id: "qwen",
-    name: "通义千问",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    model: "qwen-mt-lite",
-    caps: ["vision", "translate"],
-    temperature: 0.2,
-    maxTokens: 1024,
-    note: "Qwen-MT 专用翻译模型",
-  },
-  {
-    id: "ollama",
-    name: "Ollama（本地）",
-    baseUrl: "http://127.0.0.1:11434/v1",
-    model: "qwen2.5:7b",
-    caps: [],
-    temperature: 0.2,
-    maxTokens: 1024,
-    note: "本机 Ollama 服务，无需 API Key",
-  },
-  {
-    id: "custom",
-    name: "自定义（OpenAI 兼容）",
-    baseUrl: "https://",
-    model: "",
-    caps: [],
-    temperature: 0.2,
-    maxTokens: 1024,
-    note: "任意 OpenAI 兼容端点，仅允许 https 或 127.0.0.1",
+    note: "任意 OpenAI 兼容端点（可改 Base URL / 模型），仅允许 https 或 127.0.0.1",
   },
 ];
 

@@ -1,6 +1,6 @@
 [package]
 name = "snip-ask"
-version = "0.1.0"
+version = "1.0.0"
 description = "框选 AI —— 轻量框选解答 / 翻译 / 搜索桌面工具（Tauri 2 后端脚手架）"
 authors = ["SnipAsk Contributors"]
 edition = "2021"
@@ -45,6 +45,11 @@ base64 = "0.22"
 dirs = "5"
 once_cell = "1"
 reqwest = { version = "0.13.3", default-features = false, features = ["native-tls", "stream", "http2", "charset", "system-proxy"] }
+# 真实屏幕捕获（Win32 BitBlt，仅在 platform/capture.rs 使用 unsafe）与 PNG 编码。
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_UI_WindowsAndMessaging", "Win32_UI_HiDpi"] }
+png = "0.18"
+# 真实本地 OCR：ONNX Runtime 1.31 动态加载（运行时 DLL 由安装包资源目录提供，不在编译期下载二进制）。
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31"] }
 
 [profile.release]
 codegen-units = 1
@@ -59,4 +64,4 @@ default = []
 custom-protocol = ["tauri/custom-protocol"]
 
 [lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "deny"

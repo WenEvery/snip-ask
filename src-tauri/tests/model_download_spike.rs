@@ -272,6 +272,10 @@ fn test_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .connect_timeout(Duration::from_secs(5))
+        // 测试全部走 127.0.0.1 的本地 mock server：必须绕过用户系统代理
+        // （开发机可能开启 Clash/Steam++ 等系统代理；reqwest `system-proxy` 会拦截 loopback，
+        //  代理返回 404 导致本测试假失败——CI 无代理故历史上未暴露）。
+        .no_proxy()
         // 真实镜像（ModelScope/Aliyun CDN）对「无 User-Agent」请求返回 403，必须带 UA；
         // 这里与生产客户端 `build_http_client()` 保持一致（`snip-ask/<version>`）。
         .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION"), "-test"))

@@ -1,6 +1,8 @@
 //! 凭据服务（M16）：Provider 密钥 CRUD + 掩码 + 目标命名。
 //!
 //! 密钥不进入 `Config` / 事件载荷 / 日志；`ConfigView.providers[].keyMask` 由本服务提供。
+//! 生产环境由 [`crate::platform::credential::default_store`] 注入真实 Windows Credential
+//! Manager（+ 内存兜底），单测注入 [`crate::platform::credential::InMemoryCredentialStore`]。
 
 use std::sync::Arc;
 
@@ -14,7 +16,7 @@ pub struct CredentialService {
 }
 
 impl CredentialService {
-    /// 注入凭据存储（骨架模式为 `InMemoryCredentialStore`）。
+    /// 注入凭据存储（生产为 keyring + 内存兜底；单测为 `InMemoryCredentialStore`）。
     pub fn new(store: Arc<dyn CredentialStore>) -> Self {
         Self { store }
     }
@@ -106,5 +108,45 @@ mod tests {
             "SnipAsk/llm/deepseek"
         );
         assert_eq!(CredentialService::mask("sk-abcdefgh"), "••••efgh");
+    }
+
+    /// 服务层与真实存储接线形状（keyring + 内存兜底）：
+    /// 用一个 keyring 侧必然拒绝的目标（provider id 超长）验证 CRUD / hasKey / keyMask 全链路，
+    /// 不触碰真实 Credential Manager。
+    #[tokio::test]
+    async fn provider_key_lifecycle_with_keyring_fallback_store() {
+        use crate::platform::credential::KeyringCredentialStore;
+
+        let fallback = Arc::new(InMemoryCredentialStore::new());
+        let service = CredentialService::new(Arc::new(KeyringCredentialStore::with_fallback(
+            fallback.clone(),
+        )));
+        let provider_id = "x".repeat(600);
+
+        assert!(!service.has_provider_key(&provider_id).await.unwrap());
+        service
+            .set_provider_key(&provider_id, "sk-service-1234")
+            .await
+            .unwrap();
+        assert!(service.has_provider_key(&provider_id).await.unwrap());
+        assert_eq!(
+            service.provider_key(&provider_id).await.unwrap().as_deref(),
+            Some("sk-service-1234")
+        );
+        assert_eq!(
+            service
+                .provider_key_mask(&provider_id)
+                .await
+                .unwrap()
+                .as_deref(),
+            Some("••••1234")
+        );
+        assert!(fallback
+            .has_key(&CredentialService::target_for_llm(&provider_id))
+            .await
+            .unwrap());
+
+        service.delete_provider_key(&provider_id).await.unwrap();
+        assert!(!service.has_provider_key(&provider_id).await.unwrap());
     }
 }

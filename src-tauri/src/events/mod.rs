@@ -1,7 +1,7 @@
 //! 强类型事件发送助手（契约 §7）。
 //!
 //! 前端通过 `listen(name, cb)` 订阅；后端只在 Rust 侧 `AppHandle::emit`，前端不得回发同名事件。
-//! 这里提供 14 个事件的一一对应助手，避免字符串散落各处。
+//! 这里提供 15 个事件的一一对应助手，避免字符串散落各处。
 //!
 //! 另提供 [`Throttle`]：`overlay:selection` ≤ 30Hz、`download:progress` ≤ 200ms。
 
@@ -13,12 +13,11 @@ use crate::contract::events::{
     ConfigChangedPayload, DownloadProgressPayload, DownloadStatePayload, EngineStatusPayload,
     MenuReadyPayload, OcrStatusPayload, OverlayReadyPayload, OverlaySelectionPayload,
     TaskDeltaPayload, TaskDonePayload, TaskErrorPayload, TaskStartedPayload,
-    TranslateProgressPayload, TranslateReadyPayload, TrayActionPayload, UpdateState,
-    UpdateStatusPayload, EVENT_CONFIG_CHANGED, EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE,
-    EVENT_ENGINE_STATUS, EVENT_MENU_READY, EVENT_OCR_STATUS, EVENT_OVERLAY_READY,
-    EVENT_OVERLAY_SELECTION, EVENT_TASK_DELTA, EVENT_TASK_DONE, EVENT_TASK_ERROR,
-    EVENT_TASK_STARTED, EVENT_TRANSLATE_PROGRESS, EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION,
-    EVENT_UPDATE_STATUS,
+    TranslateProgressPayload, TranslateReadyPayload, TrayActionPayload, EVENT_CONFIG_CHANGED,
+    EVENT_DOWNLOAD_PROGRESS, EVENT_DOWNLOAD_STATE, EVENT_ENGINE_STATUS, EVENT_MENU_READY,
+    EVENT_OCR_STATUS, EVENT_OVERLAY_READY, EVENT_OVERLAY_SELECTION, EVENT_TASK_DELTA,
+    EVENT_TASK_DONE, EVENT_TASK_ERROR, EVENT_TASK_STARTED, EVENT_TRANSLATE_PROGRESS,
+    EVENT_TRANSLATE_READY, EVENT_TRAY_ACTION,
 };
 use crate::contract::types::EngineStatus;
 
@@ -114,23 +113,6 @@ pub fn emit_translate_progress(app: &AppHandle, payload: &TranslateProgressPaylo
 /// `translate:ready`（契约 v4：覆盖翻译完成）。
 pub fn emit_translate_ready(app: &AppHandle, payload: &TranslateReadyPayload) {
     let _ = app.emit(EVENT_TRANSLATE_READY, payload);
-}
-
-/// `update:status`
-pub fn emit_update_status(
-    app: &AppHandle,
-    state: UpdateState,
-    version: Option<String>,
-    error: Option<String>,
-) {
-    let _ = app.emit(
-        EVENT_UPDATE_STATUS,
-        UpdateStatusPayload {
-            state,
-            version,
-            error,
-        },
-    );
 }
 
 /// 简易节流器（单线程时间戳比较，足够覆盖事件节流场景）。

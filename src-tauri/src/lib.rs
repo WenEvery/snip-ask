@@ -5,10 +5,13 @@
 //! `contract` 为最底层契约（不依赖任何内部模块）；`platform` 是唯一允许未来 `unsafe`
 //! / Win32 的目录。
 //!
-//! 本阶段为 v0.1 骨架：外部能力（捕获 / OCR / LLM / 搜索 / 翻译 / 下载 / 更新）为
-//! 契约 §12 的确定性占位实现，真实实现以 `TODO(real)` 标注。
+//! v1.0.0：外部能力（捕获 / OCR / LLM / 搜索 / 翻译 / 下载）均为真实实现；
+//! 契约 §12 的骨架实现仅作为调试开关（`advanced.skeletonMode = true`）保留。
+//!
+//! `unsafe` 仅允许出现在 `platform` 模块（Win32 屏幕捕获与进程信息）；
+//! 其余模块沿用 `deny(unsafe_code)`。
 
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 // 骨架阶段的 Clippy 约定：
 // - AppError 是跨 IPC 边界的完整错误对象（契约 §8.1 六个字段），体积较大是刻意的；
 // - 命令 / 契约函数的参数个数由 docs/接口契约.md 固定，不可拆包；
@@ -23,6 +26,7 @@ pub mod commands;
 pub mod contract;
 pub mod domain;
 pub mod events;
+#[allow(unsafe_code)]
 pub mod platform;
 pub mod resources;
 pub mod services;
@@ -128,6 +132,12 @@ pub fn run() {
             commands::local::backends_cancel,
             commands::local::backends_remove,
             commands::cover::translate_cover,
+            // —— 契约 v5：自定义目录 / OCR 状态 / 历史线程（39–43；自动更新已移除）
+            commands::system::open_path,
+            commands::system::ocr_status,
+            commands::history::history_list,
+            commands::history::history_thread,
+            commands::history::history_clear,
         ])
         .run(tauri::generate_context!())
         .expect("框选 AI 启动失败");

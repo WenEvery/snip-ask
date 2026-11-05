@@ -505,6 +505,23 @@ export default function OverlayWindow() {
         </div>
       )}
 
+      {frozen ? (
+        <div
+          className="overlay-frame-badge"
+          title={
+            frozen.frame.dataUrl
+              ? "已收到冻结帧位图（dataUrl），选框 / 放大镜 / 覆盖翻译均基于该帧"
+              : "未收到冻结帧位图（骨架模式或受保护窗口），覆盖翻译只能叠加译文"
+          }
+        >
+          <span className={`overlay-frame-badge__dot${frozen.frame.dataUrl ? "" : " is-off"}`} />
+          <span>
+            冻结帧 {frozen.frame.width}×{frozen.frame.height}
+          </span>
+          <span>{frozen.frame.dataUrl ? "dataUrl 已加载" : "无位图"}</span>
+        </div>
+      ) : null}
+
       {frozen && cover ? (
         <TranslationOverlay
           frame={frozen.frame}
@@ -605,7 +622,11 @@ export default function OverlayWindow() {
                 模拟触发框选
               </Button>
             )}
-            <p className="overlay-waiting__hint">骨架模式 · 无真实捕获 / OCR / 网络请求</p>
+            <p className="overlay-waiting__hint">
+              {isTauri()
+                ? "真实捕获 · 本地 OCR · 本地 / 云端推理"
+                : "浏览器预览 · mock 捕获与合成冻结帧（不会访问真实网络）"}
+            </p>
           </div>
         </div>
       ) : null}

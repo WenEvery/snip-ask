@@ -1,6 +1,6 @@
 {
   "name": "snip-ask",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "框选 AI —— 屏幕框选 + AI 搜索 / 翻译 / 解答（Tauri 2 + React 18 + TypeScript）",
@@ -14,7 +14,7 @@
     "build": "tauri build",
     "build:web": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/windows/overlay/translationLayout.test.ts src/windows/result/thread.test.ts",
+    "test": "node --test src/windows/overlay/translationLayout.test.ts src/windows/result/thread.test.ts src/windows/main/ocr/status.test.ts src/windows/main/history/format.test.ts",
     "test:layout": "node --test src/windows/overlay/translationLayout.test.ts",
     "test:thread": "node --test src/windows/result/thread.test.ts",
     "preview:web": "vite preview --port 1422",

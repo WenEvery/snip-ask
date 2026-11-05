@@ -42,13 +42,14 @@ pub async fn selection_commit(
     };
     // 帧左上角为虚拟桌面左上角（绝对物理坐标，可为负）；缓存框为绝对坐标，选区可直接比较。
     let desktop = crate::services::capture_service::virtual_desktop(&app);
-    let scan = match frame_meta {
-        Some(meta) => {
-            let frame = FrozenFrame {
-                width: meta.width,
-                height: meta.height,
-                data_url: meta.data_url,
-            };
+    // 真实捕获的完整帧（含 bgra）从 AppState 取；缺失时退回会话 meta（骨架/旧会话，无 bgra）。
+    let frozen = state.frozen_frame();
+    let frame = frozen.or_else(|| frame_meta.as_ref().map(FrozenFrame::from_meta));
+    let scan = match frame {
+        Some(frame) => {
+            // S-09 目标区域切片判定：选区纯黑/空 → SA-1001（混合 DPI 双屏整帧判定会漏检）。
+            // 骨架帧无 bgra 时该函数直接通过。
+            crate::services::capture_service::validate_region(&frame, &desktop.rect, &rect)?;
             state
                 .ocr
                 .recognize_selection(

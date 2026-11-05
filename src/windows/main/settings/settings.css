@@ -116,7 +116,9 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background var(--sa-duration-fast, 120ms) ease, border-color var(--sa-duration-fast, 120ms) ease;
+  transition:
+    background var(--sa-duration-fast, 120ms) ease,
+    border-color var(--sa-duration-fast, 120ms) ease;
 }
 
 .settings-nav-item:hover {
@@ -357,7 +359,9 @@
   color: var(--sa-color-text, #e6e8eb);
   font: inherit;
   cursor: pointer;
-  transition: border-color var(--sa-duration-fast, 120ms) ease, background var(--sa-duration-fast, 120ms) ease;
+  transition:
+    border-color var(--sa-duration-fast, 120ms) ease,
+    background var(--sa-duration-fast, 120ms) ease;
 }
 
 .sa-seg:hover {
@@ -564,7 +568,11 @@
   padding: var(--sa-space-3, 12px) var(--sa-space-4, 16px);
   border: 1px solid var(--sa-color-danger, #f85149);
   border-radius: var(--sa-radius-md, 10px);
-  background: color-mix(in srgb, var(--sa-color-danger, #f85149) 10%, var(--sa-color-surface, #14181d));
+  background: color-mix(
+    in srgb,
+    var(--sa-color-danger, #f85149) 10%,
+    var(--sa-color-surface, #14181d)
+  );
 }
 
 .sa-error-head {
@@ -609,6 +617,18 @@
   margin: var(--sa-space-2, 8px) 0 0;
   color: var(--sa-color-text-muted, #8b949e);
   font-size: var(--sa-text-xs, 11px);
+}
+
+/* 自定义与关于：目录打开失败的内联提示 */
+.sa-error-inline {
+  margin: var(--sa-space-2, 8px) 0 0;
+  padding: var(--sa-space-2, 8px) var(--sa-space-3, 12px);
+  border: 1px solid var(--sa-color-danger, #f85149);
+  border-radius: var(--sa-radius-sm, 8px);
+  background: color-mix(in srgb, var(--sa-color-danger, #f85149) 10%, transparent);
+  color: var(--sa-color-danger, #f85149);
+  font-size: var(--sa-text-xs, 11px);
+  line-height: 1.6;
 }
 
 .sa-linkbtn {

@@ -12,7 +12,7 @@ use crate::contract::events::{OcrStatusPayload, OcrStatusState, OverlayReadyPayl
 use crate::contract::types::SessionId;
 use crate::domain::session::SessionPhase;
 use crate::events::{emit_ocr_status, emit_overlay_ready};
-use crate::platform::capture::{ScreenCapturer, SkeletonCapturer};
+use crate::platform::capture::{self, ScreenCapturer, SkeletonCapturer, Win32Capturer};
 use crate::services::capture_service::CaptureService;
 use crate::services::ocr_service::{SKELETON_DONE_DELAY_MS, SKELETON_SCANNING_DELAY_MS};
 
@@ -102,16 +102,26 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
         .and_then(|current| current.ocr_session_id.clone())
         .unwrap_or_else(|| session.as_str().to_string());
 
-    // 2) 捕获（骨架模式：主显示器物理尺寸合成帧，dataUrl = null）。
-    let capturer: Arc<dyn ScreenCapturer> = Arc::new(SkeletonCapturer::new(app.clone()));
+    // 2) 捕获：真实模式（默认，skeletonMode=false）= Win32 BitBlt 虚拟桌面物理像素
+    //    （含 PNG data URL + BGRA）；骨架模式（skeletonMode=true，CI/无桌面）仍合成帧。
+    let skeleton_mode = state.is_skeleton();
+    let capturer: Arc<dyn ScreenCapturer> = if skeleton_mode {
+        Arc::new(SkeletonCapturer::new(app.clone()))
+    } else {
+        Arc::new(Win32Capturer::new())
+    };
     let service = CaptureService::new(capturer);
     let frame = match service.freeze().await {
         Ok(frame) => frame,
         Err(err) => {
+            // 捕获失败（含 SA-1001 黑屏/DRM）→ 清空冻结帧并取消会话，前端展示可操作错误。
+            state.clear_frozen_frame();
             let _ = state.session.lock().cancel(&session);
             return Err(err);
         }
     };
+    // 真实帧存入 AppState：selection_commit / 真实 OCR 从这里取含 BGRA 的完整帧。
+    state.set_frozen_frame(frame.clone());
 
     // 3) 记录冻结帧 + 进入选区交互（帧尺寸 = 虚拟桌面外接矩形物理像素，S-01）。
     {
@@ -138,6 +148,31 @@ pub async fn do_capture_freeze(app: &AppHandle) -> AppResult<SessionId> {
     // 5.5) S-01：等 Windows 异步 DPI 消息处理完并复核几何；dpr 取 overlay 窗口实际缩放比。
     windows::settle_overlay_geometry(app).await;
     let desktop = windows::overlay_virtual_desktop(app);
+
+    // 5.6) 真实捕获几何对照 + 运行期证据落盘（仅开发钩子，env 未设置时零副作用）。
+    //      Win32 虚拟屏幕（捕获源）与 Tauri available_monitors（overlay 尺寸）理论一致；
+    //      不一致会导致选区绝对坐标整体偏移，必须记录。
+    if !skeleton_mode {
+        let mismatch = capture::geometry_mismatch(&frame, &desktop.rect);
+        if let Some(diff) = &mismatch {
+            tracing::warn!(target: "snip_ask_lib::trace", %diff, "真实捕获帧与 overlay 虚拟桌面几何不一致");
+        }
+        capture::maybe_dump_capture(
+            &frame,
+            serde_json::json!({
+                "session": session.as_str(),
+                "skeletonMode": false,
+                "tauriVirtualDesktop": {
+                    "x": desktop.rect.x,
+                    "y": desktop.rect.y,
+                    "width": desktop.rect.width,
+                    "height": desktop.rect.height,
+                },
+                "overlayDpr": desktop.dpr,
+                "geometryMismatch": mismatch,
+            }),
+        );
+    }
 
     // 6) overlay:ready
     emit_overlay_ready(
@@ -248,6 +283,7 @@ pub async fn capture_cancel(
         let mut store = state.session.lock();
         store.cancel(&session)?;
     }
+    state.clear_frozen_frame();
     windows::hide_overlay(&app);
     Ok(())
 }

@@ -154,6 +154,28 @@ pub async fn menu_execute(
         tracing::warn!(code = %err.code, "显示结果窗失败");
     }
 
+    // 图片搜索：取冻结帧 dataUrl（受 privacy.allowImageUpload / localOnly 约束）。
+    // 未允许上传或未取到帧时不带图，task_runner 会退化为「本地 OCR 文本 → 检索 → 摘要」
+    // 并在回答里如实标注「未上传图片」。
+    let image_data_url = if action == ActionId::ImageSearch {
+        if config.privacy.allow_image_upload && !config.privacy.local_only {
+            let data_url = state.frozen_frame().and_then(|frame| frame.data_url);
+            match data_url.as_deref() {
+                Some(url) => tracing::info!(
+                    data_url_chars = url.chars().count(),
+                    "图片搜索：已附带冻结帧 dataUrl（不上传日志内容）"
+                ),
+                None => tracing::info!("图片搜索：未取到冻结帧 dataUrl，回退本地 OCR 文本"),
+            }
+            data_url
+        } else {
+            tracing::info!("图片搜索：隐私设置禁止上传图片，回退本地 OCR 文本");
+            None
+        }
+    } else {
+        None
+    };
+
     let request = TaskRequest {
         session,
         action,
@@ -164,6 +186,7 @@ pub async fn menu_execute(
         // 首轮 / 重答：parent = None（前端据此重置线程，`task_runner` 清空会话轮次）。
         parent: None,
         search_template: config.search.engine_url_template.clone(),
+        image_data_url,
         options,
     };
     task_runner::spawn(app, request)
@@ -228,6 +251,7 @@ pub async fn task_followup(
             // 追问：parent 指向上一轮任务（前端据此追加线程气泡）。
             parent: Some(target.parent),
             search_template: None,
+            image_data_url: None,
             options: RunActionOptions::default(),
         },
     )

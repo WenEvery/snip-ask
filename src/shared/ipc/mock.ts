@@ -38,11 +38,15 @@ import type {
   DownloadStatePayload,
   EngineStatusPayload,
   GpuProbeResult,
+  HistorySession,
+  HistoryThread,
   HotkeyStatus,
   MenuReadyPayload,
   Mode,
   ModelInfo,
+  OcrAssetStatus,
   OcrBox,
+  OcrStatus,
   OcrStatusPayload,
   OnboardingDraft,
   OnboardingState,
@@ -842,8 +846,10 @@ function findModel(id: string): ModelInfo {
 
 function appStats(): Stats {
   return {
-    version: "0.1.0",
+    version: "1.0.0",
     contractVersion: IPC_CONTRACT_VERSION,
+    edition: "dev",
+    ocrReady: true,
     uptimeSec: Math.max(1, Math.round((Date.now() - state.startedAt) / 1000)),
     memoryMb: 186,
     activeSession: state.session,
@@ -854,8 +860,107 @@ function appStats(): Stats {
   };
 }
 
-/**
- * 浏览器预览的 GPU 探测结果（确定性 mock）。真实后端会执行
+
+/** 浏览器预览的 OCR 状态（确定性 mock：视为已就绪，便于预览 UI）。 */
+function mockOcrStatus(): OcrStatus {
+  const assets: OcrAssetStatus[] = [
+    {
+      id: "ocr-det",
+      name: "OCR 文本检测（PP-OCRv4 det）",
+      installed: true,
+      bundled: false,
+      sizeBytes: 4745517,
+      sha256: "d2a7720d45a54257208b1e13e36a8479894cb74155a5efe29462512d42f49da9",
+    },
+    {
+      id: "ocr-rec",
+      name: "OCR 文字识别（PP-OCRv4 rec）",
+      installed: true,
+      bundled: false,
+      sizeBytes: 10857958,
+      sha256: "48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b",
+    },
+    {
+      id: "ocr-cls",
+      name: "OCR 方向分类（PP-OCRv4 cls）",
+      installed: true,
+      bundled: false,
+      sizeBytes: 585532,
+      sha256: "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+    },
+    {
+      id: "ocr-dict",
+      name: "OCR 字典（ppocr_keys_v1）",
+      installed: true,
+      bundled: false,
+      sizeBytes: 26250,
+      sha256: "a1c84d9bdb9ab29043c58896224d32941783eb821629618416dc08f12886492",
+    },
+  ];
+  return {
+    ready: true,
+    bundled: false,
+    runtimeReady: true,
+    runtimePath: "C:/mock/ocr/onnxruntime.dll",
+    assets,
+    missing: [],
+    message: null,
+  };
+}
+
+/** 浏览器预览的历史会话存储（支持「清空单个 / 全部」手测）。 */
+let mockHistoryStore: HistorySession[] | null = null;
+
+/** 默认历史会话（确定性 mock）。 */
+function defaultMockHistorySessions(): HistorySession[] {
+  return [
+    {
+      session: "mock-session-2",
+      startedAt: Date.now() - 60_000,
+      title: "什么是框选 AI？",
+      action: "answer",
+      turns: 2,
+      engine: "deepseek",
+    },
+    {
+      session: "mock-session-1",
+      startedAt: Date.now() - 3_600_000,
+      title: "Hello world 翻译成中文",
+      action: "translate",
+      turns: 1,
+      engine: "skeleton",
+    },
+  ];
+}
+
+/** 浏览器预览的历史会话列表（返回副本，避免调用方改内部状态）。 */
+function mockHistorySessions(): HistorySession[] {
+  if (mockHistoryStore === null) mockHistoryStore = defaultMockHistorySessions();
+  return mockHistoryStore.map((item) => ({ ...item }));
+}
+
+/** 浏览器预览的单个历史线程（确定性 mock）。 */
+function mockHistoryThread(session: SessionId): HistoryThread {
+  const summary = mockHistorySessions().find((item) => item.session === session);
+  if (!summary) throw appError("SA-1099", "会话不存在或已被清理");
+  return {
+    session: summary,
+    turns: [
+      {
+        task: "mock-task-1",
+        action: summary.action ?? "answer",
+        mode: "quick",
+        question: summary.title,
+        answer: "【骨架模式】这是浏览器预览的历史回答占位内容。",
+        engine: summary.engine,
+        status: "done",
+        createdAt: summary.startedAt,
+      },
+    ],
+  };
+}
+
+/** 浏览器预览的 GPU 探测结果（确定性 mock）。真实后端会执行
  * `llama-server --list-devices`（Vulkan 优先），此处仅演示字段形状与文案。
  */
 function mockGpuProbe(): GpuProbeResult {
@@ -1217,6 +1322,33 @@ async function dispatch(
 
     case COMMANDS.appStats:
       return appStats();
+
+    // ── 契约 v5：自定义目录 / OCR 状态 / 历史线程 ──
+    case COMMANDS.openPath: {
+      const kind = requireString(args, "kind", "SA-5001");
+      const allowed = ["config", "prompts", "models", "logs", "backends", "data", "docs"];
+      if (!allowed.includes(kind)) throw appError("SA-5001", `不支持的目录类型：${kind}`);
+      console.info(`[snipask mock] 模拟打开目录：${kind}`);
+      return undefined;
+    }
+
+    case COMMANDS.ocrStatus:
+      return mockOcrStatus();
+
+    case COMMANDS.historyList:
+      return mockHistorySessions();
+
+    case COMMANDS.historyThread: {
+      const session = requireString(args, "session", "SA-1099");
+      return mockHistoryThread(session);
+    }
+
+    case COMMANDS.historyClear: {
+      const store = mockHistorySessions();
+      const session = typeof args?.session === "string" && args.session.length > 0 ? args.session : null;
+      mockHistoryStore = session === null ? [] : store.filter((item) => item.session !== session);
+      return undefined;
+    }
 
     case COMMANDS.windowShow: {
       const label = typeof args.window === "string" ? args.window : "main";

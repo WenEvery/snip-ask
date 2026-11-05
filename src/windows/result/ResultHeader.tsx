@@ -1,6 +1,7 @@
 /** 结果窗顶栏：拖拽区、动作标题、轮次/模式/引擎徽标、AI 生成标注、复制与关闭 */
 
 import type { Mode } from "@/shared/contract/types";
+import { engineLabel, engineTitle } from "../shared/engineLabel";
 
 export interface ResultHeaderProps {
   title: string;
@@ -24,7 +25,11 @@ export function ResultHeader(props: ResultHeaderProps) {
         <h1 className="result-title">{props.title}</h1>
         {props.round > 1 ? <span className="result-chip">第 {props.round} 轮</span> : null}
         {props.mode ? <span className="result-chip">{MODE_LABELS[props.mode]}</span> : null}
-        {props.engine ? <span className="result-chip is-mono">{props.engine}</span> : null}
+        {props.engine ? (
+          <span className="result-chip is-mono" title={engineTitle(props.engine)}>
+            {engineLabel(props.engine)}
+          </span>
+        ) : null}
         <span className="result-ai-badge" title="内容由 AI 生成，请自行核实">
           AI 生成
         </span>

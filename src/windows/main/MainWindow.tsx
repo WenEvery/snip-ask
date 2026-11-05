@@ -16,19 +16,22 @@ import type {
   ConfigView,
   ModelInfo,
   OnboardingState,
+  Stats,
   TrayActionPayload,
 } from "../../shared/contract/types";
 import { useIpcEvent } from "../../shared/hooks/useIpcEvent";
 import { ipc, isBrowserPreview, toAppError } from "../../shared/ipc";
 import { applyAccent, applyTheme } from "../../shared/theme/theme";
+import HistoryPage from "./history/HistoryPage";
 import OnboardingWizard from "./onboarding/OnboardingWizard";
 import type { Capabilities } from "./onboarding/capabilities";
 import { deriveCapabilities, isRestricted } from "./onboarding/capabilities";
 import { RestrictedNotice } from "./onboarding/components/RestrictedNotice";
+import { editionBadge } from "./ocr/status";
 import SettingsPage from "./settings/SettingsPage";
 import "./main.css";
 
-type MainRoute = "settings" | "onboarding";
+type MainRoute = "settings" | "onboarding" | "history";
 
 export default function MainWindow() {
   const [route, setRoute] = useState<MainRoute>("settings");
@@ -38,6 +41,7 @@ export default function MainWindow() {
   const themeCleanupRef = useRef<(() => void) | null>(null);
   // S-07 受限模式：真实能力快照 + 引导状态（用于主界面提示与「去配置」入口）。
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [onboardingFlags, setOnboardingFlags] = useState<{
     completed: boolean;
     skipped: boolean;
@@ -53,13 +57,15 @@ export default function MainWindow() {
   // 读取真实能力快照：受限模式提示与「去配置」入口的数据来源。
   const refreshCapabilities = useCallback(async () => {
     try {
-      const [view, models, state] = await Promise.all([
+      const [view, models, state, nextStats] = await Promise.all([
         ipc.invoke<ConfigView>(COMMANDS.configGet),
         ipc.invoke<ModelInfo[]>(COMMANDS.modelsList),
         ipc.invoke<OnboardingState>(COMMANDS.onboardingState),
+        ipc.invoke<Stats>(COMMANDS.appStats),
       ]);
       setCapabilities(deriveCapabilities({ providers: view.providers, models }));
       setOnboardingFlags({ completed: state.completed, skipped: state.skipped });
+      setStats(nextStats);
     } catch {
       // 能力探测失败时静默降级：不阻塞主界面。
     }
@@ -136,8 +142,12 @@ export default function MainWindow() {
     [refreshCapabilities],
   );
 
-  const restricted =
-    capabilities !== null && isRestricted(capabilities) && route === "settings";
+  const restricted = capabilities !== null && isRestricted(capabilities) && route === "settings";
+
+  // 顶栏徽标：版本类型（full/slim/dev）+ 运行模式（真实能力 / 调试骨架）。
+  const editionText = stats ? editionBadge(stats.edition) : "v1.0.0";
+  const modeText = stats?.skeletonMode ? "调试模式" : "真实能力";
+  const appBadge = `${isBrowserPreview() ? "浏览器预览 · " : ""}${editionText} · ${modeText}`;
 
   return (
     <div className="main-window">
@@ -147,9 +157,7 @@ export default function MainWindow() {
             框
           </span>
           <span className="main-titlebar__title">框选 AI</span>
-          <span className="main-titlebar__badge">
-            {isBrowserPreview() ? "浏览器预览 · 骨架模式" : "骨架模式"}
-          </span>
+          <span className="main-titlebar__badge">{appBadge}</span>
         </div>
         <div className="main-titlebar__actions">
           <IconButton label="最小化到托盘" title="最小化到托盘" onClick={hideWindow}>
@@ -177,6 +185,14 @@ export default function MainWindow() {
           </button>
           <button
             type="button"
+            className={`main-nav__item${route === "history" ? " main-nav__item--active" : ""}`}
+            aria-current={route === "history" ? "page" : undefined}
+            onClick={() => setRoute("history")}
+          >
+            历史
+          </button>
+          <button
+            type="button"
             className={`main-nav__item${route === "onboarding" ? " main-nav__item--active" : ""}`}
             aria-current={route === "onboarding" ? "page" : undefined}
             onClick={() => setRoute("onboarding")}
@@ -184,7 +200,7 @@ export default function MainWindow() {
             首启引导
           </button>
           <p className="main-nav__note">
-            脚手架阶段：捕获 / OCR / 模型均为骨架实现，命令与事件遵循 IPC 契约 v1。
+            v1.0.0 · 真实捕获 / 本地 OCR / 本地与云端推理。历史记录保存在本机 SQLite，不上传。
           </p>
         </nav>
 
@@ -210,6 +226,8 @@ export default function MainWindow() {
               ) : null}
               {route === "onboarding" ? (
                 <OnboardingWizard onFinish={handleFinish} onOpenSettings={openConfigure} />
+              ) : route === "history" ? (
+                <HistoryPage />
               ) : (
                 <SettingsPage
                   key={`settings-${settingsSection}`}

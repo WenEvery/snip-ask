@@ -7,7 +7,8 @@
 import type { Config, ConfigView, DeepPartial } from "@/shared/contract/types";
 
 /** 设置页分组标识（与导航一一对应） */
-export type SectionId = "general" | "appearance" | "ai" | "translate" | "actions" | "advanced";
+export type SectionId =
+  "general" | "appearance" | "ai" | "translate" | "actions" | "advanced" | "about";
 
 /** 归一化后的错误（由 AppError 收敛而来，字符串兜底） */
 export interface UiError {

@@ -503,7 +503,9 @@ pub fn read_log_tail(path: &Path, max_bytes: u64) -> String {
 
 /// 构造健康检查 / 引擎探测用的 HTTP 客户端（本地回环，短超时）。
 pub fn build_http_client(total_timeout: Duration) -> AppResult<reqwest::Client> {
+    // 健康检查只用于本地回环（llama-server），必须绕过系统代理。
     reqwest::Client::builder()
+        .no_proxy()
         .connect_timeout(Duration::from_secs(5))
         .timeout(total_timeout)
         .build()

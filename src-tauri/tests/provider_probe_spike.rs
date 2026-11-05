@@ -47,6 +47,7 @@ fn draft_with_base_url(base_url: &str) -> ProviderDraft {
         name: "DeepSeek".to_string(),
         base_url: base_url.to_string(),
         model: "deepseek-flash".to_string(),
+        kind: snip_ask_lib::contract::config::ProviderKind::OpenAiCompatible,
         caps: vec![Cap::Vision, Cap::Search],
         api_key: None,
         temperature: Some(0.2),
