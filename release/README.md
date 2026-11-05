@@ -1,31 +1,34 @@
-# 框选 AI（Snip Ask）· v1.0.1 发行说明
+# 框选 AI（Snip Ask）· v1.0.2 发行说明
 
-本目录是 **v1.0.1（修复版）** 的双版本发行产物归档，由仓库源码在本地 Windows 环境构建，
+本目录是 **v1.0.2（修复版）** 的双版本发行产物归档，由仓库源码在本地 Windows 环境构建，
 与该版本源码同一提交入库，可直接安装使用。
 
-> v1.0.0 与更早（v0.1.0 骨架模式 MVP）的安装包**已从本目录移除**；历史版本请见仓库提交历史。
+> v1.0.1 与更早（v1.0.0 / v0.1.0 骨架模式 MVP）的安装包**已从本目录移除**；历史版本请见仓库提交历史。
 > 本软件**不包含自动更新、也不包含遥测/使用统计上报**：升级方式 = 下载新版安装包覆盖安装，
 > 或按《自定义指南》自行源码构建。
 
-## 0 v1.0.1 主要变化（相对 v1.0.0）
+## 0 v1.0.2 主要变化（相对 v1.0.1，用户反馈修复）
 
-- **窗口交互重做**：主窗口去掉系统标题栏，改为自绘标题栏 + 最大化/还原 + 8 向边缘缩放；
-  **关闭按钮 / `Alt+F4` = 隐藏到托盘**，托盘图标左键打开设置，托盘菜单保留「重新运行引导」与「退出」；
-- **模型下载状态修复**：`DownloadState` 新增 `idle`（默认未下载），取消/重试状态正确；OCR 模型卡在 slim 下可下载、full 下显示「已内置」；
-- **运行信息**：内存占用改为真实值（不再为 0）；新增引擎启停按钮；搜索/隐私/默认模式设置补齐；
-- **隐私**：移除遥测/使用统计上报（配置 schema 升至 **v6**，迁移 v5→v6），无任何使用数据外发；工程化 UI 文案清理；
-- 契约 schema **6**、版本 `1.0.1`；其余能力（真实捕获/OCR/云端推理/凭据/历史/双安装包）与 v1.0.0 一致。
+- **结果窗透明外框 / 固定空白修复**：结果窗不再透明、无系统阴影，卡片铺满窗口；高度随内容自适应
+  （内容少时收紧，内容超过屏幕 85% 后内部滚动），去掉原固定 420px 高度造成的下方透明/空白；
+- **引擎已就绪仍提示「本地模型缺失」修复**：旧的失败提示在模型安装完成、引擎就绪后自动清空；
+  仅引擎未启动时显示原因（新增 4 个单元测试覆盖该逻辑）；
+- **自绘标题栏按钮无响应修复**：补齐窗口权限（最小化 / 最大化 / 还原 / 起始缩放 / `set-size`），
+  真机 E2E 已验证最小化、最大化按钮真实生效；
+- 继承 v1.0.1：自绘标题栏 + 关闭/`Alt+F4` 隐藏到托盘、模型下载 `idle` 状态与取消/重试、真实内存值、
+  引擎启停、搜索/隐私/默认模式设置、移除遥测（配置 schema **v6**）；
+- 版本 `1.0.2`；其余能力（真实捕获/OCR/云端推理/凭据/历史/双安装包）与 v1.0.1 一致。
 
 ## 1 发行产物
 
 | 文件 | 版本类型 | 大小 | SHA256 |
 | --- | --- | --- | --- |
-| [`SnipAsk_1.0.1_x64-setup.exe`](SnipAsk_1.0.1_x64-setup.exe) | **slim**（安装后下载版） | 7,778,389 B（7.42 MiB） | `95b241c2d13ad31e38a7dbab4f9c70d874171e292ced5d080a6018c4436a4986` |
-| [`SnipAsk_1.0.1_x64-full-setup.exe`](SnipAsk_1.0.1_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,561,123 B（21.52 MiB） | `fb1728839c481b649c1bd763284d5c07ddabd8469447c29b10e1cc848a23940b` |
+| [`SnipAsk_1.0.2_x64-setup.exe`](SnipAsk_1.0.2_x64-setup.exe) | **slim**（安装后下载版） | 7,778,687 B（7.42 MiB） | `d0e2df6b19fc964f243f9f80ca7a330f47cd94e87fa6b9d4d1f23dd9ec3ec5b2` |
+| [`SnipAsk_1.0.2_x64-full-setup.exe`](SnipAsk_1.0.2_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,564,280 B（21.52 MiB） | `67af3437f682cc13e51491d3ac62e39714efb4ebf7d71d548cbed475fa99c901` |
 | [`SHA256SUMS.txt`](SHA256SUMS.txt) | — | — | 上述两个安装包的机器可读校验和 |
 
 - 产物类型：NSIS 安装包（Windows x64），`installMode=currentUser`（当前用户安装，不需要管理员权限、不写 HKLM）；
-- 版本：`1.0.1`（`package.json` / `Cargo.toml` / `tauri.conf.json` / 安装包版本资源一致）；
+- 版本：`1.0.2`（`package.json` / `Cargo.toml` / `tauri.conf.json` / 安装包版本资源一致）；
 - 签名状态：**未签名**（`Get-AuthenticodeSignature` → `NotSigned`），预期内，见 §7；
 - 两个版本都内置：应用本体、ONNX Runtime 1.31.1 运行时（`ocr/onnxruntime.dll`）、提示词、模型/定价清单，
   以及安装目录 `docs/`（README、自定义指南、LICENSE、NOTICE、SECURITY、PRIVACY）。
@@ -37,7 +40,7 @@
 | 应用本体 + 文档 | 内置 | 内置 |
 | ONNX Runtime 运行时 `ocr/onnxruntime.dll` | **内置** | **内置** |
 | OCR 模型（det / rec / cls + `ppocr_keys_v1.txt`） | **不内置**，首次使用 OCR 时下载（≈16 MB） | **内置**（离线开箱即用） |
-| 安装包体积（本次实测） | **7.42 MiB**（7,778,389 B） | **21.52 MiB**（22,561,123 B） |
+| 安装包体积（本次实测） | **7.42 MiB**（7,778,687 B） | **21.52 MiB**（22,564,280 B） |
 | 适用场景 | 体积敏感、首次 OCR 可联网 | 离线 / 内网 / 不想额外下载 |
 
 - slim 下载的模型落盘到 `%LOCALAPPDATA%\SnipAsk\models\ocr\`（文件名固定：`ch_PP-OCRv4_det_infer.onnx`、
@@ -50,12 +53,12 @@
 ```powershell
 # 方式一：与 SHA256SUMS.txt 比对
 Get-Content .\release\SHA256SUMS.txt
-Get-FileHash .\release\SnipAsk_1.0.1_x64-setup.exe -Algorithm SHA256
-Get-FileHash .\release\SnipAsk_1.0.1_x64-full-setup.exe -Algorithm SHA256
+Get-FileHash .\release\SnipAsk_1.0.2_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\release\SnipAsk_1.0.2_x64-full-setup.exe -Algorithm SHA256
 
 # 方式二：certutil
-certutil -hashfile .\release\SnipAsk_1.0.1_x64-setup.exe SHA256
-certutil -hashfile .\release\SnipAsk_1.0.1_x64-full-setup.exe SHA256
+certutil -hashfile .\release\SnipAsk_1.0.2_x64-setup.exe SHA256
+certutil -hashfile .\release\SnipAsk_1.0.2_x64-full-setup.exe SHA256
 ```
 
 预期值与 §1 表格一致。两者不一致时**不要运行**该安装包，重新获取。
@@ -70,8 +73,8 @@ certutil -hashfile .\release\SnipAsk_1.0.1_x64-full-setup.exe SHA256
 ```powershell
 # 交互式：双击对应版本的 setup.exe，按向导完成
 # 静默安装（当前用户，任选 slim/full 之一）：
-Start-Process .\release\SnipAsk_1.0.1_x64-setup.exe -ArgumentList '/S' -Wait
-Start-Process .\release\SnipAsk_1.0.1_x64-full-setup.exe -ArgumentList '/S' -Wait
+Start-Process .\release\SnipAsk_1.0.2_x64-setup.exe -ArgumentList '/S' -Wait
+Start-Process .\release\SnipAsk_1.0.2_x64-full-setup.exe -ArgumentList '/S' -Wait
 ```
 
 - 默认安装目录：`%LOCALAPPDATA%\SnipAsk\`（安装 `snip-ask.exe`、`uninstall.exe`、`ocr\` 与 `docs\`）；
@@ -88,9 +91,10 @@ Start-Process .\release\SnipAsk_1.0.1_x64-full-setup.exe -ArgumentList '/S' -Wai
 
 卸载会删除程序文件、`ocr\`/`docs\`、卸载器、开始菜单/桌面快捷方式与卸载注册项，但**保留用户数据**（见 §5）。
 
-### 窗口与托盘交互（v1.0.1）
+### 窗口与托盘交互（v1.0.1 起；v1.0.2 补齐标题栏按钮权限）
 
-- 主窗口**没有系统标题栏**：使用自绘标题栏（可拖动移动窗口），支持最大化/还原与 8 向边缘缩放；
+- 主窗口**没有系统标题栏**：使用自绘标题栏（可拖动移动窗口），支持最小化/最大化/还原与 8 向边缘缩放
+  （v1.0.2 修复了自绘标题栏按钮无响应问题，真机验证最小化/最大化真实生效）；
 - **关闭按钮 / `Alt+F4` = 隐藏到托盘**（进程继续常驻，后台快捷键与托盘功能保持可用），不是退出程序；
 - **托盘图标左键单击 = 打开设置**；托盘右键菜单提供「重新运行引导」与「退出」（退出请用托盘菜单，或先在设置中关闭）；
 - 需要完全退出/卸载时，请先通过托盘菜单退出应用，再执行卸载，避免文件占用。
@@ -107,7 +111,7 @@ Start-Process .\release\SnipAsk_1.0.1_x64-full-setup.exe -ArgumentList '/S' -Wai
 彻底清理：先卸载，再手动删除以上目录。便携模式（程序目录存在 `portable.flag`）下数据写入程序目录旁 `data\`。
 
 > 已知设计问题：默认安装目录 `%LOCALAPPDATA%\SnipAsk` 与应用本地数据目录同名，NSIS 非递归卸载会因数据存在
-> 而留下空目录（v1.0.1 实测仍如此，属预期）；后续版本建议改为 `%LOCALAPPDATA%\Programs\SnipAsk`。
+> 而留下空目录（v1.0.2 实测仍如此，属预期）；后续版本建议改为 `%LOCALAPPDATA%\Programs\SnipAsk`。
 
 ## 6 自定义与关于（无自动更新 · 无遥测）
 
@@ -142,7 +146,7 @@ Start-Process .\release\SnipAsk_1.0.1_x64-full-setup.exe -ArgumentList '/S' -Wai
 | 项 | 值 |
 | --- | --- |
 | 构建命令 | `powershell -ExecutionPolicy Bypass -File scripts\build-installers.ps1`（内部：prepare OCR assets → slim/full 各 `SNIP_ASK_EDITION` + `pnpm exec tauri build --config src-tauri/tauri.<edition>.conf.json`） |
-| 构建时间 | 2026-11-06 03:43–03:50（Asia/Shanghai；slim 构建+打包 193.5s、full 154.9s，含 edition clean 与 NSIS 打包） |
+| 构建时间 | 2026-11-06 04:39–04:49（Asia/Shanghai；slim 构建+打包 360.8s、full 160.7s，含 edition clean 与 NSIS 打包；slim 构建窗口内另有门禁 cargo 任务并行、等锁导致耗时偏长） |
 | Rust | 1.99.1（MSVC 工具链，VS 2022 Build Tools） |
 | Tauri CLI | 2.12.4（Tauri 2，`custom-protocol` feature 已启用） |
 | Node.js / pnpm | 24.14.1 / 11.21.0 |
@@ -157,28 +161,28 @@ Start-Process .\release\SnipAsk_1.0.1_x64-full-setup.exe -ArgumentList '/S' -Wai
 | --- | --- |
 | `cargo fmt --check` | PASS |
 | `cargo clippy --all-targets -- -D warnings` | PASS（0 warning） |
-| `cargo test --all-targets` | PASS：**480 passed / 0 failed / 15 ignored**（含真实 OCR 推理、local engine 真机、cloud mock、model_download 等集成测试） |
+| `cargo test --all-targets` | PASS：`--all-targets` 全绿（lib 345 个 + 本次新增 4 个「引擎提示」单元测试；含真实 OCR 推理、local engine 真机、cloud mock、model_download 等集成测试） |
 | `pnpm typecheck` | PASS |
 | `pnpm test`（前端纯逻辑） | PASS：**48 / 48** |
-| `pnpm build:web` | PASS（128 modules） |
-| 真机 form-check（`v1.0.1` 修复项） | PASS（`.verify/v1/fix/form-check.json`） |
-| 真机 E2E（cloud+local） | **PASS**：真实框选 → 真实 OCR → 云端 DeepSeek（翻译 0.75s / 搜索 3.58s / 图片搜索 10.02s / 覆盖翻译全部块成功）→ 本地 Vulkan GPU（29 层 offload，翻译 1.46s）→ 历史 3 轮持久化；证据 [`.verify/v1/e2e/e2e-results.json`](../.verify/v1/e2e/e2e-results.json)、[`.verify/v1/e2e/README.md`](../.verify/v1/e2e/README.md) |
+| `pnpm build:web` | PASS（131 modules） |
+| 真机 form-check（v1.0.1 修复项：无工程词/引导导航/自绘标题栏+8 向缩放/关闭隐藏可重开/内存真实值/模型 idle+下载+取消/设置保存） | PASS（`.verify/v1/fix/form-check.json`） |
+| 真机 E2E（v1.0.2 结果窗 + 标题栏按钮） | **PASS**：真实框选 → 真实 OCR → 云端 DeepSeek；结果窗尺寸 **460×312** 与卡片逐像素一致（无透明外框/固定空白）、内容超屏内部滚动；自绘标题栏最小化/最大化按钮真实生效；证据 `.verify/v1/e2e/` |
 | 双版本构建 + 体积门禁（`scripts/build-installers.ps1`） | PASS：slim ≤ 25 MiB / full ≤ 60 MiB |
 | edition 注入自检（slim/full 主程序 SHA256 不同） | PASS |
 | 双安装包真实安装/启动/卸载冒烟 | PASS ×2（0 关键失败 / 0 警告；`closeBehavior=hidden-to-tray` 已验证） |
 
-本次双安装包真实冒烟结果（Windows 11 x64 build 26200，currentUser，静默 `/S` 安装 → 启动 6s → 静默卸载）：
+本次双安装包真实冒烟结果（Windows 11 x64 build 26200，currentUser，静默 `/S` 安装 → 启动 6s → 关闭隐藏到托盘验证 → 静默卸载）：
 
-- slim：安装退出码 0（3.4s）；安装目录 9 个文件、27,375,802 B = `snip-ask.exe`（7,946,752 B，版本资源 1.0.1）
+- slim：安装退出码 0（3.3s）；安装目录 9 个文件、27,380,321 B = `snip-ask.exe`（7,950,848 B，版本资源 1.0.2）
   + `uninstall.exe` + `ocr\onnxruntime.dll`（19,288,888 B，SHA256 与构建源一致）+ `docs\` 6 个文档
   （README/自定义指南/LICENSE/NOTICE/SECURITY/PRIVACY），**无任何模型文件**；启动 6s 后进程存活、
-  主窗口「框选 AI」可见、响应正常、工作集 38.4 MB；截图显示自绘标题栏与「文字识别 / 还缺 4 个模型 / 在线下载」；
-- full：安装退出码 0（4.4s）；安装目录 13 个文件、43,591,094 B = slim 全部 + `ocr\` 下 det/rec/cls/`ppocr_keys_v1.txt`，
+  主窗口「框选 AI」可见、响应正常、工作集 36.7 MB；截图见 `screenshots/launch-slim.png`；
+- full：安装退出码 0（4.2s）；安装目录 13 个文件、43,595,613 B = slim 全部 + `ocr\` 下 det/rec/cls/`ppocr_keys_v1.txt`，
   4 个模型/字典 SHA256 与 `src-tauri/resources/ocr/` 源文件完全一致；启动 6s 后进程存活、主窗口可见、响应正常、
-  工作集 38.2 MB；截图显示「文字识别已就绪（随安装包内置）」「内置模型」「模型已内置」；
+  工作集 36.5 MB；截图见 `screenshots/launch-full.png`；
 - **关闭行为验证**：对运行中的两版应用发送关闭窗口（`WM_CLOSE`）后进程仍存活 → `closeBehavior=hidden-to-tray`，
-  符合 v1.0.1「关闭/Alt+F4 隐藏到托盘」设计（随后强制结束以完成卸载步骤）；
-- 两版：`Get-AuthenticodeSignature` → `NotSigned`，版本资源 `1.0.1`；静默卸载退出码 0，卸载项/程序文件/开始菜单
+  符合「关闭/Alt+F4 隐藏到托盘」设计（随后强制结束以完成卸载步骤）；
+- 两版：`Get-AuthenticodeSignature` → `NotSigned`，版本资源 `1.0.2`；静默卸载退出码 0，卸载项/程序文件/开始菜单
   与桌面快捷方式全部清除（仅保留空的本地数据目录，符合 §5 预期）；冒烟前临时移走的用户 `%APPDATA%\SnipAsk`、
   `%LOCALAPPDATA%\SnipAsk`、WebView2 数据目录在冒烟后全部恢复（`restored=true`，真实用户数据未被破坏）；
 - 冒烟证据（完整 JSON、安装目录文件清单+SHA256、启动截图）：`.verify/v1/installer/`

@@ -216,7 +216,9 @@ pub fn ensure_result(app: &AppHandle) -> AppResult<WebviewWindow> {
     .inner_size(460.0, 420.0)
     .min_inner_size(320.0, 240.0)
     .decorations(false)
-    .transparent(true)
+    // 不透明 + 无系统阴影：内容铺满窗口，窗口自适应内容高度，避免卡片外出现透明一圈。
+    .transparent(false)
+    .shadow(false)
     .always_on_top(true)
     .skip_taskbar(true)
     .resizable(true)

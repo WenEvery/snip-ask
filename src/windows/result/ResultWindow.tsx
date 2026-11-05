@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { ipc, isTauri } from "@/shared/ipc";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
@@ -61,6 +62,7 @@ export default function ResultWindow() {
   /** 待挂到下一轮 user 气泡上的追问文本（`task:started` 到达时消费）。 */
   const pendingQuestionRef = useRef<string | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const followRef = useRef(true);
 
   const latest = latestTurn(turns);
@@ -237,11 +239,67 @@ export default function ResultWindow() {
     }
   };
 
+  // 结果窗高度随内容自适应：去掉固定的 460×420 窗口下多余透明区域。
+  // 宽度保持用户调整后的宽度；高度 = 顶栏 + 正文内容 + 底栏，上限为屏幕可用高度的 85%。
+  useEffect(() => {
+    if (!isTauri()) return undefined;
+    const win = getCurrentWindow();
+    let disposed = false;
+    let raf = 0;
+
+    const apply = async () => {
+      const card = cardRef.current;
+      if (!card || disposed) return;
+      // 卡片在窗口内被拉满（height:100%），直接量 scrollHeight 会得到窗口高度而不是内容高度。
+      // 先临时取消拉伸，量出真实内容高度，再恢复（同步执行，不产生可见闪烁）。
+      const previousHeight = card.style.height;
+      const previousMaxHeight = card.style.maxHeight;
+      card.style.height = "auto";
+      card.style.maxHeight = "none";
+      const content = card.getBoundingClientRect().height;
+      card.style.height = previousHeight;
+      card.style.maxHeight = previousMaxHeight;
+      const maxHeight = Math.min(window.screen.availHeight * 0.85, 900);
+      const height = Math.min(Math.max(Math.ceil(content), 240), maxHeight);
+      try {
+        const scale = await win.scaleFactor();
+        const current = await win.innerSize();
+        const target = Math.round(height * scale);
+        if (Math.abs(current.height - target) <= 2) return;
+        await win.setSize(new LogicalSize(current.width / scale, height));
+      } catch {
+        // 窗口 API 不可用（权限/预览环境）时保持默认尺寸，不阻塞内容渲染。
+      }
+    };
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => void apply());
+    };
+
+    schedule();
+    const resizeObserver = new ResizeObserver(schedule);
+    if (cardRef.current) resizeObserver.observe(cardRef.current);
+    const mutationObserver = new MutationObserver(schedule);
+    if (cardRef.current) {
+      mutationObserver.observe(cardRef.current, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, []);
+
   const title = first ? ACTION_TITLES[first.action] : "结果";
 
   return (
     <div className="result-root">
-      <div className="result-card">
+      <div className="result-card" ref={cardRef}>
         <ResultHeader
           title={title}
           mode={first ? first.mode : null}

@@ -1,6 +1,6 @@
 {
   "name": "snip-ask",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "description": "框选 AI —— 屏幕框选 + AI 搜索 / 翻译 / 解答（Tauri 2 + React 18 + TypeScript）",

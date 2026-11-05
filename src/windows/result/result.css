@@ -1,9 +1,10 @@
-/* 结果窗样式：透明窗口 + 圆角卡片，内部滚动；仅使用主题 token */
+/* 结果窗样式：不透明面板铺满窗口，窗口高度随内容自适应；仅使用主题 token */
 
-/* 结果窗背景透明（:has 只在结果窗渲染时生效，不影响主窗） */
+/* 结果窗背景使用面板色（:has 只在结果窗渲染时生效，不影响主窗） */
 html:has(.result-root),
 html:has(.result-root) body {
-  background: transparent;
+  margin: 0;
+  background: var(--sa-color-surface, #14181d);
 }
 
 .result-root {
@@ -11,8 +12,9 @@ html:has(.result-root) body {
   position: fixed;
   inset: 0;
   display: flex;
-  padding: 6px;
-  background: transparent;
+  align-items: flex-start;
+  padding: 0;
+  background: var(--sa-color-surface, #14181d);
   color: var(--sa-color-text, #e6e8eb);
   font-family: var(--sa-font-sans, "Segoe UI", "Microsoft YaHei", sans-serif);
   font-size: var(--sa-text-sm, 13px);
@@ -22,12 +24,13 @@ html:has(.result-root) body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: 70vh;
-  min-height: 140px;
-  border: 1px solid var(--sa-color-border-strong, #3a414b);
-  border-radius: var(--sa-radius-lg, 14px);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
   background: var(--sa-color-surface, #14181d);
-  box-shadow: var(--sa-shadow-lg, 0 18px 48px rgba(0, 0, 0, 0.45));
+  box-shadow: none;
   overflow: hidden;
 }
 

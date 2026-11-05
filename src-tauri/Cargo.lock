@@ -3743,7 +3743,7 @@ dependencies = [
 
 [[package]]
 name = "snip-ask"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "async-trait",

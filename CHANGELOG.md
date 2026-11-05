@@ -15,6 +15,42 @@
 - 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。
 - UI 打磨：结果窗 Markdown 渲染、多语言（`en-US` 预留）、无障碍键盘路径、主题自定义导入导出。
 
+## [1.0.2] - 2026-11-06
+
+> 修复版：仅处理 3 个用户反馈问题（源码已冻结）；**无契约变更**（配置 Schema 6 / 43 命令 / 15 事件 /
+> `IPC_CONTRACT_VERSION = 1` 均不变），不改数据收集与存储方式。
+
+### 修复
+- **结果窗透明外框/固定空白**：结果窗改为不透明面板并铺满窗口，高度随回答内容自适应
+  （内容少时窗口收紧、内容多时到屏幕 85% 后内部滚动）；去掉窗口外圈透明边、系统阴影与固定 420px 高度造成的空白。
+- **引擎已就绪仍提示「本地模型缺失」**：修复启动时未下载模型留下的旧失败提示在模型安装、引擎就绪后仍显示的问题；
+  引擎就绪时自动清空旧提示，仅「未启动」时才展示可读原因（引擎自身原因优先）。
+- **自绘标题栏按钮无响应**：补齐窗口权限（最小化/最大化/还原/起始缩放/`set-size`），
+  修复主窗口最小化、最大化按钮点击无效（结果窗自动高度也依赖 `set-size` 权限）。
+
+### 双安装包（重建，最终归档）
+
+- 由 T5 基于 v1.0.2 源码重建并归档到 `release/`：
+  - **在线安装版** `SnipAsk_1.0.2_x64-setup.exe` **7,778,687 B（7.42 MiB）**，
+    SHA256 `d0e2df6b19fc964f243f9f80ca7a330f47cd94e87fa6b9d4d1f23dd9ec3ec5b2`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.2_x64-full-setup.exe` **22,564,280 B（21.52 MiB）**，
+    SHA256 `67af3437f682cc13e51491d3ac62e39714efb4ebf7d71d548cbed475fa99c901`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB）。
+- 安装冒烟 PASS：两版静默安装 `/S` 退出码 0（3.3s / 4.2s），安装目录分别 9 文件/27,380,321 B（无模型）与
+  13 文件/43,595,613 B（+det/rec/cls/dict）；启动 6s 主窗口「框选 AI」可见、响应正常；
+  **关闭主窗口 = 隐藏到托盘（`closeBehavior=hidden-to-tray`，进程存活）**；静默卸载 `/S` 退出码 0（1.3s / 1.7s），
+  用户数据恢复。两版均 `NotSigned`。证据 `.verify/v1/installer/`、`release/SHA256SUMS.txt`。
+
+### 验证
+- **最终门禁（全绿）**：`cargo fmt --check` PASS（0）；`cargo clippy --all-targets -- -D warnings` PASS（0 warning）；
+  `cargo test --all-targets` **484 passed / 0 failed / 20 ignored**（lib 345 + 新增 4 个引擎提示测试）；
+  `pnpm typecheck` 0、`pnpm test` **48/48**、`pnpm build:web` 0。
+- 真机 E2E（cloud）：点击最小化/最大化真实生效；结果窗卡片与窗口逐像素一致（**460×312**，不再有透明边/固定空白）。
+- 引擎提示合并逻辑新增 **4 个单元测试**（`ready_clears_stale_missing_model_note` /
+  `stopped_attaches_note_when_engine_has_none` / `stopped_keeps_engine_own_reason` /
+  `starting_does_not_attach_old_note`）。
+- 最终门禁与双安装包体积/SHA256 以 `.verify/verify-v1.0.2/SUMMARY.md` 与 `release/SHA256SUMS.txt` 为准。
+
 ## [1.0.1] - 2026-11-06（用户反馈修复）
 
 > 本版本针对 v1.0.0 的用户反馈做集中修复，并明确产品隐私口径：**不收集任何用户信息**

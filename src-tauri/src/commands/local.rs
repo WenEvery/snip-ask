@@ -15,7 +15,7 @@ use tauri::{AppHandle, Manager, State};
 use crate::app::state::AppState;
 use crate::contract::errors::AppResult;
 use crate::contract::events::EngineStatusPayload;
-use crate::contract::types::{BackendInfo, DownloadId, GpuProbeResult};
+use crate::contract::types::{BackendInfo, DownloadId, EngineStatus, GpuProbeResult};
 
 /// 打包后 Tauri `resource_dir` 可能不在 `exe_dir` 之下（如 NSIS/安装版布局），
 /// 这里补一个**精确**的随包后端根目录（CPU 后端随主安装包分发）。
@@ -63,11 +63,31 @@ pub async fn local_gpu_probe(
     Ok(result)
 }
 
+/// 合并「引擎快照」与「上次未启动原因」，并返回是否需要清空旧原因。
+///
+/// 规则：
+/// - 已就绪：旧原因必须清空（下载模型后启动成功，不能还提示「本地模型缺失」）；
+/// - 未启动：仅在引擎自身没有回退原因时，补上上次的可读原因；
+/// - 启动中/失败：不附加旧原因（失败由引擎自身状态表达）。
+fn merge_engine_note(
+    mut payload: EngineStatusPayload,
+    note: Option<String>,
+) -> (EngineStatusPayload, bool) {
+    if payload.local == EngineStatus::Ready {
+        return (payload, true);
+    }
+    if payload.local == EngineStatus::Stopped && payload.fallback_reason.is_none() {
+        payload.fallback_reason = note;
+    }
+    (payload, false)
+}
+
 /// 引擎快照 + 未启动原因（设置页展示用）。
 fn engine_payload(state: &AppState) -> EngineStatusPayload {
-    let mut payload = state.local_engine.snapshot();
-    if payload.fallback_reason.is_none() {
-        payload.fallback_reason = state.engine_note();
+    let (payload, clear_note) =
+        merge_engine_note(state.local_engine.snapshot(), state.engine_note());
+    if clear_note {
+        state.set_engine_note(None);
     }
     payload
 }
@@ -149,4 +169,63 @@ pub async fn backends_remove(
     state.gpu_probe.invalidate();
     crate::events::emit_engine_status_payload(&app, &state.local_engine.snapshot());
     Ok(())
+}
+
+/// v1.0.2：引擎提示合并逻辑的单元测试。
+#[cfg(test)]
+mod engine_note_tests {
+    use super::*;
+
+    fn payload(local: EngineStatus) -> EngineStatusPayload {
+        EngineStatusPayload {
+            local,
+            device: None,
+            backend: None,
+            fallback_reason: None,
+            offload_layers: None,
+            device_name: None,
+            port: None,
+        }
+    }
+
+    #[test]
+    fn ready_clears_stale_missing_model_note() {
+        // 用户场景：启动时模型还没下载（记录了「本地模型缺失」），之后模型装好且引擎已就绪。
+        let (merged, clear) = merge_engine_note(
+            payload(EngineStatus::Ready),
+            Some("本地模型缺失".to_string()),
+        );
+        assert!(clear, "引擎就绪后必须清空旧的未启动原因");
+        assert_eq!(merged.fallback_reason, None, "就绪状态不能带失败原因");
+    }
+
+    #[test]
+    fn stopped_attaches_note_when_engine_has_none() {
+        let (merged, clear) = merge_engine_note(
+            payload(EngineStatus::Stopped),
+            Some("本地模型缺失".to_string()),
+        );
+        assert!(!clear);
+        assert_eq!(merged.fallback_reason.as_deref(), Some("本地模型缺失"));
+    }
+
+    #[test]
+    fn stopped_keeps_engine_own_reason() {
+        let mut base = payload(EngineStatus::Stopped);
+        base.fallback_reason = Some("Vulkan 后端未安装，已回退 CPU".to_string());
+        let (merged, clear) = merge_engine_note(base, Some("旧原因".to_string()));
+        assert!(!clear);
+        assert_eq!(
+            merged.fallback_reason.as_deref(),
+            Some("Vulkan 后端未安装，已回退 CPU")
+        );
+    }
+
+    #[test]
+    fn starting_does_not_attach_old_note() {
+        let (merged, clear) =
+            merge_engine_note(payload(EngineStatus::Starting), Some("旧原因".to_string()));
+        assert!(!clear);
+        assert_eq!(merged.fallback_reason, None);
+    }
 }

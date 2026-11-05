@@ -3,5 +3,14 @@
   "identifier": "default",
   "description": "框选 AI 默认窗口能力：main / overlay / result 三窗口共用",
   "windows": ["main", "overlay", "result"],
-  "permissions": ["core:default", "core:window:allow-start-dragging"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-start-resize-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-set-size"
+  ]
 }
