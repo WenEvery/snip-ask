@@ -114,7 +114,7 @@ function TurnBody(props: {
             <pre className="result-error-detail">{turn.error.detail}</pre>
           ) : null}
           {turn.error.fallback.length > 0 ? (
-            <p className="result-error-fallback">可尝试：{fallbackText(turn.error.fallback)}</p>
+            <p className="result-error-fallback">可以试试：{fallbackText(turn.error.fallback)}</p>
           ) : null}
         </div>
       ) : null}
@@ -123,11 +123,9 @@ function TurnBody(props: {
 
       {turn.done ? (
         <div className="result-usage">
-          <span>延迟 {formatLatency(turn.done.latencyMs)}</span>
-          <span>输入 {turn.done.usage.inputTokens} tokens</span>
-          <span>输出 {turn.done.usage.outputTokens} tokens</span>
+          <span>用时 {formatLatency(turn.done.latencyMs)}</span>
           <span>费用 {formatCost(turn.done.usage.costEstimate)}</span>
-          <span title={engineTitle(turn.done.engine)}>引擎 {engineLabel(turn.done.engine)}</span>
+          <span title={engineTitle(turn.done.engine)}>{engineLabel(turn.done.engine)}</span>
         </div>
       ) : null}
 

@@ -156,7 +156,7 @@ impl ModelManager {
             .lock()
             .get(id)
             .copied()
-            .unwrap_or(DownloadState::Queued)
+            .unwrap_or(DownloadState::Idle)
     }
 
     /// 开始下载；返回下载 ID。
@@ -167,6 +167,16 @@ impl ModelManager {
         let entry = find_entry(&self.manifest, id)
             .cloned()
             .ok_or_else(|| model_missing_error(id))?;
+        // 幂等/可读错误：已安装或正在下载时不重复启动（避免「一直排队」的观感）。
+        if self.is_installed(id) {
+            return Err(AppError::invalid_state("该模型已安装，无需重复下载"));
+        }
+        if matches!(
+            self.state_of(id),
+            DownloadState::Queued | DownloadState::Downloading | DownloadState::Verifying
+        ) {
+            return Err(AppError::invalid_state("该模型正在下载中"));
+        }
         let cancel = Arc::new(AtomicBool::new(false));
         self.cancel_flags
             .lock()
@@ -189,6 +199,8 @@ impl ModelManager {
                     .run_real_download(&app, &model_id, entry, cancel)
                     .await;
             }
+            // 任务结束后清理取消标记：避免下一次下载误命中旧令牌（「取消后无法重新下载」）。
+            manager.cancel_flags.lock().remove(&model_id);
         });
         Ok(download_id)
     }
@@ -1196,7 +1208,7 @@ pub fn model_dir(models_dir: &Path, id: &str) -> PathBuf {
 
 /// 构造 `ModelInfo`（命令层 / 测试直接使用）。
 pub fn info(entry: &ModelManifestEntry, installed_bytes: Option<u64>) -> ModelInfo {
-    entry_to_info(entry, installed_bytes, DownloadState::Queued)
+    entry_to_info(entry, installed_bytes, DownloadState::Idle)
 }
 
 #[cfg(test)]

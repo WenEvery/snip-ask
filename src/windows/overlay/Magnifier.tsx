@@ -1,5 +1,5 @@
 /**
- * 放大镜：跟随光标 3× 放大（有冻结帧时用背景图裁切，骨架模式无帧时显示十字与坐标）。
+ * 放大镜：跟随光标 3× 放大（有冻结帧时用背景图裁切，没有画面时显示十字与坐标）。
  * 同时显示当前选区物理坐标 / 尺寸。
  */
 
@@ -58,7 +58,7 @@ export function Magnifier({ cursorPhys, rect, virtualRect, dpr, frame }: Magnifi
         <div className="overlay-magnifier__placeholder">
           <span className="overlay-magnifier__grid" />
           <span className="overlay-magnifier__crosshair" />
-          <span className="overlay-magnifier__hint">骨架模式：无冻结帧</span>
+          <span className="overlay-magnifier__hint">没有读取到屏幕画面</span>
         </div>
       )}
       <span className="overlay-magnifier__readout">{readout}</span>

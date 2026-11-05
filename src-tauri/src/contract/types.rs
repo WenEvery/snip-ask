@@ -488,8 +488,10 @@ pub struct TestResult {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum DownloadState {
-    /// 排队中。
+    /// 未下载（默认态：尚未开始过下载）。
     #[default]
+    Idle,
+    /// 排队中（已请求下载，尚未开始传输）。
     Queued,
     /// 下载中。
     Downloading,

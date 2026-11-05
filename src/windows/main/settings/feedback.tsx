@@ -17,7 +17,7 @@ export function SaveBar(props: SaveBarProps) {
   return (
     <div className="sa-savebar">
       <span className={`sa-savebar-state${props.dirty ? " is-dirty" : ""}`}>
-        {props.dirty ? "有未应用的修改" : "本组设置已与后端一致"}
+        {props.dirty ? "有未保存的修改" : "本组设置已保存"}
       </span>
       <Button
         variant="primary"
@@ -25,7 +25,7 @@ export function SaveBar(props: SaveBarProps) {
         disabled={!props.dirty || props.saving || props.disabled}
         onClick={props.onSave}
       >
-        {props.saving ? "应用中…" : `应用${props.label}`}
+        {props.saving ? "保存中…" : `应用${props.label}`}
       </Button>
     </div>
   );
@@ -44,7 +44,12 @@ export function ConfirmAction(props: ConfirmActionProps) {
   const [confirming, setConfirming] = useState(false);
   if (!confirming) {
     return (
-      <Button variant="danger" size="sm" disabled={props.disabled} onClick={() => setConfirming(true)}>
+      <Button
+        variant="danger"
+        size="sm"
+        disabled={props.disabled}
+        onClick={() => setConfirming(true)}
+      >
         {props.children}
       </Button>
     );
@@ -99,13 +104,18 @@ export function ErrorNotice(props: ErrorNoticeProps) {
       </div>
       {open && error.detail ? <pre className="sa-error-detail">{error.detail}</pre> : null}
       {error.fallback.length > 0 ? (
-        <p className="sa-error-fallback">可尝试：{error.fallback.map((item) => fallbackLabel(item)).join("、")}</p>
+        <p className="sa-error-fallback">
+          可以试试：{error.fallback.map((item) => fallbackLabel(item)).join("、")}
+        </p>
       ) : null}
     </div>
   );
 }
 
 /** 小型状态标签 */
-export function StatusTag(props: { tone: "neutral" | "ok" | "warn" | "danger"; children: ReactNode }) {
+export function StatusTag(props: {
+  tone: "neutral" | "ok" | "warn" | "danger";
+  children: ReactNode;
+}) {
   return <span className={`sa-tag sa-tag-${props.tone}`}>{props.children}</span>;
 }

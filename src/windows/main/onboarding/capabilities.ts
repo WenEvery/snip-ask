@@ -44,7 +44,7 @@ export function isRestricted(capabilities: Capabilities): boolean {
 
 /** 受限模式下仍可用的能力（中文枚举，用于提示文案）。 */
 export function availableLabels(capabilities: Capabilities): string[] {
-  const labels = ["本地 OCR", "浏览器搜索", "复制文字"];
+  const labels = ["本地文字识别", "浏览器搜索", "复制文字"];
   if (capabilities.localModelAvailable) labels.push("本地翻译");
   return labels;
 }

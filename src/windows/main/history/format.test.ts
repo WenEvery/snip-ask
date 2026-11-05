@@ -60,12 +60,12 @@ test("historyActionLabel：动作中文名与空值兜底", () => {
   assert.equal(historyActionLabel(null), "—");
 });
 
-test("historyEngineLabel：骨架 / 本地 / 云端 / 供应商 id / 空值", () => {
-  assert.equal(historyEngineLabel("skeleton"), "骨架模式");
+test("historyEngineLabel：演示 / 本地 / 云端 / 供应商 id / 空值", () => {
+  assert.equal(historyEngineLabel("skeleton"), "演示");
   assert.equal(historyEngineLabel("local"), "本地模型");
   assert.equal(historyEngineLabel("cloud"), "云端");
   assert.equal(historyEngineLabel("deepseek"), "deepseek");
-  assert.equal(historyEngineLabel(null), "未知引擎");
+  assert.equal(historyEngineLabel(null), "未知来源");
 });
 
 test("turnStatusLabel：done / error / cancelled", () => {
@@ -112,7 +112,7 @@ test("filterSessions：按标题 / 引擎 / 动作过滤，空查询返回全部
     ["a"],
   );
   assert.deepEqual(
-    filterSessions(list, "骨架").map((item) => item.session),
+    filterSessions(list, "演示").map((item) => item.session),
     ["a"],
   );
   assert.deepEqual(

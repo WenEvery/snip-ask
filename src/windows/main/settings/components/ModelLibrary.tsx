@@ -1,6 +1,11 @@
 /**
- * 本地翻译模型库：`models_list` 展示清单 + `models_download` 下载，
- * 订阅 `download:progress` / `download:state` 更新进度条、速度与状态，支持取消 / 删除。
+ * 本地翻译模型库：展示可下载模型，下载时显示进度，支持取消 / 删除。
+ *
+ * 状态约定（契约 v1.0.1）：
+ * - `idle`：还没下载（默认），显示「下载」按钮，不显示进度/取消；
+ * - `queued/downloading/verifying`：下载中，显示进度与「取消」；
+ * - `failed`：下载失败，显示「重试」；
+ * - `installed`：已安装，显示「删除」。
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -24,9 +29,10 @@ export interface ModelLibraryProps {
 }
 
 const STATE_LABELS: Record<DownloadState, string> = {
-  queued: "排队中",
+  idle: "未下载",
+  queued: "等待下载",
   downloading: "下载中",
-  verifying: "校验中",
+  verifying: "正在检查文件",
   installed: "已安装",
   failed: "下载失败",
   cancelled: "已取消",
@@ -69,7 +75,11 @@ export function ModelLibrary(props: ModelLibraryProps) {
 
   useIpcEvent<DownloadStatePayload>(EVENTS.downloadState, (payload) => {
     setStates((current) => ({ ...current, [payload.model]: payload.state }));
-    if (payload.state === "installed" || payload.state === "failed" || payload.state === "cancelled") {
+    if (
+      payload.state === "installed" ||
+      payload.state === "failed" ||
+      payload.state === "cancelled"
+    ) {
       void refresh();
     }
   });
@@ -113,13 +123,14 @@ export function ModelLibrary(props: ModelLibraryProps) {
   if (engine === "ollama") {
     return (
       <EmptyHint>
-        Ollama 复用本机已安装模型，无需在应用内下载。请先在终端执行 `ollama pull &lt;模型名&gt;`，再在上方填写模型名。
+        使用 Ollama 时不需要在这里下载模型。先在终端执行 `ollama pull
+        &lt;模型名&gt;`，再在上方填写模型名即可。
       </EmptyHint>
     );
   }
 
   if (loading && models.length === 0) {
-    return <LoadingBlock text="正在读取模型清单…" />;
+    return <LoadingBlock text="正在读取模型列表…" />;
   }
 
   const kind = engineKind(engine);
@@ -127,40 +138,47 @@ export function ModelLibrary(props: ModelLibraryProps) {
 
   return (
     <div className="sa-models">
-      <Hint>下载前请预留「模型体积 + 20%」的磁盘空间；下载支持断点续传与 SHA256 校验。</Hint>
-      {visible.length === 0 ? (
-        <EmptyHint>模型清单为空，或当前引擎没有可下载模型。请检查 resources/models.manifest.json。</EmptyHint>
-      ) : null}
+      <Hint>下载前请预留足够的磁盘空间；中途退出后可以继续下载。</Hint>
+      {visible.length === 0 ? <EmptyHint>这里还没有可下载的模型。</EmptyHint> : null}
       {visible.map((model) => {
         const state = states[model.id] ?? model.downloadState;
         const installed = state === "installed" || model.installed;
         const active = state === "queued" || state === "downloading" || state === "verifying";
         const item = progress[model.id];
-        const percent = item && item.total > 0 ? Math.min(100, Math.round((item.loaded / item.total) * 100)) : 0;
+        const percent =
+          item && item.total > 0 ? Math.min(100, Math.round((item.loaded / item.total) * 100)) : 0;
         return (
           <div key={model.id} className="sa-model-row">
             <div className="sa-model-main">
               <div className="sa-model-title">
                 <strong>{model.name}</strong>
                 <code className="sa-mono">{model.id}</code>
-                <StatusTag tone={installed ? "ok" : active ? "warn" : state === "failed" ? "danger" : "neutral"}>
+                <StatusTag
+                  tone={
+                    installed ? "ok" : active ? "warn" : state === "failed" ? "danger" : "neutral"
+                  }
+                >
                   {STATE_LABELS[state]}
                 </StatusTag>
               </div>
               <p className="sa-model-meta">
-                {formatBytes(model.sizeBytes)} · 需内存 {model.minRamMB} MB · 许可 {model.license} · {model.kind}
+                {formatBytes(model.sizeBytes)} · 运行内存约{" "}
+                {formatBytes(model.minRamMB * 1024 * 1024)}
               </p>
               {active || (installed && model.installedBytes > 0) ? (
                 <div className="sa-progress">
                   <div className="sa-progressbar">
-                    <div className="sa-progressbar-fill" style={{ width: `${installed ? 100 : percent}%` }} />
+                    <div
+                      className="sa-progressbar-fill"
+                      style={{ width: `${installed ? 100 : percent}%` }}
+                    />
                   </div>
                   <span className="sa-progress-text">
                     {installed
-                      ? `已安装 ${formatBytes(model.installedBytes || model.sizeBytes)}`
+                      ? `已下载 ${formatBytes(model.installedBytes || model.sizeBytes)}`
                       : item
                         ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
-                        : "等待下载进度…"}
+                        : "正在准备下载…"}
                   </span>
                 </div>
               ) : null}

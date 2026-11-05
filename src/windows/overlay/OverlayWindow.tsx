@@ -304,7 +304,7 @@ export default function OverlayWindow() {
       if (blocks.length === 0) {
         handleError({
           code: "SA-2002",
-          message: "选区内没有可覆盖翻译的文本",
+          message: "选区内没有可翻译的文字",
           detail: null,
           retryable: false,
           fallback: ["image_path"],
@@ -365,7 +365,7 @@ export default function OverlayWindow() {
     if (boxesRef.current.length === 0) {
       handleError({
         code: "SA-2002",
-        message: "选区内没有可覆盖翻译的文字框",
+        message: "选区内没有可翻译的文字",
         detail: null,
         retryable: false,
         fallback: ["image_path"],
@@ -510,15 +510,15 @@ export default function OverlayWindow() {
           className="overlay-frame-badge"
           title={
             frozen.frame.dataUrl
-              ? "已收到冻结帧位图（dataUrl），选框 / 放大镜 / 覆盖翻译均基于该帧"
-              : "未收到冻结帧位图（骨架模式或受保护窗口），覆盖翻译只能叠加译文"
+              ? "已读取屏幕画面，框选、放大镜和覆盖翻译都基于这张画面"
+              : "没能读取屏幕画面（可能被系统保护），覆盖翻译只能显示译文"
           }
         >
           <span className={`overlay-frame-badge__dot${frozen.frame.dataUrl ? "" : " is-off"}`} />
           <span>
-            冻结帧 {frozen.frame.width}×{frozen.frame.height}
+            {frozen.frame.dataUrl ? "已读取屏幕画面" : "没能读取屏幕画面"} {frozen.frame.width}×
+            {frozen.frame.height}
           </span>
-          <span>{frozen.frame.dataUrl ? "dataUrl 已加载" : "无位图"}</span>
         </div>
       ) : null}
 
@@ -612,11 +612,11 @@ export default function OverlayWindow() {
             <h1 className="overlay-waiting__title">框选 AI</h1>
             <p className="overlay-waiting__desc">
               {isTauri()
-                ? "等待后端触发框选（全局热键或托盘菜单）…"
-                : "浏览器预览（mock 后端）：点击下方按钮模拟一次框选。"}
+                ? "按下框选热键（默认 Ctrl+Q），或右键托盘图标选择「框选」即可开始。"
+                : "预览模式：点击下方按钮模拟一次框选。"}
             </p>
             {isTauri() ? (
-              <Spinner size="md" label="等待冻结帧…" />
+              <Spinner size="md" label="等待开始框选…" />
             ) : (
               <Button variant="primary" onClick={triggerCapture}>
                 模拟触发框选
@@ -624,8 +624,8 @@ export default function OverlayWindow() {
             )}
             <p className="overlay-waiting__hint">
               {isTauri()
-                ? "真实捕获 · 本地 OCR · 本地 / 云端推理"
-                : "浏览器预览 · mock 捕获与合成冻结帧（不会访问真实网络）"}
+                ? "识别与翻译都在本机进行，只有你主动使用云端功能时才会上传。"
+                : "预览模式，不会访问真实屏幕与网络。"}
             </p>
           </div>
         </div>

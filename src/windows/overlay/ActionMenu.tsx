@@ -69,7 +69,7 @@ export function ActionMenu({
       aria-label="动作菜单"
     >
       <div className="overlay-menu__header">
-        <span className="overlay-menu__title">识别结果</span>
+        <span className="overlay-menu__title">识别到的内容</span>
         <div className="overlay-menu__mode" role="group" aria-label="回答模式">
           <button
             type="button"
@@ -85,7 +85,7 @@ export function ActionMenu({
             aria-pressed={mode === "deep"}
             onClick={onToggleMode}
           >
-            深度
+            深入
           </button>
         </div>
       </div>
@@ -154,15 +154,15 @@ export function ActionMenu({
                   disabled={disabled || !coverAvailable}
                   title={
                     coverAvailable
-                      ? "覆盖原句：模糊原文并原位显示译文（只在框选 AI 的冻结画面上，不改动目标应用）"
-                      : (coverDisabledReason ?? "选区内没有可覆盖的文本")
+                      ? "把译文直接盖在原句位置（只在这个窗口里显示，不会改动原应用）"
+                      : (coverDisabledReason ?? "选区内没有可翻译的文字")
                   }
                   onClick={onCover}
                 >
-                  <span className="overlay-menu__action-label">覆盖原句</span>
+                  <span className="overlay-menu__action-label">覆盖翻译</span>
                   <span className="overlay-menu__action-meta">
                     <span className="overlay-menu__action-mode overlay-menu__action-mode--cover">
-                      {coverAvailable ? "模糊原文 · 原位译文" : (coverDisabledReason ?? "无文本")}
+                      {coverAvailable ? "原位显示译文" : (coverDisabledReason ?? "没有文字")}
                     </span>
                   </span>
                 </button>

@@ -1,8 +1,8 @@
-/** 设置 · 高级：深度预算、代理、遥测、骨架模式、引擎状态与运行信息 */
+/** 设置 · 高级：深度模式预算、网络代理、本地引擎与运行信息 */
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui";
-import type { EngineStatusPayload, Stats } from "@/shared/contract/types";
+import type { EngineStatusPayload, EngineStatus, Stats } from "@/shared/contract/types";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
@@ -18,7 +18,6 @@ import {
   Panel,
   SaveBar,
   SectionShell,
-  SwitchRow,
   TextInput,
   WarnText,
 } from "../parts";
@@ -26,23 +25,23 @@ import type { SectionProps } from "../types";
 
 const STATS_POLL_MS = 5000;
 
-const ENGINE_LABELS: Record<Stats["localEngine"], string> = {
-  stopped: "未启动",
-  starting: "启动中",
-  ready: "就绪",
+const ENGINE_LABELS: Record<EngineStatus, string> = {
+  stopped: "未启动（用到时自动启动）",
+  starting: "正在启动…",
+  ready: "已就绪",
   failed: "启动失败",
 };
 
 const HELP_LINKS: { label: string; url: string; description: string }[] = [
   {
-    label: "DeepSeek API 文档",
+    label: "DeepSeek 接口文档",
     url: "https://api-docs.deepseek.com/",
-    description: "配置 Base URL / 模型名 / 计费说明",
+    description: "查询地址、模型名与计费方式",
   },
   {
     label: "Ollama 官网",
     url: "https://ollama.com",
-    description: "本地推理服务与模型库",
+    description: "在本机运行开源模型",
   },
 ];
 
@@ -54,8 +53,9 @@ export function AdvancedSection(props: SectionProps) {
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
-  // 契约 v4/v5：本地引擎事件携带实际设备 / 后端 / 回退原因（结果窗与覆盖翻译共用 engine 标签）。
   const [engine, setEngine] = useState<EngineStatusPayload | null>(null);
+  const [engineBusy, setEngineBusy] = useState<"start" | "stop" | null>(null);
+  const [engineError, setEngineError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +112,32 @@ export function AdvancedSection(props: SectionProps) {
     await onApply(patch, "高级设置");
   };
 
+  const startEngine = async () => {
+    setEngineBusy("start");
+    setEngineError(null);
+    try {
+      const status = await ipc.invoke<EngineStatusPayload>(COMMANDS.localEngineStart);
+      if (status) setEngine(status);
+    } catch (err) {
+      setEngineError(errorMessage(err));
+    } finally {
+      setEngineBusy(null);
+    }
+  };
+
+  const stopEngine = async () => {
+    setEngineBusy("stop");
+    setEngineError(null);
+    try {
+      const status = await ipc.invoke<EngineStatusPayload>(COMMANDS.localEngineStop);
+      if (status) setEngine(status);
+    } catch (err) {
+      setEngineError(errorMessage(err));
+    } finally {
+      setEngineBusy(null);
+    }
+  };
+
   const openExternal = async (url: string) => {
     try {
       await ipc.invoke<void>(COMMANDS.openExternal, { url });
@@ -120,15 +146,18 @@ export function AdvancedSection(props: SectionProps) {
     }
   };
 
+  const engineRunning = engine?.local === "ready" || engine?.local === "starting";
+  const engineLabel = engine ? ENGINE_LABELS[engine.local] : "正在读取…";
+
   return (
-    <SectionShell
-      title="高级"
-      description="深度模式预算、网络代理、遥测、骨架模式与诊断信息。除代理与骨架模式外均为即时生效。"
-    >
-      <Panel title="深度模式预算" description="限制单次深度任务的最坏开销（契约 §4.3 约束范围）。">
+    <SectionShell title="高级" description="深度模式的用量上限、网络代理，以及本地模型的运行情况。">
+      <Panel
+        title="深度模式的用量上限"
+        description="深度模式为了答得更准，会多搜索几次、多读几篇网页；这里限制它每次最多花多少。"
+      >
         <div className="sa-grid-3">
           <NumberField
-            label="搜索次数"
+            label="最多搜索几次"
             value={budget.search}
             min={0}
             max={5}
@@ -136,7 +165,7 @@ export function AdvancedSection(props: SectionProps) {
             onChange={(search) => updateBudget({ search })}
           />
           <NumberField
-            label="抓取篇数"
+            label="最多读几篇网页"
             value={budget.fetch}
             min={0}
             max={5}
@@ -144,124 +173,112 @@ export function AdvancedSection(props: SectionProps) {
             onChange={(fetch) => updateBudget({ fetch })}
           />
           <NumberField
-            label="输出 token 上限"
+            label="最长输出多少字"
             value={budget.maxTokens}
             min={128}
             max={8192}
             step={128}
-            suffix="tokens"
+            suffix="字"
             onChange={(maxTokens) => updateBudget({ maxTokens })}
           />
         </div>
         <Hint>
-          深度模式会开启 thinking、多次检索并抓取正文，预计时延 5–25s，成本约为快速模式 3–10 倍。
+          数值越大答得越完整，也越慢、越费钱；一般保持默认即可（搜索 3 次、读 2 篇、约 1500
+          字）。只影响「深度」模式。
         </Hint>
       </Panel>
 
       <Panel title="网络">
         <TextInput
-          label="代理"
+          label="代理地址"
           value={advanced.proxy ?? ""}
           placeholder="http://127.0.0.1:7890"
           monospace
-          hint="留空表示不使用代理；修改后需重启应用生效"
+          hint="如果访问云端服务需要代理，在这里填写；留空表示直连。修改后重新打开应用生效。"
           onChange={(proxy) => updateAdvanced({ proxy: proxy.trim() ? proxy.trim() : null })}
         />
-        <SwitchRow
-          label="匿名使用统计（遥测）"
-          description="默认关闭；开启后仅上报版本与崩溃计数，不含截图/文本/密钥"
-          checked={advanced.telemetry}
-          onChange={(telemetry) => updateAdvanced({ telemetry })}
-        />
         <Hint>
-          本软件不提供自动更新：升级请手动下载新版本安装包覆盖安装，配置与历史数据会保留。
+          本软件不会自动更新。需要升级时，下载新的安装包覆盖安装即可，配置和历史记录都会保留。
         </Hint>
-      </Panel>
-
-      <Panel title="调试 / 骨架模式">
-        <InfoRow
-          label="advanced.skeletonMode"
-          value={advanced.skeletonMode ? "已开启（骨架 / 占位实现）" : "已关闭（默认，真实能力）"}
-          hint="默认关闭；开启后捕获、OCR、LLM、搜索、下载均为确定性占位实现，便于无网络联调。"
-        />
-        <Hint>调试 / 骨架模式（默认关闭，切换后需重启应用生效）。</Hint>
-        {advanced.skeletonMode ? (
-          <Hint>
-            当前为调试状态：事件流与真实实现一致，但不会访问真实网络或模型；用户升级 v1.0
-            后该值默认被重置为关闭。
-          </Hint>
-        ) : (
-          <Hint>
-            真实能力已启用：捕获 / OCR / 本地推理 /
-            云端供应商均走真实实现；如遇问题可临时开启骨架模式定位。
-          </Hint>
-        )}
       </Panel>
 
       <Panel
-        title="本地引擎状态"
-        description="真实引擎状态由 local_engine_status / engine:status 事件同步。"
-      >
-        {engine ? (
-          <div className="sa-stats">
-            <InfoRow label="引擎" value={ENGINE_LABELS[engine.local]} />
-            <InfoRow
-              label="计算设备"
-              value={engine.device ? DEVICE_LABELS[engine.device] : "—"}
-              hint="实际使用的计算设备（auto 可能解析为 CPU）"
-            />
-            <InfoRow
-              label="推理后端"
-              value={engine.backend ? LOCAL_BACKEND_LABELS[engine.backend] : "—"}
-              hint="实际后端（含 CPU 回退）；配置中的 gpuBackend 只表达偏好"
-            />
-            <InfoRow label="设备名称" value={engine.deviceName ?? "—"} />
-            <InfoRow
-              label="offload 层数"
-              value={
-                engine.offloadLayers === null || engine.offloadLayers === undefined
-                  ? "—"
-                  : `${engine.offloadLayers} 层`
-              }
-            />
-            <InfoRow label="监听端口" value={engine.port ? `127.0.0.1:${engine.port}` : "—"} mono />
+        title="本地引擎"
+        description="本地翻译和本地模型需要它。平时用到时会自动启动，也可以在这里手动开关。"
+        actions={
+          <div className="sa-inline">
+            {engineRunning ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={engineBusy !== null}
+                onClick={() => void stopEngine()}
+              >
+                {engineBusy === "stop" ? "正在停止…" : "停止引擎"}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={engineBusy !== null}
+                onClick={() => void startEngine()}
+              >
+                {engineBusy === "start" ? "正在启动…" : "启动引擎"}
+              </Button>
+            )}
           </div>
-        ) : (
-          <Hint>正在读取引擎状态…</Hint>
-        )}
-        {engine?.fallbackReason ? <WarnText>回退原因：{engine.fallbackReason}</WarnText> : null}
-        <Hint>
-          本地引擎未启动时，云端供应商与浏览器搜索仍可用；覆盖翻译会按配置回退云端 / 本地。
-        </Hint>
+        }
+      >
+        <div className="sa-stats">
+          <InfoRow label="运行状态" value={engineLabel} />
+          <InfoRow label="计算设备" value={engine?.device ? DEVICE_LABELS[engine.device] : "—"} />
+          <InfoRow
+            label="显卡加速"
+            value={engine?.backend ? LOCAL_BACKEND_LABELS[engine.backend] : "—"}
+            hint="没有可用显卡时会自动用 CPU"
+          />
+          <InfoRow label="设备名称" value={engine?.deviceName ?? "—"} />
+          <InfoRow
+            label="显存使用"
+            value={
+              engine?.offloadLayers === null || engine?.offloadLayers === undefined
+                ? "—"
+                : `已加载 ${engine.offloadLayers} 层到显卡`
+            }
+          />
+          <InfoRow label="本机端口" value={engine?.port ? `127.0.0.1:${engine.port}` : "—"} mono />
+        </div>
+        {engine?.fallbackReason ? <WarnText>{engine.fallbackReason}</WarnText> : null}
+        {engineError ? (
+          <p className="sa-error-inline" role="alert">
+            启动本地引擎失败：{engineError}
+          </p>
+        ) : null}
+        <Hint>本地引擎没有启动时，云端 AI 和浏览器搜索仍然可以正常使用。</Hint>
       </Panel>
 
-      <Panel title="运行信息" description="每 5 秒通过 app_stats 刷新；离开本页后停止轮询。">
+      <Panel title="运行信息" description="每 5 秒自动更新。">
         {statsError ? <WarnText>读取运行信息失败：{statsError}</WarnText> : null}
         {stats ? (
           <div className="sa-stats">
             <InfoRow label="版本" value={stats.version} mono />
-            <InfoRow label="版本类型" value={editionLabel(stats.edition)} />
+            <InfoRow label="安装包" value={editionLabel(stats.edition)} />
             <InfoRow
-              label="OCR 就绪"
-              value={stats.ocrReady ? "是（运行时 + 模型齐全）" : "否（缺少模型或运行时）"}
+              label="文字识别"
+              value={stats.ocrReady ? "已就绪" : "未就绪（缺少模型，可在「翻译」中下载）"}
             />
-            <InfoRow label="契约版本" value={`v${stats.contractVersion}`} />
             <InfoRow label="运行时长" value={formatDuration(stats.uptimeSec)} />
             <InfoRow label="内存占用" value={`${stats.memoryMb} MB`} />
             <InfoRow label="本地引擎" value={ENGINE_LABELS[stats.localEngine]} />
-            <InfoRow label="活动任务" value={`${stats.activeTasks} 个`} />
-            <InfoRow label="已安装模型" value={`${stats.modelsInstalled} 个`} />
-            <InfoRow
-              label="骨架模式"
-              value={stats.skeletonMode ? "已开启（调试）" : "已关闭（真实能力）"}
-            />
+            <InfoRow label="正在处理的任务" value={`${stats.activeTasks} 个`} />
+            <InfoRow label="已下载模型" value={`${stats.modelsInstalled} 个`} />
           </div>
         ) : (
           <Hint>正在读取运行信息…</Hint>
         )}
       </Panel>
 
-      <Panel title="帮助与文档" description="外部链接仅允许 https 或 127.0.0.1。">
+      <Panel title="帮助与文档">
         <div className="sa-linklist">
           {HELP_LINKS.map((link) => (
             <div key={link.url} className="sa-linkrow">
@@ -275,7 +292,6 @@ export function AdvancedSection(props: SectionProps) {
             </div>
           ))}
         </div>
-        <Hint>项目帮助站点将在正式发布后补充；当前提供供应商文档入口。</Hint>
       </Panel>
 
       <SaveBar label="高级设置" dirty={dirty} saving={saving} onSave={() => void save()} />

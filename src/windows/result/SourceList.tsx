@@ -27,10 +27,17 @@ export function SourceList(props: SourceListProps) {
       <ul className="result-source-list">
         {props.sources.map((source, index) => (
           <li key={`${source.url}-${index}`}>
-            <button type="button" className="result-source" onClick={() => void open(source.url)} title={source.url}>
+            <button
+              type="button"
+              className="result-source"
+              onClick={() => void open(source.url)}
+              title={source.url}
+            >
               <span className="result-source-title">{source.title || source.url}</span>
               <span className="result-source-meta">{source.siteName ?? hostOf(source.url)}</span>
-              {source.snippet ? <span className="result-source-snippet">{source.snippet}</span> : null}
+              {source.snippet ? (
+                <span className="result-source-snippet">{source.snippet}</span>
+              ) : null}
             </button>
           </li>
         ))}

@@ -90,7 +90,9 @@ export function AppearanceStep(props: StepProps) {
             </button>
           ))}
         </div>
-        <p className="ob-hint">结果窗置顶、透明度、尺寸可在设置 → 外观中调整；启动时最小化在设置 → 核心中调整。</p>
+        <p className="ob-hint">
+          结果窗置顶、透明度、尺寸可在设置 → 外观中调整；启动时最小化在设置 → 核心中调整。
+        </p>
       </div>
 
       <div className="ob-block">
@@ -102,7 +104,9 @@ export function AppearanceStep(props: StepProps) {
           />
           <span>
             <strong>开机自动启动</strong>
-            <span className="ob-hint">随 Windows 登录启动并常驻托盘（注册失败不影响完成引导）。</span>
+            <span className="ob-hint">
+              随 Windows 登录启动并常驻托盘（注册失败不影响完成引导）。
+            </span>
           </span>
         </label>
       </div>
@@ -114,7 +118,9 @@ export function AppearanceStep(props: StepProps) {
           onChange={(spec) => onEdit({ hotkeys: { capture: spec } })}
           onError={onError}
         />
-        <p className="ob-hint">按下的组合键会注册为全局热键；若与系统或其他软件冲突，检测结果会给出占用提示。</p>
+        <p className="ob-hint">
+          按下的组合键会注册为全局热键；若与系统或其他软件冲突，检测结果会给出占用提示。
+        </p>
       </div>
     </div>
   );

@@ -489,9 +489,15 @@ function Invoke-InstallSmoke([string]$SetupExe, [string]$EditionName, [string]$V
             $graceful = Wait-Until -TimeoutMs 8000 -IntervalMs 250 -Condition { -not (Get-Process -Id $appProc.Id -ErrorAction SilentlyContinue) }
             $launch.gracefulExit = $graceful
             if (-not $graceful) {
+                # v1.0.1 起「关闭窗口 / Alt+F4 = 隐藏到托盘」，进程存活属预期行为；记录后强制结束以免影响卸载。
+                $stillAlive = [bool](Get-Process -Id $appProc.Id -ErrorAction SilentlyContinue)
+                $launch.closeBehavior = if ($stillAlive) { 'hidden-to-tray' } else { 'unknown' }
                 Stop-Process -Id $appProc.Id -Force -ErrorAction SilentlyContinue
                 $launch.forcedKill = $true
-            } else { $launch.forcedKill = $false }
+            } else {
+                $launch.closeBehavior = 'exited'
+                $launch.forcedKill = $false
+            }
             foreach ($p2 in Get-SnipAskProcesses) { Stop-Process -Id $p2.Id -Force -ErrorAction SilentlyContinue }
             Start-Sleep -Seconds 1
             $launch.exited = -not (Get-Process -Id $appProc.Id -ErrorAction SilentlyContinue)

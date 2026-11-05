@@ -59,9 +59,9 @@ export const SEARCH_ENGINES: { value: string; label: string }[] = [
 ];
 
 export const LOCAL_ENGINES: { value: LocalEngine; label: string }[] = [
-  { value: "llama.cpp", label: "llama.cpp（内置二进制）" },
-  { value: "ollama", label: "Ollama（复用本机服务）" },
-  { value: "ct2", label: "CTranslate2（低配兜底）" },
+  { value: "llama.cpp", label: "内置引擎（推荐）" },
+  { value: "ollama", label: "Ollama（使用本机已安装的服务）" },
+  { value: "ct2", label: "轻量引擎（适合低配置电脑）" },
 ];
 
 /* ─────────────── 本地 GPU 推理（契约 v4）：计算设备 / 后端组件 ─────────────── */
@@ -70,7 +70,7 @@ export const LOCAL_ENGINES: { value: LocalEngine; label: string }[] = [
 export const DEVICE_OPTIONS: { value: LocalDevice; label: string; description?: string }[] = [
   { value: "auto", label: "自动（推荐）", description: "优先 GPU，不可用时自动回退 CPU" },
   { value: "cpu", label: "CPU", description: "省电、低发热；速度较慢" },
-  { value: "gpu", label: "GPU", description: "显卡加速；显存不足/无可用后端时仍回退 CPU" },
+  { value: "gpu", label: "GPU", description: "用显卡加速；显存不够时会自动改用 CPU" },
 ];
 
 /**
@@ -102,9 +102,10 @@ export const GPU_BACKEND_OPTIONS: {
 
 /** 后端组件下载状态文案（复用 `download:state`）。 */
 export const BACKEND_STATE_LABELS: Record<DownloadState, string> = {
-  queued: "排队中",
+  idle: "未下载",
+  queued: "等待下载",
   downloading: "下载中",
-  verifying: "校验中",
+  verifying: "正在检查文件",
   installed: "已安装",
   failed: "下载失败",
   cancelled: "已取消",
@@ -141,18 +142,18 @@ export function formatMiB(mib: number): string {
 /**
  * GPU 探测结果 → 设置页「设备状态」文案。
  *
- * 可用时形如「已检测：AMD Radeon RX 7800 XT（显存 16.0 GB，空闲 14.8 GB，Vulkan 可用，推荐 Vulkan）」；
- * 不可用时直接使用后端给出的可操作原因（如「未检测到可用 GPU 后端，将使用 CPU」）。
+ * 可用时形如「已检测到 AMD Radeon RX 7800 XT（显存 16.0 GB，空闲 14.8 GB），推荐使用 Vulkan」；
+ * 不可用时直接使用后端给出的可操作原因。
  */
 export function describeGpuProbe(probe: GpuProbeResult): string {
   const recommended = probe.recommended;
   if (!probe.useable || !recommended) {
-    return probe.issue ?? "未检测到可用 GPU，将使用 CPU";
+    return probe.issue ?? "没有检测到可用的显卡加速，将使用 CPU";
   }
   const backend: LocalBackend = recommended === "cuda" ? "cuda" : "vulkan";
   const device = probe.devices.find((item) => item.backend === backend) ?? probe.devices[0];
   if (!device) {
-    return probe.issue ?? "未检测到可用 GPU，将使用 CPU";
+    return probe.issue ?? "没有检测到可用的显卡加速，将使用 CPU";
   }
   const vendor =
     device.vendor === "amd"
@@ -167,11 +168,13 @@ export function describeGpuProbe(probe: GpuProbeResult): string {
       ? `${vendor} ${device.name}`
       : device.name;
   const budget = probe.budget
-    ? `；当前模型需 ${formatMiB(probe.budget.requiredMb)} 显存，${probe.budget.fits ? "显存充足" : "显存可能不足"}`
+    ? `；当前模型需要约 ${formatMiB(probe.budget.requiredMb)} 显存，${
+        probe.budget.fits ? "显存够用" : "显存可能不够"
+      }`
     : "";
-  return `已检测：${name}（显存 ${formatMiB(device.vramTotalMb)}，空闲 ${formatMiB(
+  return `已检测到 ${name}（显存 ${formatMiB(device.vramTotalMb)}，空闲 ${formatMiB(
     device.vramFreeMb,
-  )}，${LOCAL_BACKEND_LABELS[backend]} 可用，推荐 ${LOCAL_BACKEND_LABELS[backend]}${budget}）`;
+  )}），推荐使用 ${LOCAL_BACKEND_LABELS[backend]}${budget}`;
 }
 
 export const DEFAULT_HOTKEYS: Hotkeys = {
@@ -241,10 +244,10 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
   },
 ];
 
-/** 失败降级动作的中文标签（契约 §8.2 的 fallback 值） */
+/** 失败降级动作的中文标签 */
 export const FALLBACK_LABELS: Record<string, string> = {
   retry: "重试",
-  wgc: "改用 WGC 捕获",
+  wgc: "换一种截图方式",
   browser_search: "改用浏览器搜索",
   image_path: "改用图片识别",
   local_translate: "改用本地翻译",
@@ -254,7 +257,7 @@ export const FALLBACK_LABELS: Record<string, string> = {
   pause_hotkey: "暂停热键",
   download_model: "下载模型",
   light_model: "换用轻量模型",
-  mirror: "切换镜像源",
+  mirror: "切换下载地址",
   manual_download: "手动下载",
   redownload: "重新下载",
   reset_group: "恢复该分组默认值",

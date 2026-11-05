@@ -34,7 +34,7 @@ export const defaultHotkeys: Hotkeys = {
 
 /** 契约 §4.1：首次运行写入磁盘的配置 */
 export const defaultConfig: Config = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   app: {
     language: "zh-CN",
     autostart: false,
@@ -136,7 +136,6 @@ export const defaultConfig: Config = {
   history: { enabled: true, maxEntries: 1000, retentionDays: 90 },
   advanced: {
     proxy: null,
-    telemetry: false,
     skeletonMode: false,
   },
 };

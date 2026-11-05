@@ -18,6 +18,7 @@ use crate::app::state::AppState;
 use crate::app::{hotkeys, tray, windows};
 use crate::contract::config::TranslateBackend;
 use crate::contract::errors::{AppError, AppResult};
+use crate::contract::events::EngineStatusPayload;
 use crate::contract::types::EngineStatus;
 use crate::events::emit_engine_status;
 use crate::platform::paths::AppPaths;
@@ -105,6 +106,7 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
             emit_engine_status(&engine_app, EngineStatus::Starting);
             match engine.ensure_ready(&engine_app, &config).await {
                 Ok(payload) => {
+                    state.set_engine_note(None);
                     *state.engine.write() = payload.local;
                     crate::events::emit_engine_status_payload(&engine_app, &payload);
                     tracing::info!(
@@ -119,13 +121,31 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
                 }
                 Err(err) => {
                     // 不阻塞启动：任务执行时 `gateway_for` → `ensure_ready` 会重试并返回真实错误。
+                    // 状态语义：用户没有主动启动引擎，预热失败按「未启动」处理（并保留可读原因），
+                    // 避免界面出现无上下文的「启动失败」。
                     tracing::warn!(
                         code = %err.code,
                         detail = ?err.detail,
-                        "本地引擎预热失败（任务执行时会重试）"
+                        "本地引擎预热未成功（使用本地推理时会再次尝试启动）"
                     );
-                    *state.engine.write() = EngineStatus::Failed;
-                    emit_engine_status(&engine_app, EngineStatus::Failed);
+                    state.set_engine_status(EngineStatus::Stopped);
+                    let note = format!(
+                        "本地推理未启动：{}。需要先下载本地模型与推理组件（设置 → 翻译）。",
+                        err.message
+                    );
+                    state.set_engine_note(Some(note.clone()));
+                    crate::events::emit_engine_status_payload(
+                        &engine_app,
+                        &EngineStatusPayload {
+                            local: EngineStatus::Stopped,
+                            device: None,
+                            backend: None,
+                            fallback_reason: Some(note),
+                            offload_layers: None,
+                            device_name: None,
+                            port: None,
+                        },
+                    );
                 }
             }
         });

@@ -303,7 +303,7 @@ impl BackendManager {
                 let download_state = states.get(&entry.id).copied().unwrap_or(if installed {
                     DownloadState::Installed
                 } else {
-                    DownloadState::Queued
+                    DownloadState::Idle
                 });
                 BackendInfo {
                     id: entry.id.clone(),
@@ -337,7 +337,7 @@ impl BackendManager {
             .lock()
             .get(id)
             .copied()
-            .unwrap_or(DownloadState::Queued)
+            .unwrap_or(DownloadState::Idle)
     }
 
     /// 启动下载（返回 `DownloadId`；进度通过 `download:progress` / `download:state` 事件推送）。
@@ -936,10 +936,10 @@ mod tests {
         assert_eq!(vulkan.download_state, DownloadState::Installed);
         assert!(vulkan.installed_bytes >= 36);
         assert!(manager.is_installed("vulkan"));
-        // 未安装组件状态为 queued。
+        // 未安装组件默认状态为 idle（未下载）。
         let cuda = infos.iter().find(|info| info.id == "cuda").unwrap();
         assert!(!cuda.installed);
-        assert_eq!(cuda.download_state, DownloadState::Queued);
+        assert_eq!(cuda.download_state, DownloadState::Idle);
 
         std::fs::remove_dir_all(&paths.data_dir).unwrap();
     }

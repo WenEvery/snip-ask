@@ -352,14 +352,14 @@ export function TranslationOverlay({
         ref={canvasRef}
         className="translation-canvas"
         role="img"
-        aria-label={`覆盖翻译结果：${plan.total} 块，当前 ${viewLabel} 模式`}
+        aria-label={`覆盖翻译结果：${plan.total} 段，当前 ${viewLabel} 模式`}
         data-testid="translation-canvas"
       />
 
       {!frame.dataUrl ? (
         // 降级提示（研究 §8.2）：DRM/受保护窗口没有可模糊的冻结帧时，只能绘制译文，不能「擦掉原文」。
         <div className="translation-notice" role="note">
-          未获取到冻结帧（骨架模式或受保护窗口），无法模糊原文；当前仅叠加译文。
+          没能读取到原来的画面（可能被系统保护），无法遮住原文；这里只显示译文。
         </div>
       ) : null}
 
@@ -374,8 +374,7 @@ export function TranslationOverlay({
             </>
           ) : (
             <span title={engineTitle(engine)}>
-              已覆盖 {plan.total} 块{plan.bubbleCount > 0 ? ` · 气泡 ${plan.bubbleCount}` : ""}
-              {engine ? ` · 引擎 ${engineLabel(engine)}` : ""}
+              已翻译 {plan.total} 段{engine ? ` · ${engineLabel(engine)}` : ""}
             </span>
           )}
         </span>
@@ -403,7 +402,7 @@ export function TranslationOverlay({
             type="button"
             className={`translation-toolbar__view${view === "cover" ? " translation-toolbar__view--active" : ""}`}
             aria-pressed={view === "cover"}
-            title="模糊原文并原位显示译文（C）"
+            title="把译文直接盖在原文位置（C）"
             onClick={() => onViewChange("cover")}
           >
             覆盖
@@ -412,10 +411,9 @@ export function TranslationOverlay({
 
         <span
           className="translation-toolbar__meta"
-          title="覆盖翻译只作用于框选 AI 自己的冻结画面，不修改目标应用"
+          title={`本窗口画面 ${frame.width}×${frame.height}${frame.dataUrl ? "（已读取）" : "（未读取）"}。覆盖翻译只改这里的显示，不会改动原应用。`}
         >
-          仅覆盖本窗口冻结画面 · 帧 {frame.width}×{frame.height}
-          {frame.dataUrl ? "（真实帧）" : "（无帧）"}
+          只在本窗口显示译文，不会改动原应用
         </span>
 
         <div className="translation-toolbar__actions">

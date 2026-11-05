@@ -1,5 +1,5 @@
 /**
- * 浏览器 mock 后端（契约 §12 骨架模式 + §13）。
+ * 浏览器预览后端（不连接真实服务，仅用于在没有安装桌面版时预览界面）。
  *
  * 目标：**无 Rust 环境**也能在浏览器里完整走通
  * 「capture_freeze → overlay:ready → 框选 → menu:ready → menu_execute → task.* 流式」。
@@ -7,7 +7,7 @@
  * 行为约定：
  * - 配置持久化：`localStorage["snipask.mock.config"]`（深合并默认值）；密钥只存内存；
  * - 引导状态：`localStorage["snipask.mock.onboarding"]`，初始 `completed=false`；
- * - 所有文案前缀「【骨架模式】」；
+ * - 文案保持自然，贴近真实结果；
  * - 事件与真实后端同形（`EVENTS` 常量），跨标签页通过 BroadcastChannel 同步，
  *   便于同时打开 `?window=overlay` 与 `?window=result` 手动验收；
  * - 命令失败统一 `Promise.reject(AppError)`。
@@ -488,16 +488,16 @@ function emitMenuReady(session: SessionId): void {
 function buildTaskText(action: ActionId, mode: Mode, question?: string): string {
   if (question) return SKELETON_FOLLOWUP_ANSWER;
   if (action === "translate") {
-    return `【骨架模式译文】${state.selection?.preview ?? SKELETON_OCR_PREVIEW}`;
+    return `（预览模式示例译文）${state.selection?.preview ?? SKELETON_OCR_PREVIEW}`;
   }
   if (action === "search") {
     const query = state.selection?.preview ?? SKELETON_OCR_PREVIEW;
     return mode === "deep"
-      ? `【骨架模式】将打开浏览器搜索 “${query}” 并执行深度检索（占位）。${SKELETON_ANSWER}`
-      : `【骨架模式】将打开浏览器搜索 “${query}”，不实际访问网络。${SKELETON_ANSWER}`;
+      ? `正在浏览器中搜索 “${query}”（深度模式会多查资料再总结）。${SKELETON_ANSWER}`
+      : `正在浏览器中搜索 “${query}”。${SKELETON_ANSWER}`;
   }
   if (action === "copy") {
-    return `【骨架模式】已模拟复制识别文本到剪贴板：${SKELETON_OCR_PREVIEW}`;
+    return `已复制识别文字：${SKELETON_OCR_PREVIEW}`;
   }
   return SKELETON_ANSWER;
 }
@@ -846,7 +846,7 @@ function findModel(id: string): ModelInfo {
 
 function appStats(): Stats {
   return {
-    version: "1.0.0",
+    version: "1.0.1",
     contractVersion: IPC_CONTRACT_VERSION,
     edition: "dev",
     ocrReady: true,
@@ -951,7 +951,7 @@ function mockHistoryThread(session: SessionId): HistoryThread {
         action: summary.action ?? "answer",
         mode: "quick",
         question: summary.title,
-        answer: "【骨架模式】这是浏览器预览的历史回答占位内容。",
+        answer: "这是浏览器预览的历史回答示例。桌面版会在这里显示真实的问答记录。",
         engine: summary.engine,
         status: "done",
         createdAt: summary.startedAt,
@@ -1064,7 +1064,7 @@ function mockBackends(): BackendInfo[] {
       requiresVendor: "nvidia",
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "cpu",
@@ -1143,7 +1143,7 @@ async function dispatch(
 
     case COMMANDS.configExport: {
       if (args.includeSecrets === true) {
-        throw appError("SA-5002", "骨架模式不支持导出明文密钥");
+        throw appError("SA-5002", "预览模式不支持导出明文密钥");
       }
       const path =
         typeof args.path === "string" && args.path.length > 0
@@ -1296,7 +1296,7 @@ async function dispatch(
       const target =
         typeof args.target === "string" && args.target.length > 0 ? args.target : "zh-CHS";
       await delay(150);
-      return `【骨架模式译文】${text}（目标语言：${target}，未调用真实翻译服务）`;
+      return `（预览模式示例译文，目标语言：${target}）${text}`;
     }
 
     case COMMANDS.hotkeyProbe: {
@@ -1402,7 +1402,7 @@ async function dispatch(
       const covered: CoveredBlock[] = blocks.map((block) => ({
         id: block.id,
         source: block.text,
-        translation: `【骨架模式译文】${block.text}`,
+        translation: `（预览模式示例译文）${block.text}`,
         failed: false,
         engine: "skeleton",
       }));

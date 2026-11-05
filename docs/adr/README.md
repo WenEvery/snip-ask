@@ -10,7 +10,7 @@
 | [ADR-0002](0002-frontend-no-network-secrets.md) | 前端不接触网络与密钥，能力全部后置到 Rust | 已接受 | 契约 §1.7/§11；概要设计 §9；实施架构 §8 |
 | [ADR-0003](0003-single-overlay-physical-pixels.md) | 单覆盖窗口覆盖虚拟桌面，坐标全程物理像素 | 已接受 | 契约 §1.5/§2；概要设计 §4.2；实施架构 §5 |
 | [ADR-0004](0004-contract-first.md) | 契约优先：文档 + 双端 contract 同构，先定协议后写实现 | 已接受 | 契约 §16；实施架构 §1/§2 |
-| [ADR-0005](0005-skeleton-mode.md) | 骨架模式：外部能力用确定性占位实现 | 已接受（v1.0.0 默认关闭，保留为调试分支） | 契约 §12；实施架构 §9 |
+| [ADR-0005](0005-skeleton-mode.md) | 骨架模式：外部能力用确定性占位实现 | 已接受（v1.0.1 起为开发者配置、不在用户 UI 出现，默认关闭） | 契约 §12；实施架构 §9 |
 | [ADR-0006](0006-vulkan-first-gpu-inference.md) | GPU 推理以 **Vulkan** 为主体、CUDA 为可选组件（跨 AMD/Intel/NVIDIA、依赖最小、无需额外 runtime） | 已接受 | 实施架构 §4.1/§9.3；契约 §4.1/§6；研究 §1 |
 | [ADR-0007](0007-dual-installer-editions.md) | **双安装包**：slim（内置 ONNX Runtime，首次下载 OCR 模型 ≤25 MiB）/ full（内置全部 OCR 模型 ≤60 MiB），edition 编译期注入 | 已接受 | 契约 §6（`ocr_status` / `Stats.edition`）/§10；实施架构 §7；自定义指南 §8 |
 | [ADR-0008](0008-remove-auto-update.md) | **彻底移除自动更新**：删 updater 插件与 `advanced.updateChannel`（schema v5）/`update:status` 事件；升级 = 覆盖安装或源码构建 | 已接受 | 契约 §4.1/§7/§16；自定义指南 §1；CHANGELOG 1.0.0 |

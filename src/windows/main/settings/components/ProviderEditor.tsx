@@ -70,7 +70,7 @@ export function ProviderEditor(props: ProviderEditorProps) {
         placeholder="https://api.deepseek.com"
         error={urlError}
         monospace
-        hint="OpenAI 兼容端点；本地服务请用 http://127.0.0.1:端口"
+        hint="OpenAI 兼容服务填服务地址；本机服务请用 http://127.0.0.1:端口"
         onChange={(baseUrl) => props.onChange({ baseUrl: baseUrl.trim() })}
       />
       <div className="sa-grid-2">
@@ -78,7 +78,7 @@ export function ProviderEditor(props: ProviderEditorProps) {
           label="API 类型"
           value={provider.kind}
           options={PROVIDER_KIND_OPTIONS}
-          hint="OpenAI 兼容走 /chat/completions；Qwen-MT 走 DashScope 原生 translation_options（仅翻译）"
+          hint="多数服务选「OpenAI 兼容」；DashScope 的 Qwen-MT 是专门的翻译接口，只用于翻译"
           onChange={(value) =>
             props.onChange({
               kind: value === "qwenMt" ? "qwenMt" : "openAiCompatible",
@@ -98,8 +98,8 @@ export function ProviderEditor(props: ProviderEditorProps) {
         label="API Key"
         value={props.apiKey}
         type="password"
-        placeholder={provider.hasKey ? "已保存，如不修改请留空" : "粘贴 API Key"}
-        hint="不写入配置文件；点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）"
+        placeholder={provider.hasKey ? "已保存；不修改请留空" : "粘贴 API Key"}
+        hint="保存在 Windows 凭据管理器，不会写进配置文件；点「测试连接」时会一并保存"
         onChange={props.onApiKeyChange}
       />
       <Field label="能力标记" hint="决定该供应商能被哪些动作选用（视觉 / 搜索 / 思考 / 翻译）。">
@@ -168,7 +168,7 @@ function TestResultBlock(props: { result: TestResult }) {
         {error?.message ?? `HTTP ${result.status ?? "无响应"}`}
       </span>
       {error?.fallback.length ? (
-        <span className="sa-field-hint">可尝试：{error.fallback.join("、")}</span>
+        <span className="sa-field-hint">可以试试：{error.fallback.join("、")}</span>
       ) : null}
     </div>
   );

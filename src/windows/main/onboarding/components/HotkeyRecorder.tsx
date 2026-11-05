@@ -67,7 +67,12 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
       >
         {recording ? "请按下组合键…" : hotkeyLabel(props.value)}
       </button>
-      <button type="button" className="ob-linkbtn" disabled={probing || !props.value} onClick={() => void probe()}>
+      <button
+        type="button"
+        className="ob-linkbtn"
+        disabled={probing || !props.value}
+        onClick={() => void probe()}
+      >
         {probing ? "检测中…" : "检测冲突"}
       </button>
       <button
@@ -88,5 +93,9 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
 function HotkeyStatusText(props: { status: HotkeyStatus }) {
   // 与设置页共用映射：conflictWith="system" → 被其它程序占用 + 改键建议
   const hint = hotkeyStatusHint(props.status);
-  return <span className={`ob-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>{hint.text}</span>;
+  return (
+    <span className={`ob-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>
+      {hint.text}
+    </span>
+  );
 }

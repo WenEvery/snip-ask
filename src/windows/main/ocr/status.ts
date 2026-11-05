@@ -11,26 +11,26 @@
 
 import type { ModelInfo, OcrAssetStatus, OcrStatus } from "@/shared/contract/types";
 
-/* ───────────────────────── 版本类型 ───────────────────────── */
+/* ───────────────────────── 安装包类型 ───────────────────────── */
 
-/** 契约 v5：版本类型文案（full=内置 OCR 模型版 / slim=安装后下载版 / dev=开发构建）。 */
+/** 安装包类型文案（full=内置 OCR 模型 / slim=首次使用时下载 / dev=本地运行）。 */
 const EDITION_LABELS: Record<string, string> = {
-  full: "完整版（内置 OCR 模型）",
-  slim: "精简版（安装后下载 OCR 模型）",
-  dev: "开发构建",
+  full: "已内置文字识别模型",
+  slim: "首次使用时下载文字识别模型",
+  dev: "本地运行",
 };
 
 export function editionLabel(edition: string | null | undefined): string {
   if (!edition) return "未知";
-  return EDITION_LABELS[edition] ?? `未知（${edition}）`;
+  return EDITION_LABELS[edition] ?? "未知";
 }
 
 /** 版本类型短标签（徽标用）。 */
 export function editionBadge(edition: string | null | undefined): string {
-  if (edition === "full") return "完整版";
-  if (edition === "slim") return "精简版";
-  if (edition === "dev") return "开发构建";
-  return "未知版本";
+  if (edition === "full") return "内置模型";
+  if (edition === "slim") return "在线下载";
+  if (edition === "dev") return "本地运行";
+  return "未知";
 }
 
 /* ───────────────────────── OCR 资产合并 ───────────────────────── */
@@ -107,42 +107,41 @@ export function summarizeOcr(status: OcrStatus | null, edition?: string | null):
   if (!status) {
     return {
       tone: "neutral",
-      label: "未读取 OCR 状态",
-      detail: "点击「重新检查」读取本机 OCR 运行时与模型状态。",
+      label: "还没读取文字识别状态",
+      detail: "点击「重新检查」看看本机是否能正常识别文字。",
     };
   }
   if (status.ready) {
     return {
       tone: "ok",
-      label: status.bundled ? "OCR 已就绪（随包内置）" : "OCR 已就绪",
+      label: status.bundled ? "文字识别已就绪（随安装包内置）" : "文字识别已就绪",
       detail:
         status.bundled || edition === "full"
-          ? "运行时与全部 OCR 模型随安装包内置，离线开箱可用。"
-          : "运行时与全部 OCR 模型已就位。",
+          ? "识别所需的组件和模型都已随安装包提供，离线也能用。"
+          : "识别所需的组件和模型都已就位。",
     };
   }
   if (!status.runtimeReady) {
     return {
       tone: "danger",
-      label: "缺少 ONNX 运行时",
+      label: "缺少识别引擎组件",
       detail:
-        status.message ??
-        "未找到 onnxruntime.dll（应在安装目录 ocr/ 下，或由安装脚本随包提供）。重新安装完整版本可修复。",
+        status.message ?? "没有找到识别引擎文件，暂时无法识别文字。重新安装应用通常可以修复。",
     };
   }
   if (status.missing.length > 0) {
     return {
       tone: "warn",
-      label: `缺少 ${status.missing.length} 个 OCR 模型`,
+      label: `还缺 ${status.missing.length} 个模型`,
       detail:
         status.message ??
-        `未就绪：${status.missing.join("、")}。精简版需首次使用 OCR 时下载模型（约 16 MB，det/rec/cls/dict）。`,
+        "首次使用文字识别需要下载模型（约 16 MB）。下载完成后即可使用，也可以稍后再下载。",
     };
   }
   return {
     tone: "warn",
-    label: "OCR 未就绪",
-    detail: status.message ?? "运行时或模型不完整，请检查安装目录或重新下载 OCR 模型。",
+    label: "文字识别暂不可用",
+    detail: status.message ?? "识别所需的组件或模型不完整，可重新下载模型后再试。",
   };
 }
 
@@ -151,7 +150,19 @@ export function pendingOcrRows(rows: OcrAssetRow[]): OcrAssetRow[] {
   return rows.filter((row) => !row.installed && !row.bundled);
 }
 
-/** 是否全部资产都随包内置（full 版徽标）。 */
+/** 面向用户的资产名称（后端名称含模型代号，这里换成白话）。 */
+const ASSET_LABELS: Record<string, string> = {
+  "ocr-det": "文字检测模型",
+  "ocr-rec": "文字识别模型",
+  "ocr-cls": "文字方向校正",
+  "ocr-dict": "识别字典",
+};
+
+export function ocrAssetLabel(id: string, fallback: string): string {
+  return ASSET_LABELS[id] ?? fallback;
+}
+
+/** 是否全部资产都随包内置（显示「随安装包内置」徽标）。 */
 export function allBundled(rows: OcrAssetRow[]): boolean {
   return rows.length > 0 && rows.every((row) => row.bundled);
 }

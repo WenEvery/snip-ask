@@ -63,8 +63,8 @@ export function AiServiceStep(props: StepProps) {
     <div className="ob-step">
       <h2 className="ob-step-title">连接一个 AI 服务</h2>
       <p className="ob-hint">
-        所有云端能力均为 BYOK（自带 Key），Key 只存 Windows 凭据管理器，不会进入配置文件。没有 Key
-        也可以先跳过。
+        使用你自己的 API Key，Key 会保存在 Windows 凭据管理器，不会写进配置文件。没有 Key
+        也可以先跳过，之后随时能在设置里补上。
       </p>
 
       <div className="ob-presets">
@@ -101,7 +101,7 @@ export function AiServiceStep(props: StepProps) {
             placeholder="粘贴 API Key（可稍后再填）"
             onChange={(event) => setApiKey(event.target.value)}
           />
-          <span className="ob-hint">输入后掩码显示；骨架模式下仅保存在内存。</span>
+          <span className="ob-hint">输入后会显示为圆点；保存后存放在 Windows 凭据管理器。</span>
         </label>
         <label className="ob-field">
           <span className="ob-field-label">模型名</span>

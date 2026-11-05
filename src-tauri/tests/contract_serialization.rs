@@ -50,7 +50,7 @@ const EXPECTED_EVENTS: [&str; 15] = [
 fn contract_version_is_one() {
     assert_eq!(IPC_CONTRACT_VERSION, 1);
     // 契约 v5：配置 schema 5（去 updateChannel / Provider.kind / 骨架模式默认关闭）。
-    assert_eq!(CONFIG_SCHEMA_VERSION, 5);
+    assert_eq!(CONFIG_SCHEMA_VERSION, 6);
 }
 
 #[test]
@@ -110,7 +110,7 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(keys, expected_keys);
 
     // 关键默认值。
-    assert_eq!(value["schemaVersion"], 5);
+    assert_eq!(value["schemaVersion"], 6);
     assert_eq!(value["app"]["language"], "zh-CN");
     assert_eq!(value["app"]["singleInstance"].as_bool(), Some(true));
     assert_eq!(value["ui"]["theme"], "system");
@@ -139,6 +139,10 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(value["history"]["maxEntries"], 1000);
     assert_eq!(value["advanced"]["skeletonMode"].as_bool(), Some(false));
     assert!(value["advanced"].get("updateChannel").is_none());
+    assert!(
+        value["advanced"].get("telemetry").is_none(),
+        "v1.0.1 起配置不含 telemetry 字段（不收集任何用户信息）"
+    );
     assert_eq!(value["translate"]["glossary"].as_array().unwrap().len(), 0);
 }
 
@@ -155,7 +159,7 @@ fn config_partial_json_fills_defaults() {
     // 缺失字段必须用默认值补齐（契约 §16：后端提供默认值）。
     let partial: Config = serde_json::from_str(r#"{"ui":{"theme":"dark"}}"#).unwrap();
     assert_eq!(partial.ui.theme, Theme::Dark);
-    assert_eq!(partial.schema_version, 5);
+    assert_eq!(partial.schema_version, 6);
     assert_eq!(partial.hotkeys.capture, "Ctrl+Q");
     assert_eq!(partial.providers.len(), 3);
 }
@@ -226,6 +230,12 @@ fn base_types_use_contract_literals() {
     assert_eq!(
         serde_json::to_value(DownloadState::Cancelled).unwrap(),
         "cancelled"
+    );
+    assert_eq!(serde_json::to_value(DownloadState::Idle).unwrap(), "idle");
+    assert_eq!(
+        serde_json::to_value(DownloadState::default()).unwrap(),
+        "idle",
+        "未下载默认状态必须是 idle"
     );
     assert_eq!(serde_json::to_value(EngineStatus::Ready).unwrap(), "ready");
     assert_eq!(

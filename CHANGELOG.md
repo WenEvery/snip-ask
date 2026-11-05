@@ -15,6 +15,78 @@
 - 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。
 - UI 打磨：结果窗 Markdown 渲染、多语言（`en-US` 预留）、无障碍键盘路径、主题自定义导入导出。
 
+## [1.0.1] - 2026-11-06（用户反馈修复）
+
+> 本版本针对 v1.0.0 的用户反馈做集中修复，并明确产品隐私口径：**不收集任何用户信息**
+> （无遥测、无崩溃上报、无使用统计、无更新检查）。功能集合不变，配置自动从 v5 迁移到 **v6**。
+
+### 契约 v6（配置 Schema / 下载状态）
+
+- **配置 Schema v5 → v6**：**删除 `advanced.telemetry`**（v5 配置升级时主动移除旧键）；
+  `advanced.skeletonMode` 保留为**开发者配置**（默认 `false`，不再出现在用户界面）；迁移链 **1→2→3→4→5→6**。
+- **`DownloadState` 新增 `"idle"`**：未下载默认态，替代「默认 `queued`」；模型/组件列表在未开始下载时显示未下载，
+  只有明确开始下载后才进入 `queued → downloading → verifying`。
+- 命令仍 **43**、事件仍 **15**，`IPC_CONTRACT_VERSION` 保持 **1**（纯增量 + 配置迁移）。
+
+### 窗口与托盘
+
+- 主窗口去掉 Windows 系统标题栏，改为**自绘标题栏**：拖拽移动、最小化、最大化/还原、关闭，以及八向缩放手柄
+  （最大化时隐藏）；浏览器预览下禁用窗口 API。
+- **关闭按钮 / `Alt+F4` = 隐藏到托盘（不退出）**；真正退出走托盘「退出」。
+- **托盘左键单击直接打开设置**（右键显示菜单）；「重新运行引导」保留；引导完成/跳过后左侧不再显示引导入口。
+
+### 设置与运行信息
+
+- 新增独立 **搜索** 分组：AI 搜索 / 浏览器搜索、搜索引擎与自定义 URL 模板（从「动作与热键」移出）。
+- 新增独立 **隐私** 分组：允许上传识别文字、允许上传截图、仅本机处理（写 `privacy.*`），并说明数据只在本机。
+- 「动作与热键」补齐四个动作默认模式（搜索 / 图片搜索 / 翻译 / 解答，写 `modes.*`）。
+- 高级页：显示**真实内存占用**（进程 WorkingSetSize）、本地引擎状态与「启动/停止引擎」按钮；
+  删除遥测开关与调试/骨架模式面板；「安装包类型」改为中性表述（内置 OCR 模型 / 在线下载）。
+- **模型下载**：未下载默认 `idle`（不显示进度/取消）；下载中显示进度与取消、取消保留断点可恢复；
+  修复「所有模型默认排队中」的观感。
+
+### 隐私与文案
+
+- **不收集任何用户信息**：无遥测、无崩溃上报、无使用统计、无更新检查；删除配置中的遥测字段与界面开关。
+- 面向用户的 UI 文案重写：移除「完整版 / 真实能力 / 骨架模式 / 契约 §x / 降级链」等工程词，
+  改为自然、简短、可操作的中文说明（设置、引导、覆盖翻译工具条、结果窗、历史、OCR 卡片、错误提示）。
+- 安装包描述统一为「内置 OCR 模型版 / 在线安装版」「内置模型 / 在线下载模型」。
+
+### 验收与门禁（v1.0.1，2026-11-06）
+
+- **最终门禁（全绿）**：`cargo fmt --check` PASS（0）；`cargo clippy --all-targets -- -D warnings` PASS（0 warning）；
+  `cargo test --all-targets` **480 passed / 0 failed / 15 ignored**（20 个测试目标；lib 341；真实 OCR 集成 24s；
+  local engine；cloud mock；model_download 12；history；contract 17 等）；`pnpm typecheck` 0；`pnpm test` **48/48**；
+  `pnpm build:web` 0。
+- **真机修复验证（PASS，`.verify/v1/fix/form-check.json`）**：界面文案无「完整版/真实能力/骨架模式/契约 §」等词
+  （`banned=[]`）；引导完成后左侧导航仅「设置 / 历史」；自绘标题栏存在、8 向缩放手柄=8；`WM_CLOSE` 后主窗口
+  `visible=false` 且进程存活、`window_show` 后恢复可见；`app_stats.version=1.0.1`、内存占用 **46MB**（真实值）；
+  无模型时启动本地引擎返回可读错误「本地模型缺失」；`models_list` 默认全部 `idle`，`ocr-dict` 真实下载
+  `installed`、`qwen3-4b-q4` 取消后 `cancelled`；搜索方式 browser→ai、隐私 `allowImageUpload` true→false、
+  默认模式 translate quick→deep 均保存生效。
+- v1.0.1 真机 E2E（cloud/local，`ok=true`）：cloud 翻译 0.75s / AI 搜索 3.58s / 图片搜索 10.02s /
+  `translate_cover` 5/5（4.09s）/ 历史 3 轮；local Vulkan offload 29 层、本地翻译 1.46s（1.5B，含提示词残留，
+  S-14 已知问题）。双安装包最终体积/SHA256 以 `.verify/verify-v1.0.1/SUMMARY.md` 与 `release/SHA256SUMS.txt` 为准。
+
+### 双安装包（重建，最终归档）
+
+- 由 T5 基于 v1.0.1 源码重建并归档到 `release/`：
+  - **在线安装版** `SnipAsk_1.0.1_x64-setup.exe` **7,778,389 B（7.42 MiB）**，
+    SHA256 `95b241c2d13ad31e38a7dbab4f9c70d874171e292ced5d080a6018c4436a4986`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.1_x64-full-setup.exe` **22,561,123 B（21.52 MiB）**，
+    SHA256 `fb1728839c481b649c1bd763284d5c07ddabd8469447c29b10e1cc848a23940b`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB）；两版 `snip-ask.exe` 不同（edition 编译期注入生效）。
+- 安装冒烟 PASS：两版静默安装 `/S` 退出码 0（3.4s / 4.4s），安装目录分别 9 文件/27,375,802 B（无模型）与
+  13 文件/43,591,094 B（+det/rec/cls/dict，SHA256 与源一致）；启动 6s 主窗口「框选 AI」可见、响应正常；
+  **关闭窗口隐藏到托盘（`closeBehavior=hidden-to-tray`，进程存活）**；静默卸载 `/S` 退出码 0（1.4s），
+  用户数据恢复。两版均 `NotSigned`。证据 `.verify/v1/installer/`、`release/SHA256SUMS.txt`。
+
+### 已知限制（沿用，如实标注）
+
+- AMD/Intel 真机 GPU 未测（Vulkan 厂商无关论证）；安装包未签名（SmartScreen 提示属预期）；
+  本机无 DashScope Key（Qwen-MT 真实翻译未验收）；本地小模型翻译格式保持不完美；
+  8GB 机型降档提示缺失；Win10/国产杀软/真人可用性（S-19）未覆盖。
+
 ## [1.0.0] - 2026-11-06（真实可用版本）
 
 > v1.0.0 把 v0.1.0 的「骨架模式 MVP」升级为完整可用的真实产品：真实捕获、真实本地 OCR、云端与本地推理、

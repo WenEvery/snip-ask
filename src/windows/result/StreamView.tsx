@@ -38,7 +38,9 @@ export function StreamView(props: StreamViewProps) {
           {lines.map((line, index) => (
             <p key={index} className="result-line">
               {renderInline(line)}
-              {props.streaming && index === lines.length - 1 ? <span className="result-cursor" /> : null}
+              {props.streaming && index === lines.length - 1 ? (
+                <span className="result-cursor" />
+              ) : null}
             </p>
           ))}
         </div>
@@ -55,13 +57,15 @@ export function StreamView(props: StreamViewProps) {
 function renderInline(line: string): ReactNode[] {
   if (!line) return [];
   const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  return parts.filter((part) => part !== "").map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
-      return <code key={index}>{part.slice(1, -1)}</code>;
-    }
-    return <span key={index}>{part}</span>;
-  });
+  return parts
+    .filter((part) => part !== "")
+    .map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+        return <code key={index}>{part.slice(1, -1)}</code>;
+      }
+      return <span key={index}>{part}</span>;
+    });
 }

@@ -35,10 +35,10 @@ pub fn entry_to_info(
         params: entry.params.clone(),
         installed,
         installed_bytes: installed_bytes.unwrap_or(0),
-        download_state: if installed && download_state == DownloadState::Queued {
-            DownloadState::Installed
-        } else {
-            download_state
+        download_state: match download_state {
+            // 已安装：无论状态是 idle/queued 都标记为已安装。
+            DownloadState::Idle | DownloadState::Queued if installed => DownloadState::Installed,
+            other => other,
         },
     }
 }
@@ -56,7 +56,7 @@ pub fn merge_installed(
             let download_state = states
                 .get(&entry.id)
                 .copied()
-                .unwrap_or(DownloadState::Queued);
+                .unwrap_or(DownloadState::Idle);
             entry_to_info(entry, installed.get(&entry.id).copied(), download_state)
         })
         .collect()
@@ -126,7 +126,7 @@ mod tests {
         assert_eq!(infos[0].installed_bytes, 1_258_291_200);
         assert_eq!(infos[0].download_state, DownloadState::Installed);
         assert!(!infos[1].installed);
-        assert_eq!(infos[1].download_state, DownloadState::Queued);
+        assert_eq!(infos[1].download_state, DownloadState::Idle);
         assert_eq!(installed_count(&infos), 1);
         // 契约 v4：清单的 vramMB 透传到 ModelInfo（缺省 0，表示不作为 GPU 预算约束）。
         assert_eq!(infos[0].vram_mb, 0);

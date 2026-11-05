@@ -64,7 +64,9 @@ export function hotkeyStatusHint(status: HotkeyStatus): { level: "ok" | "bad"; t
   }
   if (status.available) {
     const normalized =
-      status.normalized && status.normalized !== status.spec ? `（规范化为 ${status.normalized}）` : "";
+      status.normalized && status.normalized !== status.spec
+        ? `（规范化为 ${status.normalized}）`
+        : "";
     return { level: "ok", text: `可用${normalized}` };
   }
   if (status.conflictWith === SYSTEM_CONFLICT) {
@@ -73,6 +75,8 @@ export function hotkeyStatusHint(status: HotkeyStatus): { level: "ok" | "bad"; t
       text: "被其他程序占用（如 QQ / 微信 / 输入法），请点上方按键换一个组合，例如 Ctrl+Shift+Q",
     };
   }
-  const label = status.conflictWith ? (HOTKEY_FIELD_LABELS[status.conflictWith] ?? status.conflictWith) : "其他热键";
+  const label = status.conflictWith
+    ? (HOTKEY_FIELD_LABELS[status.conflictWith] ?? status.conflictWith)
+    : "其他热键";
   return { level: "bad", text: `与应用内「${label}」重复，请点上方按键换一个组合` };
 }

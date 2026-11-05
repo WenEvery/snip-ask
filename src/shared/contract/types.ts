@@ -197,7 +197,7 @@ export interface HistoryPrefs {
 
 export interface AdvancedPrefs {
   proxy: string | null;
-  telemetry: boolean;
+  /** 开发者配置：骨架模式（不在用户界面出现，默认关闭）。 */
   skeletonMode: boolean;
 }
 
@@ -329,7 +329,7 @@ export interface TestResult {
 }
 
 export type DownloadState =
-  "queued" | "downloading" | "verifying" | "installed" | "failed" | "cancelled";
+  "idle" | "queued" | "downloading" | "verifying" | "installed" | "failed" | "cancelled";
 
 export interface ModelInfo {
   id: string;

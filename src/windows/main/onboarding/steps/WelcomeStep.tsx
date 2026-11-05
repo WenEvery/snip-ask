@@ -39,15 +39,12 @@ export function WelcomeStep(props: StepProps) {
       </div>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">本地 OCR 状态</h3>
+        <h3 className="ob-block-title">文字识别</h3>
         <p className="ob-hint">
-          框选后的文字识别在本机完成，不联网。精简版（slim）首次使用 OCR 时会下载约 16 MB 的
-          det/rec/cls/dict 模型；也可以稍后在「设置 → 翻译」中下载。
+          框选后的文字识别在本机完成，不联网。如果安装包里没有识别模型，首次使用时会自动下载（约 16
+          MB），也可以稍后在「设置 → 翻译」里下载。
         </p>
-        <OcrStatusCard
-          compact
-          note="缺少模型时可直接在此下载，或先跳过引导稍后下载；读取失败不影响继续配置。"
-        />
+        <OcrStatusCard compact note="缺少模型时可以直接在这里下载，也可以先跳过、稍后再下载。" />
       </div>
 
       <div className="ob-block">
@@ -70,8 +67,8 @@ export function WelcomeStep(props: StepProps) {
       </div>
 
       <p className="ob-privacy">
-        隐私摘要：默认不上传任何截图；只有你主动触发云端动作时，才会把对应文本或图片发送给你自己配置的模型服务。
-        不采集遥测，配置与历史默认只存本机。
+        隐私说明：默认不上传任何截图；只有你主动使用云端功能时，才会把对应的文字或图片发送给你自己配置的
+        AI 服务。不会统计你的使用行为，设置和历史记录默认只存本机。
       </p>
     </div>
   );

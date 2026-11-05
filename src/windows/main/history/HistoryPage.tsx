@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, EmptyState, Spinner } from "@/components/ui";
-import type { AppError, HistorySession, HistoryThread } from "@/shared/contract/types";
+import type { HistorySession, HistoryThread } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc, toAppError } from "@/shared/ipc";
 import {
@@ -32,8 +32,7 @@ const LIST_LIMIT = 100;
 type ConfirmState = { type: "all" } | { type: "one"; session: HistorySession } | null;
 
 function describeError(err: unknown): string {
-  const appError: AppError = toAppError(err);
-  return `${appError.code} · ${appError.message}`;
+  return toAppError(err).message;
 }
 
 export default function HistoryPage() {
@@ -117,7 +116,7 @@ export default function HistoryPage() {
     setListError(null);
     try {
       await ipc.invoke<void>(COMMANDS.historyClear, { session: session.session });
-      setNotice(`已清空「${summarizeTitle(session.title)}」的历史记录。`);
+      setNotice(`已清空「${summarizeTitle(session.title)}」的记录。`);
       if (selected === session.session) {
         setSelected(null);
         setThread(null);
@@ -137,7 +136,7 @@ export default function HistoryPage() {
     setListError(null);
     try {
       await ipc.invoke<void>(COMMANDS.historyClear, {});
-      setNotice("已清空全部历史记录（本机 SQLite）。");
+      setNotice("已清空全部历史记录。");
       setSelected(null);
       setThread(null);
       await loadList(false);
@@ -161,7 +160,7 @@ export default function HistoryPage() {
         <div>
           <h1 className="history-title">历史</h1>
           <p className="history-subtitle">
-            连续提问的历史线程保存在本机 SQLite，不上传；清空后不可恢复。
+            每次框选的问答都记录在这里，只保存在本机；清空后无法恢复。
           </p>
         </div>
         <div className="history-header-actions">
@@ -211,7 +210,7 @@ export default function HistoryPage() {
           className="history-search"
           type="search"
           value={query}
-          placeholder="按标题 / 引擎 / 动作筛选…"
+          placeholder="按标题、动作或模型筛选…"
           onChange={(event) => setQuery(event.target.value)}
         />
         <span className="history-count">
@@ -224,15 +223,15 @@ export default function HistoryPage() {
           {listLoading && sessions.length === 0 ? (
             <div className="history-loading">
               <Spinner />
-              <span>正在读取历史会话…</span>
+              <span>正在读取历史…</span>
             </div>
           ) : visible.length === 0 ? (
             <EmptyState
-              title={sessions.length === 0 ? "还没有历史记录" : "没有匹配的会话"}
+              title={sessions.length === 0 ? "还没有历史记录" : "没有找到匹配的记录"}
               description={
                 sessions.length === 0
-                  ? "框选并完成一次动作后，会话会自动记录在这里（可在「设置 → 核心」关闭历史）。"
-                  : "试试更换筛选关键词。"
+                  ? "框选并完成一次动作后，记录会自动出现在这里（可在「设置 → 核心」关闭历史）。"
+                  : "换个关键词试试。"
               }
             />
           ) : (
@@ -261,15 +260,15 @@ export default function HistoryPage() {
         <section className="history-detail" aria-label="历史线程详情">
           {!selectedSummary && !threadLoading ? (
             <EmptyState
-              title="选择一个会话查看问答"
-              description="左侧列出最近的会话，点击可回溯每一轮问题、回答、引擎与时间。"
+              title="选择一个对话查看内容"
+              description="左边是最近的记录，点一下就能看到每一轮的问题、回答、使用的模型和时间。"
             />
           ) : null}
 
           {threadLoading ? (
             <div className="history-loading">
               <Spinner />
-              <span>正在读取线程…</span>
+              <span>正在读取…</span>
             </div>
           ) : null}
 
@@ -337,7 +336,7 @@ export default function HistoryPage() {
 
           {thread && selectedSummary ? (
             thread.turns.length === 0 ? (
-              <p className="history-hint">该会话没有可展示的问答轮次。</p>
+              <p className="history-hint">这个对话没有可显示的内容。</p>
             ) : (
               <div className="history-turns">
                 {thread.turns.map((turn, index) => (
@@ -354,7 +353,7 @@ export default function HistoryPage() {
                     <div className="history-turn-question">
                       <span className="history-turn-role">问</span>
                       <span className="history-turn-question-text">
-                        {turn.question || "（首轮框选动作，无追问文本）"}
+                        {turn.question || "（第一次框选，没有追问）"}
                       </span>
                     </div>
                     <div className="history-turn-answer">

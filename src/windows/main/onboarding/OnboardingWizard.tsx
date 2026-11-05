@@ -106,9 +106,7 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           ipc.invoke<ModelInfo[]>(COMMANDS.modelsList),
         ]);
         if (!cancelled) {
-          setCapabilities(
-            deriveCapabilities({ providers: view.providers, models }),
-          );
+          setCapabilities(deriveCapabilities({ providers: view.providers, models }));
         }
       } catch {
         /* 忽略：受限说明降级为草稿摘要 */
@@ -184,7 +182,11 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           {loadError ? (
             <>
               <p className="ob-error-message">{loadError.message}</p>
-              <button type="button" className="ob-btn ob-btn-primary" onClick={() => setReloadKey(reloadKey + 1)}>
+              <button
+                type="button"
+                className="ob-btn ob-btn-primary"
+                onClick={() => setReloadKey(reloadKey + 1)}
+              >
                 重新加载
               </button>
             </>
@@ -256,8 +258,9 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           {confirmSkip ? (
             <span className="ob-inline">
               <span className="ob-warn-inline">
-                跳过将进入受限模式：本地 OCR、浏览器搜索、复制仍可用；AI
-                搜索 / 解答 / 图片搜索 / 云端翻译不可用（可随时在设置页补齐）。确定？
+                跳过之后，AI
+                搜索、解答、图片搜索和云端翻译暂时用不了；本地识别、复制和浏览器搜索仍然可用，
+                随时可以在设置里补齐。确定跳过吗？
               </span>
               <button
                 type="button"
@@ -267,7 +270,11 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
               >
                 确认跳过
               </button>
-              <button type="button" className="ob-btn ob-btn-ghost" onClick={() => setConfirmSkip(false)}>
+              <button
+                type="button"
+                className="ob-btn ob-btn-ghost"
+                onClick={() => setConfirmSkip(false)}
+              >
                 继续配置
               </button>
             </span>
@@ -278,7 +285,12 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           )}
         </div>
         <div className="ob-footer-right">
-          <button type="button" className="ob-btn ob-btn-ghost" disabled={step === 0 || busy} onClick={() => void goPrev()}>
+          <button
+            type="button"
+            className="ob-btn ob-btn-ghost"
+            disabled={step === 0 || busy}
+            onClick={() => void goPrev()}
+          >
             上一步
           </button>
           {isLast ? (
@@ -292,7 +304,12 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
               {busy ? "完成中…" : "完成并进入"}
             </button>
           ) : (
-            <button type="button" className="ob-btn ob-btn-primary" disabled={busy} onClick={() => void goNext()}>
+            <button
+              type="button"
+              className="ob-btn ob-btn-primary"
+              disabled={busy}
+              onClick={() => void goNext()}
+            >
               {busy ? "保存中…" : "下一步"}
             </button>
           )}

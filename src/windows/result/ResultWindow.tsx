@@ -258,7 +258,7 @@ export default function ResultWindow() {
           {turns.length === 0 ? (
             <div className="result-empty">
               <p className="result-empty-title">等待框选结果…</p>
-              <p className="result-hint">框选屏幕区域并选择动作后，结果会流式显示在这里。</p>
+              <p className="result-hint">框选屏幕上的内容并选择一个动作，回答会显示在这里。</p>
             </div>
           ) : (
             <ThreadView
@@ -279,7 +279,7 @@ export default function ResultWindow() {
               ) : null}
               {submitError.fallback.length > 0 ? (
                 <p className="result-error-fallback">
-                  可尝试：{fallbackText(submitError.fallback)}
+                  可以试试：{fallbackText(submitError.fallback)}
                 </p>
               ) : null}
             </div>

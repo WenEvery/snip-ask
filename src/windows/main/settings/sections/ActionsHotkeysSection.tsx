@@ -1,16 +1,10 @@
-/** 设置 · 动作与热键：菜单顺序、默认动作/模式、9 项热键、搜索方式与搜索引擎 */
+/** 设置 · 动作与热键：菜单顺序、各动作默认模式、9 项热键 */
 
 import { Button } from "@/components/ui";
-import type { ActionId, Hotkeys, Mode, SearchMode } from "@/shared/contract/types";
+import type { ActionId, Hotkeys, Mode } from "@/shared/contract/types";
 import { buildPatch, hasChanges } from "../diff";
 import { HOTKEY_ROWS } from "../hotkey";
-import {
-  ACTION_LABELS,
-  DEFAULT_HOTKEYS,
-  IMAGE_MENU_ACTIONS,
-  SEARCH_ENGINES,
-  TEXT_MENU_ACTIONS,
-} from "../presets";
+import { ACTION_LABELS, DEFAULT_HOTKEYS, IMAGE_MENU_ACTIONS, TEXT_MENU_ACTIONS } from "../presets";
 import {
   Hint,
   Panel,
@@ -19,17 +13,28 @@ import {
   SegmentedControl,
   SelectField,
   SwitchRow,
-  TextInput,
 } from "../parts";
 import { HotkeyField } from "../components/HotkeyField";
 import { MenuOrderEditor } from "../components/MenuOrderEditor";
 import type { SectionProps } from "../types";
 
+/** `modes.*` 四个动作的默认模式（与引导第 4 步一致）。 */
+const MODE_ACTIONS: {
+  key: "search" | "imageSearch" | "translate" | "answer";
+  label: string;
+  description: string;
+}[] = [
+  { key: "search", label: "搜索", description: "框选文字后联网搜索并给出结论" },
+  { key: "imageSearch", label: "图片搜索", description: "识别图片内容后搜索来源" },
+  { key: "translate", label: "翻译", description: "把选中文字翻译成目标语言" },
+  { key: "answer", label: "解答", description: "解释、分析或改写选中内容" },
+];
+
 export function ActionsHotkeysSection(props: SectionProps) {
   const { draft, baseline, saving, onEdit, onApply, onError } = props;
   const actions = draft.actions;
-  const search = draft.search;
-  const dirty = hasChanges(baseline, draft, ["actions", "hotkeys", "search"]);
+  const modes = draft.modes;
+  const dirty = hasChanges(baseline, draft, ["actions", "hotkeys", "modes"]);
 
   const menuActions = Array.from(new Set<ActionId>([...actions.menu.text, ...actions.menu.image]));
 
@@ -44,8 +49,12 @@ export function ActionsHotkeysSection(props: SectionProps) {
     }));
   };
 
+  const setMode = (key: (typeof MODE_ACTIONS)[number]["key"], mode: Mode) => {
+    onEdit((current) => ({ ...current, modes: { ...current.modes, [key]: mode } }));
+  };
+
   const save = async () => {
-    const patch = buildPatch(baseline, draft, ["actions", "hotkeys", "search"]);
+    const patch = buildPatch(baseline, draft, ["actions", "hotkeys", "modes"]);
     if (Object.keys(patch).length === 0) return;
     await onApply(patch, "动作与热键");
   };
@@ -53,11 +62,11 @@ export function ActionsHotkeysSection(props: SectionProps) {
   return (
     <SectionShell
       title="动作与热键"
-      description="调整框选后动作菜单的显示顺序、默认行为，并录制全局热键（保存后由后端重新注册）。"
+      description="挑选框选后显示哪些动作、每个动作默认用多快的方式回答，并设置全局热键。"
     >
       <Panel
-        title="动作菜单顺序"
-        description="菜单按数组顺序展示；取消勾选即隐藏该动作。"
+        title="动作菜单"
+        description="菜单从上到下按这里的顺序显示；取消勾选即可隐藏该动作。"
         actions={
           <Button
             variant="ghost"
@@ -77,28 +86,53 @@ export function ActionsHotkeysSection(props: SectionProps) {
         }
       >
         <MenuOrderEditor
-          title="文本选区"
-          description="框选到文字时展示的动作"
+          title="框选到文字"
+          description="选中文字时出现的动作"
           candidates={TEXT_MENU_ACTIONS}
           value={actions.menu.text}
           onChange={(next) => changeMenu("text", next)}
         />
         <MenuOrderEditor
-          title="图片选区"
-          description="框选到图像时展示的动作"
+          title="框选到图片"
+          description="选中图片时出现的动作"
           candidates={IMAGE_MENU_ACTIONS}
           value={actions.menu.image}
           onChange={(next) => changeMenu("image", next)}
         />
       </Panel>
 
-      <Panel title="默认行为">
+      <Panel
+        title="每个动作的默认模式"
+        description="快速模式几秒内出结果、费用低；深度模式会多搜索几次、读更多内容，更慢也更贵。"
+      >
+        <div className="sa-action-modes">
+          {MODE_ACTIONS.map((row) => (
+            <div key={row.key} className="sa-action-mode-row">
+              <div className="sa-action-mode-info">
+                <span className="sa-field-label">{row.label}</span>
+                <span className="sa-field-hint">{row.description}</span>
+              </div>
+              <SegmentedControl<Mode>
+                value={modes[row.key]}
+                onChange={(mode) => setMode(row.key, mode)}
+                options={[
+                  { value: "quick", label: "快速" },
+                  { value: "deep", label: "深度" },
+                ]}
+              />
+            </div>
+          ))}
+        </div>
+        <Hint>在框选后的动作菜单里还能临时切换这一次的模式。</Hint>
+      </Panel>
+
+      <Panel title="其他行为">
         <div className="sa-grid-2">
           <SelectField
-            label="默认动作"
+            label="自动执行的动作"
             value={actions.defaultAction ?? ""}
             options={[
-              { value: "", label: "不自动执行（手动选择）" },
+              { value: "", label: "不自动执行（每次手动选）" },
               ...menuActions.map((action) => ({ value: action, label: ACTION_LABELS[action] })),
             ]}
             onChange={(value) =>
@@ -106,46 +140,36 @@ export function ActionsHotkeysSection(props: SectionProps) {
                 ...current,
                 actions: {
                   ...current.actions,
-                  defaultAction: menuActions.includes(value as ActionId) ? (value as ActionId) : null,
+                  defaultAction: menuActions.includes(value as ActionId)
+                    ? (value as ActionId)
+                    : null,
                 },
               }))
             }
-            hint="仅可选当前菜单中存在的动作（契约约束）"
+            hint="可选当前菜单中已有的动作"
           />
           <div className="sa-field is-stacked">
-            <span className="sa-field-label">默认模式</span>
-            <SegmentedControl<Mode>
-              value={actions.defaultMode}
-              options={[
-                { value: "quick", label: "快速", description: "1–3s，成本低" },
-                { value: "deep", label: "深度", description: "5–25s，成本 3–10x" },
-              ]}
-              onChange={(mode) =>
-                onEdit((current) => ({ ...current, actions: { ...current.actions, defaultMode: mode } }))
+            <span className="sa-field-label">结果处理</span>
+            <SwitchRow
+              label="自动复制结果"
+              description="结果生成后自动复制到剪贴板"
+              checked={actions.autoCopy}
+              onChange={(autoCopy) =>
+                onEdit((current) => ({ ...current, actions: { ...current.actions, autoCopy } }))
               }
             />
           </div>
         </div>
-        <SwitchRow
-          label="自动复制结果"
-          description="结果生成后自动写入剪贴板"
-          checked={actions.autoCopy}
-          onChange={(autoCopy) =>
-            onEdit((current) => ({ ...current, actions: { ...current.actions, autoCopy } }))
-          }
-        />
       </Panel>
 
       <Panel
         title="全局热键"
-        description="点击热键框后按下组合键；至少包含一个修饰键（Ctrl/Alt/Shift/Win）+ 字母或数字。"
+        description="点击热键框后按下组合键；至少包含一个修饰键（Ctrl / Alt / Shift / Win）加字母或数字。"
         actions={
           <Button
             variant="ghost"
             size="sm"
-            onClick={() =>
-              onEdit((current) => ({ ...current, hotkeys: { ...DEFAULT_HOTKEYS } }))
-            }
+            onClick={() => onEdit((current) => ({ ...current, hotkeys: { ...DEFAULT_HOTKEYS } }))}
           >
             恢复全部默认
           </Button>
@@ -162,44 +186,7 @@ export function ActionsHotkeysSection(props: SectionProps) {
             onError={onError}
           />
         ))}
-        <Hint>热键冲突时会显示占用来源；建议保留一个「框选并唤起」热键。</Hint>
-      </Panel>
-
-      <Panel title="搜索方式">
-        <SegmentedControl<SearchMode>
-          value={search.mode}
-          onChange={(mode) =>
-            onEdit((current) => ({ ...current, search: { ...current.search, mode } }))
-          }
-          options={[
-            { value: "browser", label: "浏览器搜索", description: "打开系统默认浏览器" },
-            { value: "ai", label: "AI 搜索", description: "结果窗输出结论 + 来源" },
-          ]}
-        />
-        <SelectField
-          label="搜索引擎"
-          value={search.engine}
-          options={SEARCH_ENGINES}
-          onChange={(engine) =>
-            onEdit((current) => ({ ...current, search: { ...current.search, engine } }))
-          }
-          hint="仅浏览器搜索模式使用"
-        />
-        {search.engine === "custom" ? (
-          <TextInput
-            label="自定义搜索 URL 模板"
-            value={search.engineUrlTemplate ?? ""}
-            placeholder="https://www.example.com/search?q={query}"
-            monospace
-            hint="必须包含 {query} 占位符；仅允许 https"
-            onChange={(template) =>
-              onEdit((current) => ({
-                ...current,
-                search: { ...current.search, engineUrlTemplate: template.trim() ? template : null },
-              }))
-            }
-          />
-        ) : null}
+        <Hint>如果热键被其他软件占用，这里会显示冲突提示，换一个组合即可。</Hint>
       </Panel>
 
       <SaveBar label="动作与热键" dirty={dirty} saving={saving} onSave={() => void save()} />

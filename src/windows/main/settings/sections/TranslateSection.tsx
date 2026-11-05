@@ -1,4 +1,4 @@
-/** 设置 · 翻译：云端 / 本地后端、计算设备（GPU）、目标语言、术语表、模型库与试译 */
+/** 设置 · 翻译：云端 / 本地翻译、显卡加速、目标语言、术语表、模型库与试译 */
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui";
@@ -155,7 +155,7 @@ export function TranslateSection(props: SectionProps) {
     setBackendBusy(id);
     try {
       await ipc.invoke<void>(COMMANDS.backendsRemove, { id });
-      setNotice(`已删除后端组件「${id}」`);
+      setNotice(`已删除加速组件「${id}」`);
       await refreshBackends();
       await refreshProbe(true);
     } catch (err) {
@@ -226,7 +226,7 @@ export function TranslateSection(props: SectionProps) {
       return;
     }
     const ok = await onApply(patch, "翻译设置");
-    if (ok) setNotice("翻译设置已保存；切换本地引擎 / 计算设备 / GPU 后端会触发本地引擎重启");
+    if (ok) setNotice("翻译设置已保存；切换引擎或计算设备后，本地引擎会自动重启。");
   };
 
   const providerOptions = draft.providers.map((provider) => ({
@@ -238,39 +238,39 @@ export function TranslateSection(props: SectionProps) {
   return (
     <SectionShell
       title="翻译"
-      description="云端复用 AI 服务或使用专用翻译模型；本地模型离线运行、更重隐私。"
+      description="可以选择云端翻译（更快、效果更好，需要 API Key），也可以用本地模型离线翻译。"
     >
-      <Panel title="翻译后端">
+      <Panel title="翻译方式">
         <SegmentedControl<TranslateBackend>
           value={translate.backend}
           onChange={(backend) => {
             updateTranslate({ backend });
             setNotice(
-              backend === "local" ? "本地翻译需要先下载并安装模型" : "云端翻译将复用所选供应商",
+              backend === "local" ? "本地翻译需要先下载模型" : "云端翻译会使用你配置的 AI 服务",
             );
           }}
           options={[
-            { value: "cloud", label: "云端（推荐）", description: "复用 AI 服务 Key，质量高" },
-            { value: "local", label: "本地（离线）", description: "隐私好，需下载模型" },
+            { value: "cloud", label: "云端翻译", description: "用已配置的 AI 服务，效果好" },
+            { value: "local", label: "本地翻译", description: "离线可用，不上传内容" },
           ]}
         />
       </Panel>
 
       <Panel
-        title="本地 OCR（框选识别）"
-        description="框选后的文字识别在本机完成，不联网。运行时随包内置；精简版（slim）的 OCR 模型在首次使用时下载。"
+        title="文字识别（框选识别）"
+        description="框选后的文字识别在本机完成，不联网。识别需要的模型随安装包提供，或在首次使用时自动下载。"
       >
         <OcrStatusCard />
       </Panel>
 
       {translate.backend === "cloud" ? (
-        <Panel title="云端翻译" description="可选择专用翻译模型（如 Qwen-MT）或任意通用模型。">
+        <Panel title="云端翻译" description="可以使用专用翻译模型，也可以直接用普通的 AI 模型。">
           <SelectField
             label="供应商"
             value={translate.providerId ?? ""}
-            options={[{ value: "", label: "跟随默认供应商" }, ...providerOptions]}
+            options={[{ value: "", label: "使用默认供应商" }, ...providerOptions]}
             onChange={(providerId) => updateTranslate({ providerId: providerId || null })}
-            hint="只列出已配置的 AI 供应商，停用的不可选"
+            hint="只列出已配置的供应商，停用的不可选"
           />
           <TextInput
             label="模型名"
@@ -283,12 +283,9 @@ export function TranslateSection(props: SectionProps) {
         </Panel>
       ) : (
         <>
-          <Panel
-            title="本地翻译"
-            description="本地引擎仅监听 127.0.0.1；空闲超时后自动卸载以节省内存。"
-          >
+          <Panel title="本地翻译" description="本地引擎只在本机运行；长时间不用会自动释放内存。">
             <SelectField
-              label="推理引擎"
+              label="本地引擎"
               value={local.engine}
               options={LOCAL_ENGINES.map((engine) => ({
                 value: engine.value,
@@ -305,25 +302,27 @@ export function TranslateSection(props: SectionProps) {
               value={local.model}
               placeholder="hy-mt-1.8b-q4"
               monospace
-              hint="llama.cpp / Ollama 使用模型名；CTranslate2 使用模型目录名"
+              hint="填写本地模型的名称；不同引擎的填法略有不同"
               onChange={(model) => updateLocal({ model: model.trim() })}
             />
             <div className="sa-grid-2">
               <NumberField
-                label="本地服务端口"
+                label="本机端口"
                 value={local.port}
                 min={1024}
                 max={65535}
                 suffix=""
+                hint="一般保持默认即可"
                 onChange={(port) => updateLocal({ port })}
               />
               <NumberField
-                label="空闲卸载"
+                label="闲置多久后释放内存"
                 value={local.idleUnloadSec}
                 min={0}
                 max={86400}
                 step={30}
                 suffix="秒"
+                hint="设为 0 表示不自动释放"
                 onChange={(idleUnloadSec) => updateLocal({ idleUnloadSec })}
               />
             </div>
@@ -331,8 +330,8 @@ export function TranslateSection(props: SectionProps) {
           </Panel>
 
           <Panel
-            title="计算设备（GPU 加速）"
-            description="Vulkan 优先：AMD / Intel / NVIDIA 通用；CUDA 为 NVIDIA 可选组件。GPU 后端按需下载，不随主安装包分发。"
+            title="显卡加速"
+            description="有显卡时会优先用显卡加速，没有也能用 CPU。NVIDIA 用户还可以额外启用 CUDA。"
             actions={
               <Button
                 variant="secondary"
@@ -340,7 +339,7 @@ export function TranslateSection(props: SectionProps) {
                 disabled={probeLoading}
                 onClick={() => void refreshProbe(true)}
               >
-                {probeLoading ? "探测中…" : "重新探测"}
+                {probeLoading ? "检测中…" : "重新检测"}
               </Button>
             }
           >
@@ -354,10 +353,10 @@ export function TranslateSection(props: SectionProps) {
                   disabled: false,
                 }))}
                 onChange={(value) => updateLocal({ device: value as LocalDevice })}
-                hint="自动：优先 GPU，不可用时回退 CPU"
+                hint="自动：有显卡用显卡，否则用 CPU"
               />
               <SelectField
-                label="GPU 后端"
+                label="显卡加速方式"
                 value={local.gpuBackend}
                 options={GPU_BACKEND_OPTIONS.map((option) => ({
                   value: option.value,
@@ -366,33 +365,29 @@ export function TranslateSection(props: SectionProps) {
                 }))}
                 onChange={(value) => updateLocal({ gpuBackend: value as GpuBackend })}
                 disabled={local.device === "cpu"}
-                hint="Vulkan 支持 AMD / Intel / NVIDIA；CUDA 仅 NVIDIA"
+                hint="大多数显卡选 Vulkan；CUDA 仅支持 NVIDIA"
               />
               <NumberField
-                label="GPU 层数"
+                label="交给显卡的比例"
                 value={local.gpuLayers}
                 min={0}
                 max={512}
-                hint="99 = 全部层 offload 到 GPU；0 = 纯 CPU；显存不足时降低层数"
+                hint="数值越大，越多计算交给显卡；显存不够时调小"
                 disabled={local.device === "cpu"}
                 onChange={(gpuLayers) => updateLocal({ gpuLayers })}
               />
             </div>
             <InfoRow
               label="设备状态"
-              value={probeLoading ? "正在探测…" : probe ? describeGpuProbe(probe) : "尚未探测"}
-              hint="探测方式：真实执行 llama-server --list-devices（只认 llama.cpp 输出，不依赖 nvidia-smi；AMD/Intel 同样可用）"
+              value={probeLoading ? "正在检测…" : probe ? describeGpuProbe(probe) : "还没有检测"}
+              hint="自动检测显卡型号和可用显存"
             />
-            {local.device === "cpu" ? (
-              <Hint>
-                已选择 CPU：保存后本地引擎使用 -ngl 0（不 offload 到 GPU），更省电但速度较慢。
-              </Hint>
-            ) : null}
+            {local.device === "cpu" ? <Hint>已选择 CPU：更省电但速度较慢。</Hint> : null}
             {probe?.budget && !probe.budget.fits ? (
               <div className="sa-warn" role="status">
                 <span>
-                  当前模型需 {formatMiB(probe.budget.requiredMb)} 显存，设备当前空闲{" "}
-                  {formatMiB(probe.budget.availableMb)}，可能显存不足（可能启动失败或回退 CPU）。
+                  这个模型大约需要 {formatMiB(probe.budget.requiredMb)} 显存，当前空闲{" "}
+                  {formatMiB(probe.budget.availableMb)}，可能不够用（会变慢或改用 CPU）。
                 </span>
                 <span className="sa-inline">
                   <Button
@@ -407,22 +402,20 @@ export function TranslateSection(props: SectionProps) {
             ) : null}
             {!probeLoading && probe && !probe.useable ? (
               <Hint>
-                未检测到可用 GPU：将使用 CPU。可在上方「GPU 后端」下载 Vulkan 组件（AMD / Intel /
-                NVIDIA 通用）。
+                没有检测到可用的显卡加速，将使用 CPU。可在上方「显卡加速方式」下载 Vulkan 组件（AMD
+                / Intel / NVIDIA 都适用）。
               </Hint>
             ) : null}
 
             <Field
-              label="后端组件"
-              hint="Vulkan 是默认 GPU 组件（跨厂商）；CUDA 可选；CPU 随主安装包。下载支持断点续传与 SHA256 校验；开发/验证可用环境变量 SNIP_ASK_BACKENDS_DIR 指向自定义后端目录。"
+              label="加速组件"
+              hint="Vulkan 是通用组件（AMD / Intel / NVIDIA 都可用）；CUDA 只适用于 NVIDIA 显卡；CPU 随安装包提供。下载会自动继续，也能随时取消。"
             >
               {backendsLoading && backends.length === 0 ? (
-                <LoadingBlock text="正在读取后端组件…" />
+                <LoadingBlock text="正在读取加速组件…" />
               ) : (
                 <div className="sa-models">
-                  {backends.length === 0 ? (
-                    <Hint>后端组件清单为空，请检查 resources/backends.manifest.json。</Hint>
-                  ) : null}
+                  {backends.length === 0 ? <Hint>这里暂时没有可下载的加速组件。</Hint> : null}
                   {backends.map((component) => {
                     const state = backendStates[component.id] ?? component.downloadState;
                     const installed = state === "installed" || component.installed;
@@ -455,8 +448,8 @@ export function TranslateSection(props: SectionProps) {
                             </StatusTag>
                           </div>
                           <p className="sa-model-meta">
-                            {formatBytes(component.sizeBytes)} · 版本 {component.version} · 许可{" "}
-                            {component.license}
+                            {formatBytes(component.sizeBytes)}
+                            {component.version ? ` · 版本 ${component.version}` : ""}
                             {vendorHint}
                           </p>
                           {active || (installed && component.installedBytes > 0) ? (
@@ -472,13 +465,13 @@ export function TranslateSection(props: SectionProps) {
                                   ? `已安装 ${formatBytes(component.installedBytes || component.sizeBytes)}`
                                   : progress
                                     ? `${formatBytes(progress.loaded)} / ${formatBytes(progress.total)} · ${percent}%`
-                                    : "等待下载进度…"}
+                                    : "正在准备下载…"}
                               </span>
                             </div>
                           ) : null}
                           {state === "failed" ? (
                             <p className="sa-field-hint">
-                              下载失败：可重试（支持断点续传）；若网络受限请稍后再试。
+                              下载失败，可以重试；如果网络不稳定，稍后再试也可以。
                             </p>
                           ) : null}
                         </div>
@@ -551,7 +544,7 @@ export function TranslateSection(props: SectionProps) {
               value={translate.targetLang}
               placeholder="例如 pt / ar"
               monospace
-              hint="BCP-47 风格代码，如 zh-CHT、pt、ar"
+              hint="填写语言代码，例如 en、ja、pt"
               onChange={(targetLang) => updateTranslate({ targetLang })}
             />
           ) : (
@@ -605,10 +598,7 @@ export function TranslateSection(props: SectionProps) {
         </Field>
       </Panel>
 
-      <Panel
-        title="试译"
-        description="调用 translate_test 用当前目标语言翻译一句示例文本，验证链路。"
-      >
+      <Panel title="试译" description="用当前设置翻译一段示例文字，看看效果和速度。">
         <TextInput
           label="示例文本"
           value={testText}

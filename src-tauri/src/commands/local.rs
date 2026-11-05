@@ -63,10 +63,19 @@ pub async fn local_gpu_probe(
     Ok(result)
 }
 
+/// 引擎快照 + 未启动原因（设置页展示用）。
+fn engine_payload(state: &AppState) -> EngineStatusPayload {
+    let mut payload = state.local_engine.snapshot();
+    if payload.fallback_reason.is_none() {
+        payload.fallback_reason = state.engine_note();
+    }
+    payload
+}
+
 /// 命令：引擎运行态快照。
 #[tauri::command]
 pub async fn local_engine_status(state: State<'_, AppState>) -> AppResult<EngineStatusPayload> {
-    Ok(state.local_engine.snapshot())
+    Ok(engine_payload(&state))
 }
 
 /// 命令：显式启动本地引擎（按 `local.device` / `local.gpuBackend` 走 Vulkan → CUDA → CPU）。
@@ -78,6 +87,7 @@ pub async fn local_engine_start(
     let config = state.snapshot_config();
     let engine = state.local_engine.clone();
     let status = engine.start(&app, &config).await?;
+    state.set_engine_note(None);
     crate::events::emit_engine_status_payload(&app, &status);
     *state.engine.write() = status.local;
     Ok(status)
@@ -91,6 +101,7 @@ pub async fn local_engine_stop(
 ) -> AppResult<EngineStatusPayload> {
     let engine = state.local_engine.clone();
     engine.stop().await?;
+    state.set_engine_note(None);
     let status = engine.snapshot();
     crate::events::emit_engine_status_payload(&app, &status);
     *state.engine.write() = status.local;

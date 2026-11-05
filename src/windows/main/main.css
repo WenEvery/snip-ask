@@ -21,6 +21,8 @@
   flex: none;
   background: var(--sa-color-surface);
   border-bottom: 1px solid var(--sa-color-border);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .main-titlebar__brand {
@@ -142,4 +144,87 @@
   text-align: center;
   font-size: var(--sa-text-sm);
   color: var(--sa-color-danger);
+}
+
+/* ───────── 自绘窗口：八向缩放手柄（无系统标题栏） ───────── */
+
+.window-resize {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.window-resize__handle {
+  position: fixed;
+  pointer-events: auto;
+}
+
+.window-resize__handle--n {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 5px;
+  cursor: n-resize;
+}
+
+.window-resize__handle--s {
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 5px;
+  cursor: s-resize;
+}
+
+.window-resize__handle--e {
+  right: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 5px;
+  cursor: e-resize;
+}
+
+.window-resize__handle--w {
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 5px;
+  cursor: w-resize;
+}
+
+.window-resize__handle--ne {
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.window-resize__handle--nw {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.window-resize__handle--se {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+.window-resize__handle--sw {
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
+}
+
+/* 最大化时内容铺满，避免圆角/外边距残留 */
+.main-window.is-maximized {
+  border-radius: 0;
 }

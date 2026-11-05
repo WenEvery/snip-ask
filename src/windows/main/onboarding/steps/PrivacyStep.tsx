@@ -30,7 +30,7 @@ export function PrivacyStep(props: StepProps) {
     : null;
   const aiSummary = draft.ai
     ? `${provider ?? "自定义"} / ${draft.ai.model || "未填写模型"}${draft.ai.tested ? "（已测试）" : ""}`
-    : "未配置（受限模式）";
+    : "未配置（部分功能不可用）";
   const translateSummary = draft.translate
     ? draft.translate.backend === "cloud"
       ? `云端${draft.translate.cloudModel ? `（${draft.translate.cloudModel}）` : "（复用 AI 服务）"}`
@@ -87,9 +87,7 @@ export function PrivacyStep(props: StepProps) {
           />
           <span>
             <strong>我已阅读并同意隐私声明与开源许可（Apache-2.0）</strong>
-            <span className="ob-hint">
-              不同意时可点「跳过引导」进入受限模式（仅本地 OCR + 浏览器搜索 + 已就绪的本地翻译）。
-            </span>
+            <span className="ob-hint">不同意也可以直接跳过引导，先使用本机功能。</span>
           </span>
         </label>
         {privacy.agreed ? null : (
@@ -138,8 +136,7 @@ export function PrivacyStep(props: StepProps) {
       </div>
 
       <p className="ob-privacy">
-        完成后可先框选一段示例文字试问：已配置且同意隐私声明时进入正常模式；若跳过了关键配置，则进入受限模式，
-        可随时在设置页补齐。
+        完成后就可以开始框选；如果跳过了关键配置，部分功能会暂时不可用，随时可以在设置里补齐。
       </p>
     </div>
   );

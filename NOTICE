@@ -7,10 +7,11 @@ Copyright 2026 框选 AI (Snip Ask) contributors
 说明：
 - 版本以发布包内的 Cargo.lock / pnpm-lock.yaml 为准；下表为开发阶段的主要组件清单，
   正式发布前必须由维护者按依赖树补齐完整清单、版权行与许可原文。
-- 「模型」类资源：**OCR 模型（det/rec/cls + 字典）在 full 版随安装包分发，slim 版由用户首次使用时下载**；
+- 「模型」类资源：**OCR 模型（det/rec/cls + 字典）在内置 OCR 模型版安装包中随包分发，在线安装版由用户首次使用时下载**；
   本地翻译模型（GGUF）不随安装包分发，由用户在应用内按需下载。其许可与使用限制以模型卡
   （model card）和官方许可原文为准，下载界面与本地模型管理页会展示对应许可。
-- **v1.0.0 不含任何自动更新组件**（无 `tauri-plugin-updater`），升级方式为覆盖安装或源码构建。
+- **v1.0.0 起不含任何自动更新组件**（无 `tauri-plugin-updater`），升级方式为覆盖安装或源码构建；
+  **v1.0.1 起不收集任何用户信息**（无遥测、无崩溃上报、无使用统计）。
 
 一、运行时与框架（随包分发）
 - Tauri 2（tauri / tauri-build / tauri-runtime / tauri-utils） — MIT OR Apache-2.0
@@ -37,7 +38,7 @@ Copyright 2026 框选 AI (Snip Ask) contributors
 - pnpm — MIT
 - ESLint / Prettier 生态（若启用） — MIT
 
-三、本地 OCR（full 版随包 / slim 版首次下载）
+三、本地 OCR（内置 OCR 模型版随包 / 在线安装版首次下载）
 - RapidOCR（推理封装与后处理） — Apache-2.0
 - ONNX Runtime 1.31.1（`onnxruntime.dll`，两个版本均随包） — MIT
 - PaddleOCR PP-OCRv4 检测/识别/方向分类模型（`ch_PP-OCRv4_det_infer.onnx` /

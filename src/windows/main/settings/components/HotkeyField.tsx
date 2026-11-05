@@ -108,5 +108,9 @@ export function HotkeyField(props: HotkeyFieldProps) {
 function HotkeyStatusLine(props: { status: HotkeyStatus }) {
   // conflictWith="system"（被其它程序占用）与配置内热键字段名由同一映射给出可操作文案
   const hint = hotkeyStatusHint(props.status);
-  return <span className={`sa-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>{hint.text}</span>;
+  return (
+    <span className={`sa-hotkey-status ${hint.level === "ok" ? "is-ok" : "is-bad"}`}>
+      {hint.text}
+    </span>
+  );
 }

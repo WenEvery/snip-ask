@@ -17,7 +17,9 @@ import type { SectionId, SectionProps } from "./types";
 import { GeneralSection } from "./sections/GeneralSection";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { AiProvidersSection } from "./sections/AiProvidersSection";
+import { SearchSection } from "./sections/SearchSection";
 import { TranslateSection } from "./sections/TranslateSection";
+import { PrivacySection } from "./sections/PrivacySection";
 import { ActionsHotkeysSection } from "./sections/ActionsHotkeysSection";
 import { AdvancedSection } from "./sections/AdvancedSection";
 import { AboutSection } from "./sections/AboutSection";
@@ -27,8 +29,10 @@ const NAV: { id: SectionId; label: string; hint: string }[] = [
   { id: "general", label: "核心", hint: "语言 / 启动 / 历史" },
   { id: "appearance", label: "外观", hint: "主题 / 字号 / 结果窗" },
   { id: "ai", label: "AI 服务", hint: "供应商与连接测试" },
+  { id: "search", label: "搜索", hint: "AI / 浏览器与引擎" },
   { id: "translate", label: "翻译", hint: "云端 / 本地 / 术语表" },
-  { id: "actions", label: "动作与热键", hint: "菜单 / 热键 / 搜索" },
+  { id: "privacy", label: "隐私", hint: "上传与本地模式" },
+  { id: "actions", label: "动作与热键", hint: "菜单 / 模式 / 热键" },
   { id: "advanced", label: "高级", hint: "预算 / 代理 / 运行信息" },
   { id: "about", label: "自定义与关于", hint: "版本 / 目录 / 文档" },
 ];
@@ -42,8 +46,12 @@ const SECTION_ALIASES: Record<string, SectionId> = {
   ai: "ai",
   providers: "ai",
   provider: "ai",
+  search: "search",
+  websearch: "search",
   translate: "translate",
   translation: "translate",
+  privacy: "privacy",
+  private: "privacy",
   actions: "actions",
   hotkeys: "actions",
   hotkey: "actions",
@@ -62,8 +70,8 @@ function resolveSection(initial?: string): SectionId {
 }
 
 const STATUS_TEXT: Record<string, string> = {
-  idle: "已同步",
-  draft: "草稿 · 有未应用修改",
+  idle: "已保存",
+  draft: "有未保存的修改",
   ok: "已应用",
   error: "保存失败",
 };
@@ -120,7 +128,7 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
         ) : (
           <div className="settings-fallback">
             <ErrorNotice error={loadError} />
-            <p className="sa-hint">无法读取配置，请确认后端已启动。</p>
+            <p className="sa-hint">无法读取配置，请确认应用已正常启动。</p>
             <Button variant="primary" size="sm" onClick={() => void reload()}>
               重新加载
             </Button>
@@ -177,7 +185,7 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
               <span className="settings-nav-hint">{item.hint}</span>
             </button>
           ))}
-          <p className="settings-nav-note">修改后需点击各分组底部的「应用」按钮保存。</p>
+          <p className="settings-nav-note">改完每一项后，点该分组底部的保存按钮才会生效。</p>
         </nav>
 
         <div className="settings-content">
@@ -186,7 +194,9 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
             <AppearanceSection key="appearance" {...sectionProps} />
           ) : null}
           {section === "ai" ? <AiProvidersSection key="ai" {...sectionProps} /> : null}
+          {section === "search" ? <SearchSection key="search" {...sectionProps} /> : null}
           {section === "translate" ? <TranslateSection key="translate" {...sectionProps} /> : null}
+          {section === "privacy" ? <PrivacySection key="privacy" {...sectionProps} /> : null}
           {section === "actions" ? <ActionsHotkeysSection key="actions" {...sectionProps} /> : null}
           {section === "advanced" ? <AdvancedSection key="advanced" {...sectionProps} /> : null}
           {section === "about" ? <AboutSection key="about" {...sectionProps} /> : null}

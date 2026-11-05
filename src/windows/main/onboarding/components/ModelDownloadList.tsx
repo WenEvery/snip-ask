@@ -13,9 +13,10 @@ import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
 import { formatBytes, formatSpeed } from "../format";
 
 const STATE_LABELS: Record<DownloadState, string> = {
-  queued: "排队中",
+  idle: "未下载",
+  queued: "等待下载",
   downloading: "下载中",
-  verifying: "校验中",
+  verifying: "正在检查文件",
   installed: "已安装",
   failed: "下载失败",
   cancelled: "已取消",
@@ -58,7 +59,11 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
 
   useIpcEvent<DownloadStatePayload>(EVENTS.downloadState, (payload) => {
     setStates((current) => ({ ...current, [payload.model]: payload.state }));
-    if (payload.state === "installed" || payload.state === "failed" || payload.state === "cancelled") {
+    if (
+      payload.state === "installed" ||
+      payload.state === "failed" ||
+      payload.state === "cancelled"
+    ) {
       void refresh();
     }
   });
@@ -86,16 +91,14 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
     }
   };
 
-  if (loading) return <p className="ob-hint">正在读取本地模型清单…</p>;
+  if (loading) return <p className="ob-hint">正在读取本地模型…</p>;
   const focusModelId = props.focusModelId ?? null;
-  const visibleModels = focusModelId
-    ? models.filter((model) => model.id === focusModelId)
-    : models;
-  if (models.length === 0) return <p className="ob-hint">未找到可下载模型（骨架模式下清单为空时属正常）。</p>;
+  const visibleModels = focusModelId ? models.filter((model) => model.id === focusModelId) : models;
+  if (models.length === 0) return <p className="ob-hint">这里暂时没有可下载的模型。</p>;
   if (visibleModels.length === 0) {
     return (
       <p className="ob-hint">
-        模型清单中暂未找到 {focusModelId}（清单更新后可用）；也可以先继续，稍后在设置 → 翻译中下载。
+        没有找到 {focusModelId}；也可以先继续，稍后在「设置 → 翻译」中下载。
       </p>
     );
   }
@@ -107,7 +110,8 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
         const installed = state === "installed" || model.installed;
         const active = state === "queued" || state === "downloading" || state === "verifying";
         const item = progress[model.id];
-        const percent = item && item.total > 0 ? Math.min(100, Math.round((item.loaded / item.total) * 100)) : 0;
+        const percent =
+          item && item.total > 0 ? Math.min(100, Math.round((item.loaded / item.total) * 100)) : 0;
         const selected = props.selectedModelId === model.id;
         return (
           <div key={model.id} className={`ob-model${selected ? " is-selected" : ""}`}>
@@ -118,7 +122,8 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                 {selected ? <span className="ob-tag is-ok">已选用</span> : null}
               </div>
               <p className="ob-hint">
-                {formatBytes(model.sizeBytes)} · 需内存 {model.minRamMB} MB · 许可 {model.license}
+                {formatBytes(model.sizeBytes)} · 运行内存约{" "}
+                {formatBytes(model.minRamMB * 1024 * 1024)}
               </p>
               {active ? (
                 <>
@@ -128,7 +133,7 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                   <p className="ob-hint">
                     {item
                       ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
-                      : "等待下载进度…"}
+                      : "正在准备下载…"}
                   </p>
                 </>
               ) : null}

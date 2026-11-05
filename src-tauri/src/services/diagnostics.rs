@@ -41,11 +41,9 @@ pub fn collect(
     }
 }
 
-/// 进程内存占用（MB）。
-///
-/// TODO(real): `K32GetProcessMemoryInfo` 读取 `WorkingSetSize`。
+/// 进程内存占用（MB，真实 WorkingSetSize）。
 pub fn memory_mb() -> u64 {
-    0
+    crate::platform::process::current_process_memory_mb()
 }
 
 #[cfg(test)]
@@ -68,7 +66,8 @@ mod tests {
         assert_eq!(stats.edition, "dev");
         assert!(!stats.ocr_ready);
         assert_eq!(stats.uptime_sec, 42);
-        assert_eq!(stats.memory_mb, 0);
+        // 真实进程工作集内存（V1.0.1 起不再返回 0）。
+        assert!(stats.memory_mb > 0, "运行中进程内存占用应大于 0");
         assert_eq!(stats.active_tasks, 2);
         assert_eq!(stats.models_installed, 3);
         assert!(stats.skeleton_mode);

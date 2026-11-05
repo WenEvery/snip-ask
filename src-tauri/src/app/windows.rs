@@ -259,15 +259,31 @@ pub fn hide_result(app: &AppHandle) {
     }
 }
 
-/// 显示主窗口（设置 / 引导）。
+/// 显示主窗口（设置 / 引导）；已最小化时还原并聚焦。
+///
+/// 若窗口已被销毁（例如被外部强制关闭 / 旧版本遗留状态），按当前布局重建主窗口——
+/// 保证「托盘左键 / 托盘菜单 / 单实例唤起」始终能把设置页叫回来。
 pub fn show_main(app: &AppHandle) -> AppResult<()> {
-    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
-        return Err(AppError::new(
-            ErrorCode::OverlayFailed,
-            Some("主窗口不存在".to_string()),
-        ));
-    };
-    window.show().map_err(window_error)?;
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+        let _ = window.unminimize();
+        window.show().map_err(window_error)?;
+        let _ = window.set_focus();
+        return Ok(());
+    }
+    let window = WebviewWindowBuilder::new(
+        app,
+        MAIN_WINDOW,
+        WebviewUrl::App("index.html?window=main".into()),
+    )
+    .title("框选 AI")
+    .inner_size(980.0, 720.0)
+    .min_inner_size(820.0, 600.0)
+    // 无系统标题栏：由前端自绘标题栏（最小化 / 最大化 / 关闭 / 拖拽 / 缩放）。
+    .decorations(false)
+    .center()
+    .visible(true)
+    .build()
+    .map_err(window_error)?;
     let _ = window.set_focus();
     Ok(())
 }

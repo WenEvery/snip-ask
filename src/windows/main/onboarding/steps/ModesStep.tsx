@@ -13,14 +13,16 @@ export function ModesStep(props: StepProps) {
   };
 
   const setAll = (mode: Mode) => {
-    onEdit({ modes: { ...DEFAULT_MODES, search: mode, imageSearch: mode, translate: mode, answer: mode } });
+    onEdit({
+      modes: { ...DEFAULT_MODES, search: mode, imageSearch: mode, translate: mode, answer: mode },
+    });
   };
 
   return (
     <div className="ob-step">
       <h2 className="ob-step-title">为每个动作选择默认模式</h2>
       <p className="ob-hint">
-        同一入口可在动作菜单中临时切换。深度模式会开启思考、多次检索并抓取正文，时延与费用都更高，建议只对需要质量的动作开启。
+        动作菜单里还能临时切换这一次的模式。深度模式会多查几次、多读几篇网页再回答，更慢、费用也更高，建议只对需要质量的动作开启。
       </p>
 
       <div className="ob-inline">
@@ -65,7 +67,8 @@ export function ModesStep(props: StepProps) {
       </div>
 
       <p className="ob-hint">
-        深度模式预算（检索次数 / 抓取篇数 / token 上限）可在设置 → 高级中自定义，默认为 3 / 2 / 1500。
+        深度模式每次最多搜索几次、读几篇网页、输出多长，可以在「设置 → 高级」中调整，默认是 3 次、2
+        篇、约 1500 字。
       </p>
     </div>
   );

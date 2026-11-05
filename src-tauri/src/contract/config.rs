@@ -1,10 +1,10 @@
 //! 持久化配置模型（契约 §4）。
 //!
 //! 覆盖内容：
-//! - §4.1 默认配置（Schema v5）与全部子结构；
+//! - §4.1 默认配置（Schema v6）与全部子结构；
 //! - §4.2 枚举字面量与 [`ConfigView`]（providers 换成带密钥状态视图）；
 //! - §4.3 约束校验 [`validate`]；
-//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4 → 5，未知字段保留）；
+//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4 → 5 → 6，未知字段保留）；
 //! - 深合并 [`merge_patch`]；
 //! - 快捷键规范化（`Ctrl+Q` 形式）。
 //!
@@ -19,7 +19,7 @@ use super::errors::{AppError, AppResult};
 use super::types::{ActionId, Mode};
 
 /// 当前配置 Schema 版本。
-pub const CONFIG_SCHEMA_VERSION: u32 = 5;
+pub const CONFIG_SCHEMA_VERSION: u32 = 6;
 
 // ---------------------------------------------------------------------------
 // 枚举（契约 §4.2）
@@ -778,9 +778,7 @@ impl Default for HistoryPrefs {
 pub struct AdvancedPrefs {
     /// 代理（需重启应用）。
     pub proxy: Option<String>,
-    /// 遥测（默认关闭，且不实现）。
-    pub telemetry: bool,
-    /// 骨架模式（调试开关；v1.0.0 默认关闭，走真实捕获/OCR/LLM）。
+    /// 骨架模式（**仅开发者配置**，不在用户界面出现；默认关闭，走真实捕获/OCR/LLM）。
     pub skeleton_mode: bool,
     /// 未知字段。
     #[serde(flatten)]
@@ -791,7 +789,6 @@ impl Default for AdvancedPrefs {
     fn default() -> Self {
         Self {
             proxy: None,
-            telemetry: false,
             skeleton_mode: false,
             extra: serde_json::Map::new(),
         }
@@ -1386,7 +1383,7 @@ fn migrate_v2_to_v3(value: &mut serde_json::Value) {
         "ocr": { "textThreshold": 0.6, "preserveBoxes": true },
         "privacy": { "localOnly": false },
         "history": { "retentionDays": 90 },
-        "advanced": { "telemetry": false, "skeletonMode": true }
+        "advanced": { "skeletonMode": true }
     });
     fill_defaults(value, &defaults);
 }
@@ -1401,6 +1398,17 @@ fn migrate_v3_to_v4(value: &mut serde_json::Value) {
         "local": { "device": "auto", "gpuBackend": "auto", "gpuLayers": 99 }
     });
     fill_defaults(value, &defaults);
+}
+
+/// v5 → v6：移除已删除的 `advanced.telemetry`（v1.0.1 起不收集任何用户信息；
+/// 含崩溃/统计信息均不上报）。旧配置该键被主动删除，未知字段保留约定不适用于本键。
+fn migrate_v5_to_v6(value: &mut serde_json::Value) {
+    if let Some(advanced) = value
+        .get_mut("advanced")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        advanced.remove("telemetry");
+    }
 }
 
 /// v4 → v5：移除已删除的 `advanced.updateChannel` 更新通道；把历史默认值
@@ -1445,7 +1453,12 @@ pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     }
     if current < 5 {
         migrate_v4_to_v5(&mut value);
+        current = 5;
         tracing::debug!(from = 4, to = 5, "配置迁移完成");
+    }
+    if current < 6 {
+        migrate_v5_to_v6(&mut value);
+        tracing::debug!(from = 5, to = 6, "配置迁移完成");
     }
     if let Some(object) = value.as_object_mut() {
         object.insert(
@@ -1467,7 +1480,7 @@ mod tests {
     #[test]
     fn default_matches_contract_json() {
         let expected = serde_json::json!({
-            "schemaVersion": 5,
+            "schemaVersion": 6,
             "app": { "language": "zh-CN", "autostart": false, "singleInstance": true, "startMinimized": true },
             "ui": {
                 "theme": "system",
@@ -1525,7 +1538,7 @@ mod tests {
             "ocr": { "engine": "rapidocr", "detMaxEdge": 3200, "textThreshold": 0.6, "preserveBoxes": true },
             "privacy": { "allowTextUpload": true, "allowImageUpload": true, "localOnly": false },
             "history": { "enabled": true, "maxEntries": 1000, "retentionDays": 90 },
-            "advanced": { "proxy": null, "telemetry": false, "skeletonMode": false }
+            "advanced": { "proxy": null, "skeletonMode": false }
         });
         assert_eq!(serde_json::to_value(Config::default()).unwrap(), expected);
         validate(&Config::default()).expect("默认配置必须通过校验");
@@ -1649,7 +1662,7 @@ mod tests {
             "unknownGroup": { "hello": "world" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 5);
+        assert_eq!(config.schema_version, 6);
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.result_window.width, 460.0);
         assert!(config.ui.result_window.pin);
@@ -1682,7 +1695,7 @@ mod tests {
             "translate": { "backend": "local", "model": "qwen-mt-lite", "targetLang": "en" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 5);
+        assert_eq!(config.schema_version, 6);
         // 用户已有值保持不变
         assert_eq!(config.local.model, "qwen2.5-0.5b-instruct-q4");
         assert_eq!(config.local.port, 39285);
@@ -1771,12 +1784,31 @@ mod tests {
             "advanced": { "proxy": null, "updateChannel": "preview", "telemetry": true, "skeletonMode": true }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 5);
+        assert_eq!(config.schema_version, 6);
         assert!(!config.advanced.skeleton_mode);
-        assert!(config.advanced.telemetry);
         assert!(!config.advanced.extra.contains_key("updateChannel"));
+        assert!(
+            !config.advanced.extra.contains_key("telemetry"),
+            "v6 迁移必须移除 telemetry（不收集任何用户信息）"
+        );
         let value = serde_json::to_value(&config).unwrap();
         assert!(value["advanced"].get("updateChannel").is_none());
+    }
+
+    #[test]
+    fn migrate_from_v5_removes_telemetry() {
+        let raw = serde_json::json!({
+            "schemaVersion": 5,
+            "advanced": { "proxy": null, "telemetry": true, "skeletonMode": false }
+        });
+        let config = migrate(raw).unwrap();
+        assert_eq!(config.schema_version, 6);
+        assert!(!config.advanced.extra.contains_key("telemetry"));
+        let value = serde_json::to_value(&config).unwrap();
+        assert!(value["advanced"].get("telemetry").is_none());
+        assert!(serde_json::to_value(Config::default()).unwrap()["advanced"]
+            .get("telemetry")
+            .is_none());
     }
 
     #[test]

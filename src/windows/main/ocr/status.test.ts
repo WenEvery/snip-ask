@@ -62,15 +62,15 @@ function status(overrides = {}) {
 }
 
 test("editionLabel / editionBadge：full / slim / dev / 未知", () => {
-  assert.equal(editionLabel("full"), "完整版（内置 OCR 模型）");
-  assert.equal(editionLabel("slim"), "精简版（安装后下载 OCR 模型）");
-  assert.equal(editionLabel("dev"), "开发构建");
+  assert.equal(editionLabel("full"), "已内置文字识别模型");
+  assert.equal(editionLabel("slim"), "首次使用时下载文字识别模型");
+  assert.equal(editionLabel("dev"), "本地运行");
   assert.equal(editionLabel(null), "未知");
-  assert.equal(editionLabel("weird"), "未知（weird）");
-  assert.equal(editionBadge("full"), "完整版");
-  assert.equal(editionBadge("slim"), "精简版");
-  assert.equal(editionBadge("dev"), "开发构建");
-  assert.equal(editionBadge(undefined), "未知版本");
+  assert.equal(editionLabel("weird"), "未知");
+  assert.equal(editionBadge("full"), "内置模型");
+  assert.equal(editionBadge("slim"), "在线下载");
+  assert.equal(editionBadge("dev"), "本地运行");
+  assert.equal(editionBadge(undefined), "未知");
 });
 
 test("ocrModels：只保留 kind === onnx 的模型", () => {
@@ -122,19 +122,19 @@ test("summarizeOcr：未读取 / 就绪 / 随包内置 / 缺运行时 / 缺模�
 
   const ready = summarizeOcr(status());
   assert.equal(ready.tone, "ok");
-  assert.equal(ready.label, "OCR 已就绪");
+  assert.equal(ready.label, "文字识别已就绪");
 
   const bundled = summarizeOcr(
     status({ bundled: true, assets: [asset("ocr-det", { bundled: true })] }),
   );
   assert.equal(bundled.tone, "ok");
-  assert.equal(bundled.label, "OCR 已就绪（随包内置）");
+  assert.equal(bundled.label, "文字识别已就绪（随安装包内置）");
 
   const noRuntime = summarizeOcr(
     status({ ready: false, runtimeReady: false, missing: [], message: "缺少 onnxruntime.dll" }),
   );
   assert.equal(noRuntime.tone, "danger");
-  assert.equal(noRuntime.label, "缺少 ONNX 运行时");
+  assert.equal(noRuntime.label, "缺少识别引擎组件");
   assert.equal(noRuntime.detail, "缺少 onnxruntime.dll");
 
   const slim = summarizeOcr(
@@ -145,12 +145,12 @@ test("summarizeOcr：未读取 / 就绪 / 随包内置 / 缺运行时 / 缺模�
     }),
   );
   assert.equal(slim.tone, "warn");
-  assert.equal(slim.label, "缺少 2 个 OCR 模型");
-  assert.match(slim.detail, /ocr-det、ocr-rec/);
+  assert.equal(slim.label, "还缺 2 个模型");
+  assert.match(slim.detail, /16 MB/);
 
   const other = summarizeOcr(status({ ready: false, runtimeReady: true, missing: [] }));
   assert.equal(other.tone, "warn");
-  assert.equal(other.label, "OCR 未就绪");
+  assert.equal(other.label, "文字识别暂不可用");
 });
 
 test("pendingOcrRows / allBundled：决定下载入口与内置徽标", () => {

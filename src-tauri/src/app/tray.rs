@@ -1,13 +1,14 @@
 //! 系统托盘（M02 / 概要设计 §4.1）。
 //!
 //! 原生 `TrayIcon`（非 Web 实现），菜单：开始框选 / 设置 / 重新运行引导 / 暂停热键 / 退出。
+//! 左键单击托盘图标直接打开设置（v1.0.1）。
 //! 菜单事件同时：本地处理 `capture`/`openSettings`/`togglePause`/`quit`，并广播 `tray:action`。
 //!
 //! 已真实编译验证（Tauri 2.12 / Rust 1.99）: 校验 `TrayIconBuilder` / `MenuItem::with_id` / `Menu::with_items` 的
 //! 实际签名（Tauri 2.x）。
 
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager};
 
 use crate::app::state::AppState;
@@ -54,7 +55,28 @@ pub fn create(app: &AppHandle) -> AppResult<()> {
     let mut builder = TrayIconBuilder::new()
         .tooltip("框选 AI")
         .menu(&menu)
-        .on_menu_event(on_menu_event);
+        // 左键单击 / 双击直接打开设置；右键才显示菜单（Windows 默认左键弹菜单，容易让用户找不到设置）。
+        .show_menu_on_left_click(false)
+        .on_menu_event(on_menu_event)
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let app = tray.app_handle();
+                if let Err(err) = crate::app::windows::show_main(app) {
+                    tracing::warn!(code = %err.code, "托盘左键打开主窗口失败");
+                }
+                emit_tray_action(
+                    app,
+                    &TrayActionPayload {
+                        id: "openSettings".to_string(),
+                    },
+                );
+            }
+        });
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }

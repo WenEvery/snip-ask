@@ -44,10 +44,10 @@ export function ResultFooter(props: ResultFooterProps) {
               type="button"
               className="result-btn"
               disabled={props.disabled}
-              title="结束本次对话并清空线程（下次框选重新开始）"
+              title="结束这次对话，回到等待框选的状态"
               onClick={props.onClearThread}
             >
-              清空线程
+              结束对话
             </button>
           </>
         )}

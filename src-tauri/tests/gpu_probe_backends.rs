@@ -213,7 +213,7 @@ fn list_merges_on_disk_install_state() {
     assert!(infos.iter().all(|info| !info.installed));
     assert!(infos
         .iter()
-        .all(|info| info.download_state == DownloadState::Queued));
+        .all(|info| info.download_state == DownloadState::Idle));
 
     // 手工放置一个 Vulkan 后端（模拟安装完成）。
     let vulkan_dir = manager.install_root().join("vulkan");

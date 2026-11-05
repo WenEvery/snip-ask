@@ -83,7 +83,7 @@ export function AiProvidersSection(props: SectionProps) {
     };
     onEdit((current) => ({ ...current, providers: [...current.providers, view] }));
     setExpandedId(id);
-    setNotice(`已添加「${preset.name}」，填写 Base URL / 模型 / 密钥后点「应用本组设置」`);
+    setNotice(`已添加「${preset.name}」，填好地址、模型和密钥后点「应用 AI 服务」`);
   };
 
   const removeProvider = (id: string) => {
@@ -97,7 +97,7 @@ export function AiProvidersSection(props: SectionProps) {
       providers: current.providers.filter((provider) => provider.id !== id),
     }));
     setExpandedId((current) => (current === id ? null : current));
-    setNotice(`已删除「${name}」，点「应用本组设置」后生效`);
+    setNotice(`已删除「${name}」，点「应用 AI 服务」后生效。`);
   };
 
   const testProvider = async (provider: ProviderView) => {
@@ -140,7 +140,7 @@ export function AiProvidersSection(props: SectionProps) {
     for (const provider of pending) await testProvider(provider);
     if (pending.length > 0) {
       setApiKeys({});
-      setNotice(`已提交 ${pending.length} 个新密钥用于连接测试（由后端凭据服务保存）`);
+      setNotice(`已提交 ${pending.length} 个新密钥用于连接测试（保存在 Windows 凭据管理器）`);
     } else {
       setNotice("供应商配置已保存");
     }
@@ -152,11 +152,11 @@ export function AiProvidersSection(props: SectionProps) {
   return (
     <SectionShell
       title="AI 服务"
-      description="配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接 / 应用」提交给后端凭据服务。"
+      description="添加你使用的 AI 服务。API Key 保存在 Windows 凭据管理器，不会写进配置文件。"
     >
       <Panel
         title="供应商列表"
-        description="至少保留一个供应商；停用的供应商不会用于任何动作。"
+        description="至少保留一个供应商；被停用的供应商不会用于任何动作。"
         actions={
           <div className="sa-inline">
             <SelectField
@@ -262,14 +262,11 @@ export function AiProvidersSection(props: SectionProps) {
         })}
       </Panel>
 
-      <Panel
-        title="动作绑定"
-        description="脚手架阶段所有动作共用默认供应商；按动作单独绑定模型为后续版本能力。"
-      >
+      <Panel title="默认供应商">
         <InfoRow
-          label="默认供应商"
+          label="当前默认"
           value={defaultProvider ? `${defaultProvider.name} / ${defaultProvider.model}` : "未配置"}
-          hint="取第一个已启用且填写了模型的供应商"
+          hint="所有动作共用默认供应商：取第一个已启用且填好模型的供应商"
         />
       </Panel>
 

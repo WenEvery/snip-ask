@@ -70,6 +70,8 @@ pub struct AppState {
     pub paused: AtomicBool,
     /// 当前冻结帧（真实捕获含 BGRA 像素与 PNG data URL；T2/T3 共用）。
     pub frozen: RwLock<Option<FrozenFrame>>,
+    /// 本地引擎未启动的可读原因（用于设置页展示；启动成功后清空）。
+    pub engine_note: RwLock<Option<String>>,
 }
 
 impl AppState {
@@ -134,6 +136,7 @@ impl AppState {
             started_at: Instant::now(),
             paused: AtomicBool::new(false),
             frozen: RwLock::new(None),
+            engine_note: RwLock::new(None),
         })
     }
 
@@ -193,6 +196,16 @@ impl AppState {
     /// 设置热键暂停标记。
     pub fn set_paused(&self, paused: bool) {
         self.paused.store(paused, Ordering::SeqCst);
+    }
+
+    /// 记录本地引擎未启动的可读原因（设置页展示用）。
+    pub fn set_engine_note(&self, note: Option<String>) {
+        *self.engine_note.write() = note;
+    }
+
+    /// 读取本地引擎未启动原因。
+    pub fn engine_note(&self) -> Option<String> {
+        self.engine_note.read().clone()
     }
 
     /// 保存冻结帧（真实捕获帧；overlay / OCR / 图片搜索共用）。
@@ -316,7 +329,7 @@ mod tests {
         assert_eq!(state.active_task_count(), 0);
         assert_eq!(state.engine_status(), EngineStatus::Stopped);
         assert!(!state.is_paused());
-        assert_eq!(state.snapshot_config().schema_version, 5);
+        assert_eq!(state.snapshot_config().schema_version, 6);
         assert!(!state.onboarding.lock().completed);
         assert!(paths.config_file.is_file());
         assert!(state.history.is_enabled());

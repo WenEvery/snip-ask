@@ -501,6 +501,31 @@ pub fn read_log_tail(path: &Path, max_bytes: u64) -> String {
     String::from_utf8_lossy(slice).into_owned()
 }
 
+/// 当前进程工作集内存（MB），用于设置页「运行信息」。
+///
+/// 走 Win32 `GetProcessMemoryInfo`（`platform` 是唯一允许 unsafe 的目录）；
+/// 读取失败返回 0（不阻塞界面）。
+pub fn current_process_memory_mb() -> u64 {
+    #[cfg(windows)]
+    unsafe {
+        use windows::Win32::System::ProcessStatus::{
+            GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS,
+        };
+        use windows::Win32::System::Threading::GetCurrentProcess;
+
+        let mut counters = std::mem::zeroed::<PROCESS_MEMORY_COUNTERS>();
+        counters.cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
+        match GetProcessMemoryInfo(GetCurrentProcess(), &mut counters, counters.cb) {
+            Ok(()) => (counters.WorkingSetSize as u64) / (1024 * 1024),
+            Err(_) => 0,
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
 /// 构造健康检查 / 引擎探测用的 HTTP 客户端（本地回环，短超时）。
 pub fn build_http_client(total_timeout: Duration) -> AppResult<reqwest::Client> {
     // 健康检查只用于本地回环（llama-server），必须绕过系统代理。

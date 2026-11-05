@@ -131,7 +131,7 @@ pub async fn app_stats(app: AppHandle, state: State<'_, AppState>) -> AppResult<
     Ok(crate::services::diagnostics::collect(
         state.active_session_id(),
         state.active_task_count() as u32,
-        state.engine_status(),
+        state.local_engine.snapshot().local,
         state.models.installed_count(),
         state.is_skeleton(),
         state.uptime_sec(),

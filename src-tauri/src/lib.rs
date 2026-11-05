@@ -74,6 +74,16 @@ pub fn run() {
                 crate::app::windows::emit_overlay_snapshot(webview.app_handle());
             }
         })
+        // 主窗口：点窗口关闭按钮 / Alt+F4 时隐藏到托盘而不是退出（托盘左键或菜单可重新打开）。
+        // 主窗口无系统标题栏（tauri.conf decorations:false），由前端自绘标题栏。
+        .on_window_event(|window, event| {
+            if window.label() == crate::app::windows::MAIN_WINDOW {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .setup(|app| {
             let mut handle = app.handle().clone();
             match crate::app::lifecycle::setup(&mut handle) {

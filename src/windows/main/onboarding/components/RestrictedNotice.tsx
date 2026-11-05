@@ -1,8 +1,8 @@
 /**
- * S-07 受限模式提示：引导完成页 / 主界面共用。
+ * 「部分功能暂不可用」提示：引导完成页 / 主界面共用。
  *
- * - `variant="inline"`：显示在引导第 6 步内容区，说明完成后将进入受限模式；
- * - `variant="banner"`：显示在主界面顶部，说明当前受限状态并提供「去配置」入口。
+ * - `variant="inline"`：显示在引导最后一步，说明完成后哪些功能还不能用；
+ * - `variant="banner"`：显示在主界面顶部，并给出「去配置」入口。
  */
 
 import type { ReactNode } from "react";
@@ -32,15 +32,15 @@ export function RestrictedNotice({
 }: RestrictedNoticeProps) {
   const available = availableLabels(capabilities).join("、");
   const unavailable = unavailableLabels(capabilities).join("、");
-  const title = skipped ? "已跳过引导 · 进入受限模式" : "受限模式";
+  const title = skipped ? "已跳过引导，部分功能暂不可用" : "部分功能暂不可用";
   const intro = skipped
-    ? "你没有配置 AI 服务，应用会以受限模式运行，之后可随时在设置页补齐。"
-    : "当前未配置任何 AI 服务（无 API Key、无本地模型），应用将以受限模式运行。";
+    ? "你还没有配置 AI 服务，所以需要联网的 AI 功能暂时用不了；随时可以在设置里补上。"
+    : "还没有配置任何 AI 服务，需要联网的 AI 功能暂时用不了。";
 
   return (
     <section
       role="status"
-      aria-label="受限模式提示"
+      aria-label="功能可用性提示"
       data-testid="restricted-notice"
       style={{
         display: "flex",
@@ -61,12 +61,12 @@ export function RestrictedNotice({
         <strong style={{ color: COLORS.accent }}>{title}</strong>
         <p style={{ margin: "4px 0 0" }}>{intro}</p>
         <p style={{ margin: "2px 0 0" }}>
-          <strong>仍可用：</strong>
+          <strong>现在可用：</strong>
           {available}
         </p>
         <p style={{ margin: "2px 0 0" }}>
-          <strong>不可用：</strong>
-          {unavailable}（原因与修复入口见动作菜单 / 设置页）
+          <strong>暂时不可用：</strong>
+          {unavailable}（可以在设置中补齐）
         </p>
         {children}
       </div>

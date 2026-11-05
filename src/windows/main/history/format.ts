@@ -68,12 +68,12 @@ export function historyActionLabel(action: ActionId | null): string {
   return action ? ACTION_LABELS[action] : "—";
 }
 
-/** 引擎中文名：skeleton → 骨架模式 / local → 本地模型 / cloud → 云端 / 供应商 id 原样 / 空 → 未知。 */
+/** 引擎中文名：skeleton → 演示 / local → 本地模型 / cloud → 云端 / 供应商 id 原样 / 空 → 未知。 */
 export function historyEngineLabel(engine: string | null): string {
-  if (!engine) return "未知引擎";
+  if (!engine) return "未知来源";
   switch (engine) {
     case "skeleton":
-      return "骨架模式";
+      return "演示";
     case "local":
       return "本地模型";
     case "cloud":

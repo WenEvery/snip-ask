@@ -26,7 +26,7 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     model: "deepseek-flash",
     kind: "openAiCompatible",
     caps: ["vision", "search", "thinking"],
-    note: "默认推荐：文本 + 视觉（deepseek-flash）+ 真实联网搜索（Search/Fetch API）",
+    note: "默认推荐：能看图、能联网搜索，回答质量高",
   },
   {
     id: "dashscope",
@@ -35,7 +35,7 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     model: "qwen-mt-lite",
     kind: "qwenMt",
     caps: ["translate"],
-    note: "专用翻译 API：填入 DashScope Key 后可在设置中启用（仅翻译，不参与搜索/视觉）",
+    note: "专门的翻译服务：填入 DashScope 的 Key 后可以用于翻译（不参与搜索和看图）",
   },
   {
     id: "generic-openai",
@@ -44,7 +44,7 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     model: "gpt-4o-mini",
     kind: "openAiCompatible",
     caps: ["vision", "search", "thinking", "translate"],
-    note: "任意 OpenAI 兼容端点：可自定义 Base URL 与模型（仅 https 或 127.0.0.1）",
+    note: "支持任何 OpenAI 兼容的服务，可自行填写地址和模型名",
   },
 ];
 
@@ -74,51 +74,46 @@ export interface TranslateTier {
 }
 
 /**
- * 引导第 3 步「翻译方式」三档（item3 用户决策）。
+ * 引导第 3 步「翻译方式」三档。
  *
- * 数据来源：`docs/spikes/data/s05_s06/summary_s05_s06.json`（2026-11-05 实测）
- * - 普通模型（HY-MT1.5-1.8B Q4，200 字）：P50 11.76s / P95 21.84s / 最快 9.89s；
- * - 极小模型（Qwen2.5-0.5B-Instruct Q4 + 精简提示词，200 字）：P50 3.09s / P95 3.21s，常驻 ≈0.55 GB；
- *   注意：必须配 `resources/prompts/translate_minimal.md`，用产品长提示词会复述原文（S-05 实测）；
- * - 云端（DeepSeek deepseek-flash，200 字）：thinking 关闭时首字 P50 0.61s / P95 0.87s（达标）；
- *   默认 thinking 时首字 P95 4.59s（不达标，网关接入时需显式关闭思考）。
+ * 速度文案来自 S-05/S-06 实测（200 字、纯 CPU），这里改成用户能直接理解的说法。
  */
 export const TRANSLATE_TIERS: TranslateTier[] = [
   {
     id: "cloud",
     title: "云端翻译",
     tag: "推荐 · 最快",
-    description: "需 API Key；不占磁盘与内存，按量计费",
+    description: "需要 API Key；不占磁盘和内存，按使用量付费",
     backend: "cloud",
     modelId: null,
     sizeText: null,
     ramText: null,
-    speedText: "实测（DeepSeek deepseek-flash / thinking 关闭）：首字 P50 0.61s / P95 0.87s 达标；默认 thinking 首字 P95 4.59s（不达标，接入网关需显式关闭思考）",
-    qualityText: "质量最高（大模型）；需联网并同意文本上传，按量计费",
+    speedText: "通常 1 秒左右就能出结果",
+    qualityText: "效果最好；需要联网，文字会上传到你的 AI 服务",
   },
   {
     id: "tiny",
-    title: "极小模型（本地）",
-    tag: "低配友好",
-    description: "Qwen2.5-0.5B-Instruct Q4_K_M，隐私/离线/零成本",
+    title: "小模型（本地）",
+    tag: "省资源",
+    description: "适合低配电脑，不上传内容、不按次收费",
     backend: "local",
     modelId: TINY_LOCAL_MODEL_ID,
-    sizeText: "≈470 MB",
-    ramText: "内存 ≈1 GB",
-    speedText: "实测 P50 3.1s / P95 3.2s（200 字，纯 CPU；需精简提示词）；30 字短句约 0.4s",
-    qualityText: "快、省内存（常驻 ≈0.55 GB）；译文质量一般，适合短句/轻度使用，长文建议云端或普通模型",
+    sizeText: "约 470 MB",
+    ramText: "内存约 1 GB",
+    speedText: "短句通常 1 秒内，长段落几秒",
+    qualityText: "速度快、占用低；译文质量一般，适合短句和日常使用",
   },
   {
     id: "standard",
     title: "普通模型（本地）",
-    tag: "本地推荐质量",
-    description: "HY-MT1.5-1.8B Q4，专注翻译、译文更自然",
+    tag: "本地效果最好",
+    description: "专注翻译的本地模型，译文更自然",
     backend: "local",
     modelId: STANDARD_LOCAL_MODEL_ID,
-    sizeText: "≈1.08 GB",
-    ramText: "常驻内存 ≈2.1 GB",
-    speedText: "实测 P50 11.76s / P95 21.84s / 最快 9.89s（200 字，纯 CPU i7-12650H）",
-    qualityText: "质量好但纯 CPU 慢：8s 目标仅云端满足；适合重质量、可等待的场景",
+    sizeText: "约 1.08 GB",
+    ramText: "内存约 2.1 GB",
+    speedText: "一段 200 字大约需要 10–20 秒（仅用 CPU 时）",
+    qualityText: "译文质量好，但纯 CPU 运行较慢；适合愿意等待、看重质量的场景",
   },
 ];
 
@@ -136,29 +131,29 @@ export const MODE_ROWS: ModeRow[] = [
     key: "search",
     label: "文本搜索",
     description: "框选文字后生成检索结论与来源",
-    quick: "1–3s · 成本 1x",
-    deep: "5–25s · 成本 3–10x",
+    quick: "1–3 秒 · 花费少",
+    deep: "5–25 秒 · 花费高",
   },
   {
     key: "imageSearch",
     label: "图片搜索",
     description: "识别图像内容并检索来源",
-    quick: "2–4s · 成本 1–2x",
-    deep: "6–25s · 成本 3–10x",
+    quick: "2–4 秒 · 花费少",
+    deep: "6–25 秒 · 花费高",
   },
   {
     key: "translate",
     label: "翻译",
     description: "框选文字直接翻译为目标语言",
-    quick: "1–3s · 成本 1x",
-    deep: "5–15s · 成本 3–5x",
+    quick: "1–3 秒 · 花费少",
+    deep: "5–15 秒 · 花费较高",
   },
   {
     key: "answer",
     label: "解答",
     description: "解释、分析或改写框选内容",
-    quick: "1–3s · 成本 1x",
-    deep: "5–25s · 成本 3–10x",
+    quick: "1–3 秒 · 花费少",
+    deep: "5–25 秒 · 花费高",
   },
 ];
 

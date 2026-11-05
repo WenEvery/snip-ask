@@ -1,51 +1,48 @@
 /**
- * mock 后端的静态演示数据（契约 §12 骨架模式）。
- * 所有文案统一前缀「【骨架模式】」，保证浏览器预览与真实后端行为可区分。
+ * 浏览器预览模式的静态演示数据（不连接任何真实服务）。
+ * 文案保持自然，贴近真实结果，便于在没有安装桌面版时预览界面。
  */
 
 import type { ModelInfo, SourceRef } from "../contract/types";
 
-export const SKELETON_PREFIX = "【骨架模式】";
+export const SKELETON_PREFIX = "【预览】";
 
 /** 与契约 §12 完全一致的占位识别文本 */
-export const SKELETON_OCR_PREVIEW = "【骨架模式】本地 OCR 未接入，此为占位识别文本。";
+export const SKELETON_OCR_PREVIEW = "这是一段示例识别文字，用于预览框选后的操作界面。";
 
 /** 固定占位回答（分 8 块流式推送；总长 ≈ 320 字 ≈ 40 字/块） */
 export const SKELETON_ANSWER = [
-  "这是【骨架模式】的固定占位回答：当前脚手架尚未接入真实大模型、OCR 与网络搜索，",
-  "所以你看到的内容是确定性生成的演示文本。它用于验证「框选 → 动作菜单 → 流式输出 → 结果窗」",
-  "的完整链路：任务先发出 task:started，再以 25–40ms 的间隔分块推送 task:delta，",
-  "最后用 task:done 携带 usage 与真实耗时收尾。接入真实能力时，只需替换服务层实现，",
-  "事件流与前端交互保持不变。你可以在设置页切换主题与强调色、配置供应商密钥（仅内存模拟）、",
-  "测试模型下载进度，或重新运行首启引导；这些操作的命令与事件同样遵循 IPC 契约 v1。",
-  "若要体验真实后端，请在具备 Rust 工具链的环境中运行 pnpm dev（本机当前无 Rust 环境）。",
-  "骨架模式不会访问网络、不读取密钥、不写入真实配置，可安全用于 UI 联调与手动验收。",
+  "这是浏览器预览里的示例回答，用来说明结果窗的显示效果。",
+  "安装桌面版并配置好模型服务后，框选文字点「解答」，这里会显示模型生成的完整回答，",
+  "并随生成过程实时输出。回答下方会给出所用模型、耗时与费用，方便判断是否值得继续追问。",
+  "你可以在设置里调整主题、语言与结果窗外观，也可以配置自己的模型服务。",
+  "预览模式不会访问网络、不会读取你的配置，也不会写入任何真实数据。",
 ].join("");
 
 /** 追问回答（固定占位） */
 export const SKELETON_FOLLOWUP_ANSWER =
-  "【骨架模式】这是追问的占位回答：当前会话未接入真实模型，追问链路仅用于验证上下文与流式渲染。接入真实模型后，这里会结合上一轮结果继续作答。";
+  "这是追问的示例回答。桌面版会结合上一轮的问答内容继续作答，方便在同一个话题上深入追问。";
 
 /** 图片搜索的 2 条占位来源（契约 §12：图片搜索附 2 条 sources） */
 export const SKELETON_SOURCES: SourceRef[] = [
   {
-    title: "【骨架模式】示例来源 · 维基百科",
-    url: "https://example.com/skeleton/wiki",
+    title: "示例来源 · 百科条目",
+    url: "https://example.com/preview/wiki",
     siteName: "example.com",
-    snippet: "【骨架模式】占位摘要：此处将展示真实检索结果的标题、站点与摘要。",
+    snippet: "这里是检索结果的摘要示例，桌面版会显示真实网页的标题、站点与摘要。",
   },
   {
-    title: "【骨架模式】示例来源 · 官方文档",
-    url: "https://example.com/skeleton/docs",
+    title: "示例来源 · 官方文档",
+    url: "https://example.com/preview/docs",
     siteName: "example.com",
-    snippet: "【骨架模式】占位摘要：来源列表仅用于验证结果窗渲染与跳转逻辑。",
+    snippet: "点击来源可在浏览器中打开原网页；这里仅用于预览来源列表的排版。",
   },
 ];
 
 /**
  * 与仓库 `resources/models.manifest.json` 对应的占位模型列表（均未安装）。
  * 静态字段（名称/大小/许可/链接/参数）与清单逐字段一致，仅补运行时字段：
- * `installed=false`、`installedBytes=0`、`downloadState="queued"`。
+ * `installed=false`、`installedBytes=0`、`downloadState="idle"`（未下载）。
  */
 export function createPlaceholderModels(): ModelInfo[] {
   return [
@@ -65,7 +62,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { quant: "Q4_K_M", context: 8192, languages: 38, engine: "llama.cpp" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "qwen3-4b-q4",
@@ -83,7 +80,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { quant: "Q4_K_M", context: 32768, languages: 119, engine: "llama.cpp" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "opus-mt-zh-en",
@@ -101,7 +98,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { format: "ctranslate2", direction: "zh-en", quant: "int8", beamSize: 4 },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     // ── 契约 v5：OCR 本地模型（RapidOCR PP-OCRv4 ONNX；由 T1 的 manifest 对齐） ──
     {
@@ -117,7 +114,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { role: "ocr", fileName: "ch_PP-OCRv4_det_infer.onnx" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "ocr-rec",
@@ -132,7 +129,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { role: "ocr", fileName: "ch_PP-OCRv4_rec_infer.onnx" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "ocr-cls",
@@ -147,7 +144,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { role: "ocr", fileName: "ch_ppocr_mobile_v2.0_cls_infer.onnx" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
     {
       id: "ocr-dict",
@@ -162,7 +159,7 @@ export function createPlaceholderModels(): ModelInfo[] {
       params: { role: "ocr", fileName: "ppocr_keys_v1.txt" },
       installed: false,
       installedBytes: 0,
-      downloadState: "queued",
+      downloadState: "idle",
     },
   ];
 }

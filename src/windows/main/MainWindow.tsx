@@ -1,14 +1,16 @@
 /**
- * main 窗口壳：自绘顶栏 + 左侧导航（设置 / 首启引导）+ 右侧内容。
- * 设置页、引导页内部由 frontend-pages 实现，这里只做路由与启动逻辑。
+ * main 窗口壳：自绘标题栏（无系统边框）+ 左侧导航（设置 / 历史 / 使用引导）+ 右侧内容。
  *
  * 行为约定：
  * - 启动读 `onboarding_state`：未完成且未跳过 → 进入引导，否则设置页；
- * - 顶栏关闭 = 隐藏窗口（`window_hide`），不退出应用（退出走托盘 / app_quit）；
- * - 订阅 `config:changed` 同步主题/强调色，订阅 `tray:action` 切换路由。
+ * - 标题栏：拖拽移动、最小化到任务栏、最大化/还原（双击标题栏亦可）、关闭 = 隐藏到托盘；
+ * - 四边四角缩放手柄；最大化时隐藏（窗口 API 在浏览器预览下为 no-op）；
+ * - 订阅 `config:changed` 同步主题/强调色，订阅 `tray:action` 切换路由；
+ * - 引导完成后隐藏「首启引导」导航；从托盘「重新运行引导」进入时仍显示。
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { Button, IconButton, Spinner } from "../../components/ui";
 import { COMMANDS, EVENTS } from "../../shared/contract/names";
 import type {
@@ -16,7 +18,6 @@ import type {
   ConfigView,
   ModelInfo,
   OnboardingState,
-  Stats,
   TrayActionPayload,
 } from "../../shared/contract/types";
 import { useIpcEvent } from "../../shared/hooks/useIpcEvent";
@@ -27,8 +28,8 @@ import OnboardingWizard from "./onboarding/OnboardingWizard";
 import type { Capabilities } from "./onboarding/capabilities";
 import { deriveCapabilities, isRestricted } from "./onboarding/capabilities";
 import { RestrictedNotice } from "./onboarding/components/RestrictedNotice";
-import { editionBadge } from "./ocr/status";
 import SettingsPage from "./settings/SettingsPage";
+import { useWindowControls, WindowResizeHandles } from "./windowChrome";
 import "./main.css";
 
 type MainRoute = "settings" | "onboarding" | "history";
@@ -39,33 +40,32 @@ export default function MainWindow() {
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const themeCleanupRef = useRef<(() => void) | null>(null);
-  // S-07 受限模式：真实能力快照 + 引导状态（用于主界面提示与「去配置」入口）。
+  // 能力快照（用于「未配置 AI 服务」提示与「去配置」入口）与引导状态。
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
-  const [stats, setStats] = useState<Stats | null>(null);
   const [onboardingFlags, setOnboardingFlags] = useState<{
     completed: boolean;
     skipped: boolean;
   } | null>(null);
   const [settingsSection, setSettingsSection] = useState<string>("general");
+  const { maximized, minimize, toggleMaximize, toggleMaximizeFromDoubleClick } =
+    useWindowControls();
 
-  // 路由 `/` 支持 `?section=xxx` 直达设置分组（脚手架可选能力）
+  // 路由 `/` 支持 `?section=xxx` 直达设置分组
   const [initialSection] = useState<string | undefined>(() => {
     if (typeof window === "undefined") return undefined;
     return new URLSearchParams(window.location.search).get("section") ?? undefined;
   });
 
-  // 读取真实能力快照：受限模式提示与「去配置」入口的数据来源。
+  // 读取能力快照：受限提示与「去配置」入口的数据来源。
   const refreshCapabilities = useCallback(async () => {
     try {
-      const [view, models, state, nextStats] = await Promise.all([
+      const [view, models, state] = await Promise.all([
         ipc.invoke<ConfigView>(COMMANDS.configGet),
         ipc.invoke<ModelInfo[]>(COMMANDS.modelsList),
         ipc.invoke<OnboardingState>(COMMANDS.onboardingState),
-        ipc.invoke<Stats>(COMMANDS.appStats),
       ]);
       setCapabilities(deriveCapabilities({ providers: view.providers, models }));
       setOnboardingFlags({ completed: state.completed, skipped: state.skipped });
-      setStats(nextStats);
     } catch {
       // 能力探测失败时静默降级：不阻塞主界面。
     }
@@ -143,25 +143,40 @@ export default function MainWindow() {
   );
 
   const restricted = capabilities !== null && isRestricted(capabilities) && route === "settings";
+  // 引导完成后隐藏入口；从托盘「重新运行引导」进入时仍显示。
+  const onboardingDone =
+    onboardingFlags !== null && (onboardingFlags.completed || onboardingFlags.skipped);
+  const showOnboardingNav = !onboardingDone || route === "onboarding";
 
-  // 顶栏徽标：版本类型（full/slim/dev）+ 运行模式（真实能力 / 调试骨架）。
-  const editionText = stats ? editionBadge(stats.edition) : "v1.0.0";
-  const modeText = stats?.skeletonMode ? "调试模式" : "真实能力";
-  const appBadge = `${isBrowserPreview() ? "浏览器预览 · " : ""}${editionText} · ${modeText}`;
+  const onTitlebarDoubleClick = (event: ReactMouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    toggleMaximizeFromDoubleClick();
+  };
 
   return (
-    <div className="main-window">
-      <header className="main-titlebar" data-tauri-drag-region>
+    <div className={`main-window${maximized ? " is-maximized" : ""}`}>
+      <header
+        className="main-titlebar"
+        data-tauri-drag-region
+        onDoubleClick={onTitlebarDoubleClick}
+      >
         <div className="main-titlebar__brand" data-tauri-drag-region>
           <span className="main-titlebar__logo" aria-hidden="true">
             框
           </span>
           <span className="main-titlebar__title">框选 AI</span>
-          <span className="main-titlebar__badge">{appBadge}</span>
+          {isBrowserPreview() ? <span className="main-titlebar__badge">预览</span> : null}
         </div>
         <div className="main-titlebar__actions">
-          <IconButton label="最小化到托盘" title="最小化到托盘" onClick={hideWindow}>
+          <IconButton label="最小化到任务栏" title="最小化" onClick={minimize}>
             <span aria-hidden="true">—</span>
+          </IconButton>
+          <IconButton
+            label={maximized ? "还原窗口" : "最大化"}
+            title={maximized ? "还原" : "最大化"}
+            onClick={toggleMaximize}
+          >
+            <span aria-hidden="true">{maximized ? "❐" : "□"}</span>
           </IconButton>
           <IconButton
             label="关闭窗口（继续在托盘运行）"
@@ -191,17 +206,17 @@ export default function MainWindow() {
           >
             历史
           </button>
-          <button
-            type="button"
-            className={`main-nav__item${route === "onboarding" ? " main-nav__item--active" : ""}`}
-            aria-current={route === "onboarding" ? "page" : undefined}
-            onClick={() => setRoute("onboarding")}
-          >
-            首启引导
-          </button>
-          <p className="main-nav__note">
-            v1.0.0 · 真实捕获 / 本地 OCR / 本地与云端推理。历史记录保存在本机 SQLite，不上传。
-          </p>
+          {showOnboardingNav ? (
+            <button
+              type="button"
+              className={`main-nav__item${route === "onboarding" ? " main-nav__item--active" : ""}`}
+              aria-current={route === "onboarding" ? "page" : undefined}
+              onClick={() => setRoute("onboarding")}
+            >
+              使用引导
+            </button>
+          ) : null}
+          <p className="main-nav__note">历史与配置都保存在本机，不会上传。</p>
         </nav>
 
         <main className="main-content sa-scroll">
@@ -238,6 +253,7 @@ export default function MainWindow() {
           )}
         </main>
       </div>
+      <WindowResizeHandles visible={!maximized} />
     </div>
   );
 }
