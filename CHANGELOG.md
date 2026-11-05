@@ -15,6 +15,45 @@
 - 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。
 - UI 打磨：结果窗 Markdown 渲染、多语言（`en-US` 预留）、无障碍键盘路径、主题自定义导入导出。
 
+## [1.0.3] - 2026-11-06
+
+> 修复版：仅修复本地 HY-MT 翻译复述原文问题；**无契约变更**（配置 Schema 6 / 43 命令 / 15 事件 /
+> `IPC_CONTRACT_VERSION = 1` 均不变），不改数据收集与存储方式。
+
+### 修复
+- **本地翻译（HY-MT1.5-1.8B）输出原文/复述**：本地翻译模型 `hy-mt-1.8b-q4` 之前使用产品长提示词
+  `translate.md`，该 1.8B 翻译模型不遵循该格式，直接复述原文且被当作成功，导致「试译/框选翻译/覆盖翻译」
+  显示原文、也不会降级云端。现将 HY-MT 与 Qwen2.5 0.5B/1.5B 一起归入「需要精简提示词的本地模型」
+  （常量改名 `LOCAL_MODELS_MINIMAL_PROMPT`），改用 `translate_minimal.md`；同时补对应单元测试。
+- 云端 DeepSeek 翻译链路不受影响；临时规避方式（切云端翻译或换 Qwen2.5-0.5B）不再需要。
+
+### 双安装包（重建，最终归档）
+
+- 由 T5 基于 v1.0.3 源码重建并归档到 `release/`：
+  - **在线安装版** `SnipAsk_1.0.3_x64-setup.exe` **7,779,083 B（7.42 MiB）**，
+    SHA256 `f001fbdec76a918ad24997e14cfa3e4563ba5811364c9e6bfaf7474d6b118f82`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.3_x64-full-setup.exe` **22,565,321 B（21.52 MiB）**，
+    SHA256 `4f2cfe2d4c87adfa17ef62b779c7a0559dd0a466ec33b40380325843ad2e7146`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB）。
+- 安装冒烟 PASS：两版静默安装 `/S` 退出码 0（3.3s / 4.0s），安装目录分别 9 文件/27,381,124 B（无模型）与
+  13 文件/43,596,416 B（+det/rec/cls/dict）；启动 6s 主窗口「框选 AI」可见、响应正常；
+  **关闭主窗口 = 隐藏到托盘（`closeBehavior=hidden-to-tray`，进程存活）**；静默卸载 `/S` 退出码 0
+  （1.2s / 1.3s），用户数据恢复。两版均 `NotSigned`。构建时间 2026-11-06 05:19:16–05:27:04。
+
+### 验证
+- **最终门禁（全绿）**：`cargo fmt --check` PASS（0）；`cargo clippy --all-targets -- -D warnings` PASS（0 warning）；
+  `cargo test --all-targets` **484 passed / 0 failed / 20 ignored**（lib 350 含新增 1 个）；
+  `pnpm typecheck` 0、`pnpm test` **48/48**、`pnpm build:web` 0。
+- **真实 App 路径验证（PASS，`.verify/v1/fix/v103-hy-mt-local.{json,md}`）**：applab 便携 debug 构建
+  （`app_stats.version=1.0.3`、`edition=dev`），`translate.backend=local` + `local.model=hy-mt-1.8b-q4` +
+  `privacy.localOnly=true`；`local_engine_status` = ready / **vulkan** / gpu / RTX 4060 Laptop /
+  **offload 33 层** / port 39281 / 无回退；`translate_test` 两条输入均输出中文译文（**103ms / 166ms**，
+  非复述原文，`sameAsInput=false`）。
+- 修复前对照诊断（`.verify/v1/installer/translate-local-hy-mt-diagnosis.md`）：同一长提示词下 HY-MT 输出英文原文。
+- 单元测试覆盖：本地 HY-MT → `translate_minimal`、Qwen2.5 0.5B/1.5B → `translate_minimal`、
+  Qwen3-4B / 云端 → `translate`；改名后的 `local_models_minimal_prompt_includes_tiny_and_hy_mt`。
+- 最终门禁与双安装包体积/SHA256 以 `.verify/verify-v1.0.3/SUMMARY.md` 与 `release/SHA256SUMS.txt` 为准。
+
 ## [1.0.2] - 2026-11-06
 
 > 修复版：仅处理 3 个用户反馈问题（源码已冻结）；**无契约变更**（配置 Schema 6 / 43 命令 / 15 事件 /
