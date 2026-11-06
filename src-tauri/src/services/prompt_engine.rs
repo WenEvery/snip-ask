@@ -12,7 +12,7 @@ use crate::contract::errors::{AppError, AppResult};
 use crate::platform::paths::AppPaths;
 use crate::resources::{
     PROMPT_ANSWER, PROMPT_FOLLOWUP, PROMPT_IMAGE_SEARCH, PROMPT_TEXT_SEARCH, PROMPT_TRANSLATE,
-    PROMPT_TRANSLATE_MINIMAL,
+    PROMPT_TRANSLATE_MINIMAL, PROMPT_TRANSLATE_MINIMAL_GLOSSARY,
 };
 
 /// 支持的变量名。
@@ -33,6 +33,10 @@ pub const PROMPT_FILES: &[(&str, &str)] = &[
     ("image_search", "image_search.md"),
     ("translate", "translate.md"),
     ("translate_minimal", "translate_minimal.md"),
+    (
+        "translate_minimal_glossary",
+        "translate_minimal_glossary.md",
+    ),
     ("answer", "answer.md"),
     ("followup", "followup.md"),
 ];
@@ -44,6 +48,7 @@ pub fn builtin_template(key: &str) -> Option<&'static str> {
         "image_search" => Some(PROMPT_IMAGE_SEARCH),
         "translate" => Some(PROMPT_TRANSLATE),
         "translate_minimal" => Some(PROMPT_TRANSLATE_MINIMAL),
+        "translate_minimal_glossary" => Some(PROMPT_TRANSLATE_MINIMAL_GLOSSARY),
         "answer" => Some(PROMPT_ANSWER),
         "followup" => Some(PROMPT_FOLLOWUP),
         _ => None,
@@ -223,6 +228,7 @@ mod tests {
             "image_search",
             "translate",
             "translate_minimal",
+            "translate_minimal_glossary",
             "answer",
             "followup",
         ] {
@@ -260,13 +266,16 @@ mod tests {
         let engine = PromptEngine::with_override_dir("C:/not-exists");
         let mut vars = HashMap::new();
         vars.insert("text", "你好");
-        vars.insert("targetLang", "en");
-        vars.insert("sourceLang", "zh-CHS");
+        vars.insert("targetLang", "英文");
+        vars.insert("sourceLang", "简体中文");
         vars.insert("glossary", "");
         let rendered = engine.render("translate_minimal", &vars).unwrap();
-        assert!(rendered.contains("en"));
+        assert!(rendered.contains("英文"));
         assert!(rendered.contains("你好"));
         assert!(!rendered.contains('#'));
+        // 极简版提示词不再出现源语言/术语表行（小模型会复述这些行）。
+        assert!(!rendered.contains("术语表"), "rendered={rendered}");
+        assert!(!rendered.contains("简体中文"), "rendered={rendered}");
         // 精简提示词应显著短于产品长提示词（实测长提示词会让 0.5B 类小模型复述原文）。
         let full = engine.render("translate", &vars).unwrap();
         assert!(
@@ -275,5 +284,27 @@ mod tests {
             rendered.chars().count(),
             full.chars().count()
         );
+    }
+
+    #[test]
+    fn translate_minimal_glossary_template_only_adds_inline_glossary() {
+        let engine = PromptEngine::with_override_dir("C:/not-exists");
+        let mut vars = HashMap::new();
+        vars.insert("text", "Hello, world");
+        vars.insert("targetLang", "简体中文");
+        vars.insert("sourceLang", "英文");
+        vars.insert("glossary", "world => 世界; Hello => 你好");
+        let rendered = engine.render("translate_minimal_glossary", &vars).unwrap();
+        assert!(rendered.contains("简体中文"));
+        assert!(rendered.contains("术语表（命中时按指定译法）：world => 世界; Hello => 你好"));
+        assert!(rendered.contains("Hello, world"));
+        assert!(!rendered.contains('#'));
+        // 术语表必须与指令同一段（中间不能有空行），否则小模型会复述该行。
+        let first_line = rendered.lines().next().unwrap_or_default();
+        assert!(first_line.contains("术语表"));
+        // 无术语表时仍选择极简模板（见 action_router/translator 的选择逻辑），这里只确保两模板同源极简。
+        let plain = engine.render("translate_minimal", &vars).unwrap();
+        assert!(!plain.contains("术语表"));
+        assert!(rendered.chars().count() > plain.chars().count());
     }
 }

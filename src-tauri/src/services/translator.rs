@@ -3,12 +3,21 @@
 //! 三类真实实现 + 一条回退链：
 //! - [`GatewayTranslator`]：通用 OpenAI 兼容 LLM（云端供应商 / 本地 llama-server），
 //!   提示词来自 `prompt_engine`（`translate.md`，含 `{glossary}`；本地极小模型用
-//!   `translate_minimal.md`）；
+//!   `translate_minimal.md` / 术语表非空时 `translate_minimal_glossary.md`）；
 //! - [`QwenMtTranslator`]：DashScope Qwen-MT 原生翻译端点（`translation_options`，
 //!   含术语干预 `terms`），真实协议见文件内 [`qwen_mt_generation_url`] 注释；
 //! - [`SkeletonTranslator`]：骨架模式占位（契约 §12，`skeletonMode=true` 时保持原行为）；
 //! - [`translate_with_config`] / [`translate_attempts`]：按配置解析「主后端 → 降级链」
 //!   顺序（云端 provider 之间、云端↔本地），逐个尝试，全部失败返回可操作错误。
+//!
+//! # v1.0.4 本地翻译「回显原文」修复
+//!
+//! 本地小模型（Qwen2.5-0.5B/1.5B、HY-MT1.5-1.8B）不认识 `zh-CHS` 这类 BCP-47 码，
+//! 提示词里带语言码时会把原文原样吐出。修复分三层：
+//! 1. [`prompt_language_name`] 把语言码映射为中文语言名，仅用于本地精简提示词与覆盖翻译提示词；
+//! 2. [`looks_untranslated`] 严格检测「输出 == 原文且不含目标文字脚本」，命中记失败（[`untranslated_output_error`]）
+//!    并继续降级链；同语言合法原样输出与未知语言码不会被误判；
+//! 3. `task_runner` 对本地结果先缓冲、校验通过后才推送前端（不把原文先推给用户再报错）。
 //!
 //! # 实测协议事实（2026-11-06，DashScope 官方文档核对）
 //!
@@ -233,6 +242,324 @@ pub fn qwen_mt_language_name(code: &str) -> String {
         _ => return normalized.to_string(),
     };
     mapped.to_string()
+}
+
+/// BCP-47 / ISO 语言码 → 人类可读**中文语言名**（仅用于本地精简提示词与覆盖翻译提示词）。
+///
+/// 本地小模型（Qwen2.5-0.5B/1.5B、HY-MT1.5-1.8B 实测）不认识 `zh-CHS` 这类 BCP-47 码：
+/// 提示词里带语言码时会把原文原样复述；换成「简体中文」等中文语言名后能正确翻译。
+/// 云端 `translate.md` 继续使用 BCP-47 码（云端模型已验证正常），不经过本函数。
+///
+/// 已是中文名或无法识别的代码原样透传（trim 后）；空串返回空串。
+pub fn prompt_language_name(code: &str) -> String {
+    let normalized = code.trim();
+    if normalized.is_empty() {
+        return String::new();
+    }
+    // 已是中文语言名：原样返回（不再二次映射）。
+    if normalized.chars().any(|ch| (ch as u32) >= 0x2E80) {
+        return normalized.to_string();
+    }
+    let key = normalized.to_ascii_lowercase().replace('_', "-");
+    let mapped = match key.as_str() {
+        "auto" => "自动检测",
+        "zh" | "zh-chs" | "zh-cn" | "zh-hans" | "zh-hans-cn" | "chinese" | "chi" => "简体中文",
+        "zh-cht" | "zh-tw" | "zh-hk" | "zh-hant" | "zh-hant-tw" | "traditional chinese" => {
+            "繁体中文"
+        }
+        "en" | "en-us" | "en-gb" | "english" => "英文",
+        "ja" | "jp" | "japanese" => "日文",
+        "ko" | "kr" | "korean" => "韩文",
+        "fr" | "french" => "法文",
+        "de" | "ger" | "german" => "德文",
+        "es" | "spanish" => "西班牙文",
+        "ru" | "russian" => "俄文",
+        "pt" | "portuguese" => "葡萄牙文",
+        "it" | "italian" => "意大利文",
+        "ar" | "arabic" => "阿拉伯文",
+        "th" | "thai" => "泰文",
+        "vi" | "vietnamese" => "越南文",
+        "id" | "indonesian" => "印度尼西亚文",
+        "ms" | "malay" => "马来文",
+        "nl" | "dutch" => "荷兰文",
+        "tr" | "turkish" => "土耳其文",
+        "hi" | "hindi" => "印地文",
+        "pl" | "polish" => "波兰文",
+        "sv" | "swedish" => "瑞典文",
+        "da" | "danish" => "丹麦文",
+        "fi" | "finnish" => "芬兰文",
+        "no" | "norwegian" => "挪威文",
+        "cs" | "czech" => "捷克文",
+        "ro" | "romanian" => "罗马尼亚文",
+        "hu" | "hungarian" => "匈牙利文",
+        "el" | "greek" => "希腊文",
+        "he" | "hebrew" => "希伯来文",
+        "uk" | "ukrainian" => "乌克兰文",
+        "bg" | "bulgarian" => "保加利亚文",
+        "fa" | "persian" => "波斯文",
+        "ur" | "urdu" => "乌尔都文",
+        "sr" | "serbian" => "塞尔维亚文",
+        "hr" | "croatian" => "克罗地亚文",
+        "sk" | "slovak" => "斯洛伐克文",
+        "sl" | "slovenian" => "斯洛文尼亚文",
+        "lt" | "lithuanian" => "立陶宛文",
+        "lv" | "latvian" => "拉脱维亚文",
+        "et" | "estonian" => "爱沙尼亚文",
+        "ca" | "catalan" => "加泰罗尼亚文",
+        "fil" | "tl" | "filipino" => "菲律宾文",
+        "ne" | "nepali" => "尼泊尔文",
+        "km" | "khmer" => "高棉文",
+        "lo" | "lao" => "老挝文",
+        "my" | "burmese" => "缅甸文",
+        "si" | "sinhala" => "僧伽罗文",
+        "ta" | "tamil" => "泰米尔文",
+        "te" | "telugu" => "泰卢固文",
+        "bn" | "bengali" => "孟加拉文",
+        "gu" | "gujarati" => "古吉拉特文",
+        "kn" | "kannada" => "卡纳达文",
+        "ml" | "malayalam" => "马拉雅拉姆文",
+        "mr" | "marathi" => "马拉地文",
+        "pa" | "punjabi" => "旁遮普文",
+        "sw" | "swahili" => "斯瓦希里文",
+        "yue" | "cantonese" => "粤语",
+        _ => return normalized.to_string(),
+    };
+    mapped.to_string()
+}
+
+/// 目标语言使用的文字脚本（用于判断译文是否真的用目标语言书写）。
+///
+/// 只用于 [`looks_untranslated`] 的「输出与原文完全相同」判定，避免把
+/// 「源语言 == 目标语言原样输出」误判为未翻译。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TargetScript {
+    /// 汉字（简繁中文、粤语）。
+    Han,
+    /// 日文：假名或汉字。
+    HanKana,
+    /// 韩文：Hangul。
+    Hangul,
+    /// 拉丁字母（英/法/德/西/葡/意/荷…）。
+    Latin,
+    /// 西里尔字母（俄/乌/保/塞）。
+    Cyrillic,
+    /// 希腊字母。
+    Greek,
+    /// 希伯来字母。
+    Hebrew,
+    /// 阿拉伯字母（阿/波斯/乌尔都）。
+    Arabic,
+    /// 泰文。
+    Thai,
+    /// 天城文（印地/马拉地/尼泊尔）。
+    Devanagari,
+    /// 孟加拉文。
+    Bengali,
+    /// 古木基文（旁遮普）。
+    Gurmukhi,
+    /// 古吉拉特文。
+    Gujarati,
+    /// 泰米尔文。
+    Tamil,
+    /// 泰卢固文。
+    Telugu,
+    /// 卡纳达文。
+    Kannada,
+    /// 马拉雅拉姆文。
+    Malayalam,
+    /// 僧伽罗文。
+    Sinhala,
+    /// 高棉文。
+    Khmer,
+    /// 老挝文。
+    Lao,
+    /// 缅甸文。
+    Myanmar,
+}
+
+/// 目标语言对应的文字脚本；未知语言码返回 `None`（未知一律不判，避免误伤）。
+fn target_script(target_lang: &str) -> Option<TargetScript> {
+    let canonical = prompt_language_name(target_lang);
+    match canonical.as_str() {
+        "简体中文" | "繁体中文" | "粤语" | "中文" => Some(TargetScript::Han),
+        "日文" => Some(TargetScript::HanKana),
+        "韩文" => Some(TargetScript::Hangul),
+        "英文" | "法文" | "德文" | "西班牙文" | "葡萄牙文" | "意大利文" | "荷兰文" | "土耳其文"
+        | "波兰文" | "瑞典文" | "丹麦文" | "芬兰文" | "挪威文" | "捷克文" | "罗马尼亚文"
+        | "匈牙利文" | "斯洛伐克文" | "斯洛文尼亚文" | "克罗地亚文" | "立陶宛文" | "拉脱维亚文"
+        | "爱沙尼亚文" | "加泰罗尼亚文" | "菲律宾文" | "印度尼西亚文" | "马来文" | "越南文"
+        | "斯瓦希里文" => Some(TargetScript::Latin),
+        "俄文" | "乌克兰文" | "保加利亚文" | "塞尔维亚文" => {
+            Some(TargetScript::Cyrillic)
+        }
+        "希腊文" => Some(TargetScript::Greek),
+        "希伯来文" => Some(TargetScript::Hebrew),
+        "阿拉伯文" | "波斯文" | "乌尔都文" => Some(TargetScript::Arabic),
+        "泰文" => Some(TargetScript::Thai),
+        "印地文" | "马拉地文" | "尼泊尔文" => Some(TargetScript::Devanagari),
+        "孟加拉文" => Some(TargetScript::Bengali),
+        "旁遮普文" => Some(TargetScript::Gurmukhi),
+        "古吉拉特文" => Some(TargetScript::Gujarati),
+        "泰米尔文" => Some(TargetScript::Tamil),
+        "泰卢固文" => Some(TargetScript::Telugu),
+        "卡纳达文" => Some(TargetScript::Kannada),
+        "马拉雅拉姆文" => Some(TargetScript::Malayalam),
+        "僧伽罗文" => Some(TargetScript::Sinhala),
+        "高棉文" => Some(TargetScript::Khmer),
+        "老挝文" => Some(TargetScript::Lao),
+        "缅甸文" => Some(TargetScript::Myanmar),
+        _ => None,
+    }
+}
+
+/// 汉字码点（基本区 + 扩展 A/B… + 兼容区）。
+fn is_han(codepoint: u32) -> bool {
+    (0x4E00..=0x9FFF).contains(&codepoint)
+        || (0x3400..=0x4DBF).contains(&codepoint)
+        || (0xF900..=0xFAFF).contains(&codepoint)
+        || (0x20000..=0x2FA1F).contains(&codepoint)
+}
+
+/// 该字符是否属于目标脚本。
+fn script_contains(script: TargetScript, ch: char) -> bool {
+    let cp = ch as u32;
+    match script {
+        TargetScript::Han => is_han(cp),
+        TargetScript::HanKana => {
+            is_han(cp)
+                || (0x3040..=0x30FF).contains(&cp)
+                || (0x31F0..=0x31FF).contains(&cp)
+                || (0xFF66..=0xFF9F).contains(&cp)
+        }
+        TargetScript::Hangul => {
+            (0x1100..=0x11FF).contains(&cp)
+                || (0x3130..=0x318F).contains(&cp)
+                || (0xA960..=0xA97F).contains(&cp)
+                || (0xAC00..=0xD7AF).contains(&cp)
+        }
+        TargetScript::Latin => {
+            ch.is_ascii_alphabetic()
+                || (0x00C0..=0x024F).contains(&cp)
+                || (0x1E00..=0x1EFF).contains(&cp)
+                || (0x2C60..=0x2C7F).contains(&cp)
+        }
+        TargetScript::Cyrillic => (0x0400..=0x052F).contains(&cp),
+        TargetScript::Greek => (0x0370..=0x03FF).contains(&cp) || (0x1F00..=0x1FFF).contains(&cp),
+        TargetScript::Hebrew => (0x0590..=0x05FF).contains(&cp),
+        TargetScript::Arabic => {
+            (0x0600..=0x06FF).contains(&cp)
+                || (0x0750..=0x077F).contains(&cp)
+                || (0xFB50..=0xFDFF).contains(&cp)
+                || (0xFE70..=0xFEFF).contains(&cp)
+        }
+        TargetScript::Thai => (0x0E00..=0x0E7F).contains(&cp),
+        TargetScript::Devanagari => (0x0900..=0x097F).contains(&cp),
+        TargetScript::Bengali => (0x0980..=0x09FF).contains(&cp),
+        TargetScript::Gurmukhi => (0x0A00..=0x0A7F).contains(&cp),
+        TargetScript::Gujarati => (0x0A80..=0x0AFF).contains(&cp),
+        TargetScript::Tamil => (0x0B80..=0x0BFF).contains(&cp),
+        TargetScript::Telugu => (0x0C00..=0x0C7F).contains(&cp),
+        TargetScript::Kannada => (0x0C80..=0x0CFF).contains(&cp),
+        TargetScript::Malayalam => (0x0D00..=0x0D7F).contains(&cp),
+        TargetScript::Sinhala => (0x0D80..=0x0DFF).contains(&cp),
+        TargetScript::Khmer => (0x1780..=0x17FF).contains(&cp),
+        TargetScript::Lao => (0x0E80..=0x0EFF).contains(&cp),
+        TargetScript::Myanmar => (0x1000..=0x109F).contains(&cp),
+    }
+}
+
+/// 去除译文常见的包裹：首尾空白、`译文：`/`翻译：`/`Translation:` 前缀、成对引号/反引号。
+fn strip_translation_wrappers(text: &str) -> String {
+    let mut current = text.trim().to_string();
+    for prefix in [
+        "译文：",
+        "译文:",
+        "翻译：",
+        "翻译:",
+        "Translation:",
+        "Translation：",
+        "Translated:",
+        "Translated text:",
+    ] {
+        if let Some(rest) = current.strip_prefix(prefix) {
+            current = rest.trim().to_string();
+        }
+    }
+    loop {
+        let trimmed = current.trim();
+        let chars: Vec<char> = trimmed.chars().collect();
+        if chars.len() < 2 {
+            break;
+        }
+        let first = chars[0];
+        let last = chars[chars.len() - 1];
+        let is_pair = matches!(
+            (first, last),
+            ('"', '"')
+                | ('\'', '\'')
+                | ('`', '`')
+                | ('“', '”')
+                | ('‘', '’')
+                | ('「', '」')
+                | ('『', '』')
+                | ('【', '】')
+                | ('（', '）')
+        );
+        if !is_pair {
+            break;
+        }
+        let inner: String = chars[1..chars.len() - 1].iter().collect();
+        let trimmed_inner = inner.trim().to_string();
+        if trimmed_inner.is_empty() {
+            break;
+        }
+        current = trimmed_inner;
+    }
+    current
+}
+
+/// 归一化空白（合并连续空白 + 去首尾），用于「输出与原文是否完全相同」的严格比较。
+fn normalize_whitespace(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// 判断翻译结果是否**原样复述了原文**（本地小模型未执行翻译）。
+///
+/// 判定刻意保守（避免误伤合法输出）：
+/// 1. 未知目标语言码（含 `auto`）一律不判；
+/// 2. 先去掉输出首尾空白、`译文：` 类前缀与包裹引号/反引号，再归一化空白；
+/// 3. 仅当归一化后**与原文完全相同**、且输出中**不含任何目标语言脚本字符**时才判为未翻译；
+/// 4. 因此「源语言 == 目标语言」的合法原样输出（如中文→中文）不会被误判。
+pub fn looks_untranslated(source: &str, output: &str, target_lang: &str) -> bool {
+    let Some(script) = target_script(target_lang) else {
+        return false;
+    };
+    let source_normalized = normalize_whitespace(source);
+    if source_normalized.is_empty() {
+        return false;
+    }
+    let output_normalized = normalize_whitespace(&strip_translation_wrappers(output));
+    if output_normalized.is_empty() || output_normalized != source_normalized {
+        return false;
+    }
+    // 输出与原文完全一致：目标脚本完全缺席 ⇒ 模型只是把原文吐了回来。
+    !output_normalized
+        .chars()
+        .any(|ch| script_contains(script, ch))
+}
+
+/// 本地翻译「返回原文（未翻译）」的可操作错误（SA-1099）。
+///
+/// 供 `translate_with_fallback` 与 `task_runner` 共用：命中复述检测时记失败并继续降级链。
+pub fn untranslated_output_error(target_lang: &str) -> AppError {
+    AppError::invalid_state(format!(
+        "本地翻译模型未执行翻译：输出与原文完全相同（目标语言 {}）",
+        prompt_language_name(target_lang)
+    ))
+    .with_message(
+        "本地翻译模型没有翻译（返回了原文）：已自动尝试云端降级；如仍失败，请在设置中更换本地模型或改用云端翻译",
+    )
+    .with_fallback(vec!["retry", "open_settings"])
 }
 
 /// 截断到 `limit` 字符（UTF-8 安全）。
@@ -740,6 +1067,21 @@ pub async fn translate_with_fallback(
                 );
                 match translator.translate(request).await {
                     Ok(text) => {
+                        // 本地小模型可能把原文原样复述（v1.0.3 用户反馈的根因）：
+                        // 仅对 engine=="local" 的 LLM 结果做复述检测，命中则记失败并继续降级链。
+                        if attempt.engine == "local"
+                            && looks_untranslated(&request.text, &text, &request.target_lang)
+                        {
+                            let err = untranslated_output_error(&request.target_lang);
+                            tracing::warn!(
+                                engine = %attempt.engine,
+                                code = %err.code,
+                                "本地翻译返回原文（未翻译），判定失败并继续降级链"
+                            );
+                            failures.push((attempt.engine.clone(), err.code.clone()));
+                            last_error = Some(err);
+                            continue;
+                        }
                         // LLM 网关的 token 用量在 translate_stream 的 outcome 里；
                         // 这里只拿到正文，用量由调用方（task_runner）单独结算。
                         return Ok(TranslationOutcome {
@@ -948,7 +1290,9 @@ fn build_local_attempt(
     request: &TranslateRequest,
 ) -> Option<TranslateAttempt> {
     let base_url = state.local_engine.base_url()?;
-    let prompt_key = crate::services::action_router::translate_prompt_key(config);
+    // 本地精简模型：术语表非空走 `translate_minimal_glossary`，否则 `translate_minimal`。
+    let prompt_key =
+        crate::services::action_router::translate_prompt_key_for(config, &request.glossary);
     let prompt = match render_translate_prompt(
         prompt_engine,
         config,
@@ -992,7 +1336,12 @@ pub fn cloud_provider_order(config: &Config) -> Vec<&crate::contract::config::Pr
     ordered
 }
 
-/// 渲染翻译提示词（`translate.md` / `translate_minimal.md`，含 `{glossary}`）。
+/// 渲染翻译提示词（`translate.md` / `translate_minimal*.md`，含 `{glossary}`）。
+///
+/// 语言名策略（v1.0.4 真机实测）：
+/// - **本地精简提示词**：`{targetLang}`/`{sourceLang}` 渲染为中文语言名（如 `简体中文`），
+///   因为 0.5B/1.5B/HY-MT-1.8B 不认识 `zh-CHS` 这类 BCP-47 码，会原样复述原文；
+/// - **云端 `translate.md`**：保持 BCP-47 码不变（云端模型已验证正常，契约里也约定了语言码）。
 pub fn render_translate_prompt(
     engine: &crate::services::prompt_engine::PromptEngine,
     config: &Config,
@@ -1005,22 +1354,41 @@ pub fn render_translate_prompt(
         crate::contract::config::Language::ZhCn => "zh-CN",
         crate::contract::config::Language::EnUs => "en-US",
     };
-    let glossary = if request.glossary.is_empty() {
-        render_glossary(config)
+    let glossary = effective_glossary(config, &request.glossary);
+    // 只有「本地 + 精简提示词」需要把语言码换成中文语言名；其余（云端、本地 4B 级模型）保持原样。
+    let local_minimal = is_local && prompt_key.starts_with("translate_minimal");
+    let target_lang_value = if local_minimal {
+        prompt_language_name(target_lang)
     } else {
-        render_glossary_entries(&request.glossary)
+        target_lang.to_string()
+    };
+    let source_lang_value = if local_minimal {
+        prompt_language_name(request.source_lang_or_auto())
+    } else {
+        request.source_lang_or_auto().to_string()
     };
     let mut vars: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
     vars.insert("text", request.text.as_str());
     vars.insert("lang", lang);
     vars.insert("mode", request.mode.as_str());
-    vars.insert("targetLang", target_lang);
-    vars.insert("sourceLang", request.source_lang_or_auto());
+    vars.insert("targetLang", target_lang_value.as_str());
+    vars.insert("sourceLang", source_lang_value.as_str());
     vars.insert("glossary", glossary.as_str());
     vars.insert("question", "");
     vars.insert("context", "");
-    let _ = is_local;
     engine.render(prompt_key, &vars)
+}
+
+/// 本请求实际生效的术语表文本（`{glossary}` 变量值；空串表示无有效术语）。
+///
+/// 两处来源都判断：请求级 `request_glossary` 非空时优先（与原有渲染口径一致），
+/// 否则使用配置级 `config.translate.glossary`。条目在渲染侧过滤（空原文/空译文丢弃）。
+pub fn effective_glossary(config: &Config, request_glossary: &[GlossaryEntry]) -> String {
+    if request_glossary.is_empty() {
+        render_glossary(config)
+    } else {
+        render_glossary_entries(request_glossary)
+    }
 }
 
 /// 渲染术语表条目（`原文 => 译文; ...`）。
@@ -1034,8 +1402,13 @@ pub fn render_glossary_entries(entries: &[GlossaryEntry]) -> String {
 }
 
 /// 最小可用翻译提示词（提示词模板渲染失败时的兜底，与 `translate_minimal.md` 语义一致）。
+///
+/// 目标语言同样映射为中文语言名（本地小模型不认 BCP-47 码）。
 pub fn minimal_translate_prompt(text: &str, target_lang: &str) -> String {
-    format!("把下面的文字翻译成 {target_lang}，只输出译文，不要解释：\n{text}")
+    format!(
+        "把下面的文本翻译成{}，只输出译文：\n\n{text}",
+        prompt_language_name(target_lang)
+    )
 }
 
 /// 翻译提示词中的术语表渲染（`{glossary}` 变量）。
@@ -1280,6 +1653,286 @@ mod tests {
         ];
         assert_eq!(render_glossary(&config), "API => 接口; Rust => Rust");
     }
+
+    /* ───────────────────────── v1.0.4：语言名 / 复述检测 ───────────────────────── */
+
+    #[test]
+    fn prompt_language_names_are_human_readable() {
+        assert_eq!(prompt_language_name("zh"), "简体中文");
+        assert_eq!(prompt_language_name("zh-CHS"), "简体中文");
+        assert_eq!(prompt_language_name("zh_CN"), "简体中文");
+        assert_eq!(prompt_language_name("zh-Hans"), "简体中文");
+        assert_eq!(prompt_language_name("zh-CHT"), "繁体中文");
+        assert_eq!(prompt_language_name("zh-TW"), "繁体中文");
+        assert_eq!(prompt_language_name("en"), "英文");
+        assert_eq!(prompt_language_name("en-US"), "英文");
+        assert_eq!(prompt_language_name("ja"), "日文");
+        assert_eq!(prompt_language_name("ko"), "韩文");
+        assert_eq!(prompt_language_name(" ru "), "俄文");
+        assert_eq!(prompt_language_name("ar"), "阿拉伯文");
+        // 已是中文名 / 未知码原样透传；空串返回空串。
+        assert_eq!(prompt_language_name("简体中文"), "简体中文");
+        assert_eq!(prompt_language_name(" 英文 "), "英文");
+        assert_eq!(prompt_language_name("xx-YY"), "xx-YY");
+        assert_eq!(prompt_language_name(""), "");
+    }
+
+    fn local_tiny_config() -> Config {
+        let mut config = Config::default();
+        config.translate.backend = TranslateBackend::Local;
+        config.local.model = "qwen2.5-0.5b-instruct-q4".to_string();
+        config
+    }
+
+    #[test]
+    fn local_minimal_prompt_uses_language_name_cloud_keeps_code() {
+        let config = local_tiny_config();
+        let engine =
+            crate::services::prompt_engine::PromptEngine::with_override_dir("C:/not-exists");
+        let request = TranslateRequest::new("Hello, world", "zh-CHS", Mode::Quick);
+
+        let key =
+            crate::services::action_router::translate_prompt_key_for(&config, &request.glossary);
+        assert_eq!(key, "translate_minimal");
+        let local = render_translate_prompt(&engine, &config, key, &request, "zh-CHS", true)
+            .expect("本地精简提示词渲染应成功");
+        assert!(local.contains("简体中文"), "local={local}");
+        assert!(
+            !local.contains("zh-CHS"),
+            "本地提示词不应再出现语言码：{local}"
+        );
+        assert!(
+            !local.contains("术语表"),
+            "无术语表时不应出现术语表行：{local}"
+        );
+        assert!(local.contains("Hello, world"));
+
+        // 云端 translate.md：保持 BCP-47 码（云端模型已验证正常）。
+        let cloud =
+            render_translate_prompt(&engine, &config, "translate", &request, "zh-CHS", false)
+                .expect("云端提示词渲染应成功");
+        assert!(cloud.contains("zh-CHS"), "云端提示词应保留语言码：{cloud}");
+        assert!(!cloud.contains("简体中文"));
+    }
+
+    #[test]
+    fn local_minimal_prompt_selects_glossary_template_when_glossary_present() {
+        let mut config = local_tiny_config();
+        let engine =
+            crate::services::prompt_engine::PromptEngine::with_override_dir("C:/not-exists");
+        let glossary = vec![GlossaryEntry {
+            from: "API".to_string(),
+            to: "接口".to_string(),
+            extra: serde_json::Map::new(),
+        }];
+        let request = TranslateRequest::new("Hello, API", "zh-CHS", Mode::Quick)
+            .with_glossary(glossary.clone());
+        let key =
+            crate::services::action_router::translate_prompt_key_for(&config, &request.glossary);
+        assert_eq!(key, "translate_minimal_glossary");
+        let prompt = render_translate_prompt(&engine, &config, key, &request, "zh-CHS", true)
+            .expect("术语表模板渲染应成功");
+        assert!(prompt.contains("简体中文"), "prompt={prompt}");
+        assert!(
+            prompt.contains("术语表（命中时按指定译法）：API => 接口"),
+            "prompt={prompt}"
+        );
+        assert!(!prompt.contains("zh-CHS"));
+
+        // 配置级术语表（请求级为空）同样走术语表模板。
+        config.translate.glossary = glossary;
+        let empty_request = TranslateRequest::new("Hello, API", "zh-CHS", Mode::Quick);
+        assert_eq!(
+            crate::services::action_router::translate_prompt_key_for(
+                &config,
+                &empty_request.glossary
+            ),
+            "translate_minimal_glossary"
+        );
+        // 空术语表 → 极简模板（无术语表行）。
+        config.translate.glossary.clear();
+        let plain = render_translate_prompt(
+            &engine,
+            &config,
+            "translate_minimal",
+            &empty_request,
+            "zh-CHS",
+            true,
+        )
+        .unwrap();
+        assert!(!plain.contains("术语表"));
+    }
+
+    #[test]
+    fn minimal_translate_prompt_fallback_uses_language_name() {
+        let prompt = minimal_translate_prompt("Hello, world", "zh-CHS");
+        assert!(prompt.contains("简体中文"), "prompt={prompt}");
+        assert!(!prompt.contains("zh-CHS"));
+        assert!(prompt.contains("Hello, world"));
+    }
+
+    #[test]
+    fn looks_untranslated_detects_echo_only() {
+        // 英文原文 → 中文目标：原样输出 = 未翻译。
+        assert!(looks_untranslated("Hello, world", "Hello, world", "zh-CHS"));
+        assert!(looks_untranslated(
+            "Hello, world",
+            "Hello,  world\n",
+            "zh-CHS"
+        ));
+        // 引号 / 前缀包裹的原文同样命中。
+        assert!(looks_untranslated(
+            "Hello, world",
+            "\"Hello, world\"",
+            "zh-CHS"
+        ));
+        assert!(looks_untranslated(
+            "Hello, world",
+            "「Hello, world」",
+            "zh-CHS"
+        ));
+        assert!(looks_untranslated(
+            "Hello, world",
+            "译文：Hello, world",
+            "zh-CHS"
+        ));
+        assert!(looks_untranslated(
+            "Hello, world",
+            "`Hello, world`",
+            "zh-CN"
+        ));
+        // 真实中文译文不命中。
+        assert!(!looks_untranslated("Hello, world", "你好，世界", "zh-CHS"));
+        // 中文 → 中文原样输出是合法输出，不命中。
+        assert!(!looks_untranslated("你好，世界", "你好，世界", "zh-CHS"));
+        // 同语言（英→英）原样输出不命中。
+        assert!(!looks_untranslated("Hello", "Hello", "en"));
+        // 有改动（追加标点）不算复述。
+        assert!(!looks_untranslated("Hello", "Hello!", "zh-CHS"));
+        // 目标代码未知 / auto 一律不判（避免误伤）。
+        assert!(!looks_untranslated("Hello, world", "Hello, world", "xx-YY"));
+        assert!(!looks_untranslated("Hello, world", "Hello, world", "auto"));
+        // 空原文不判。
+        assert!(!looks_untranslated("", "", "zh-CHS"));
+        // 其它目标脚本：俄文原样输出合法（不命中），英文原文复述到俄文目标（命中）。
+        assert!(!looks_untranslated("Привет, мир", "Привет, мир", "ru"));
+        assert!(looks_untranslated("Hello, world", "Hello, world", "ru"));
+        // 日文：假名译文不命中；英文原文复述到日文目标命中。
+        assert!(!looks_untranslated("こんにちは", "こんにちは", "ja"));
+        assert!(looks_untranslated("Hello", "Hello", "ja"));
+    }
+
+    /// 固定输出的测试网关（复述检测 / 降级链单测用）。
+    struct FixedGateway(&'static str);
+
+    #[async_trait::async_trait]
+    impl LlmGateway for FixedGateway {
+        async fn stream(
+            &self,
+            request: &LlmRequest,
+            sink: &(dyn Fn(StreamChunk) + Send + Sync),
+        ) -> AppResult<crate::services::llm_gateway::TaskOutcome> {
+            sink(StreamChunk {
+                kind: StreamKind::Text,
+                chunk: self.0.to_string(),
+            });
+            Ok(crate::services::llm_gateway::TaskOutcome {
+                usage: TokenUsage::default(),
+                latency_ms: 1,
+                engine: request.engine.clone(),
+                sources: Vec::new(),
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn fallback_retries_cloud_after_local_echo() {
+        let attempts = vec![
+            TranslateAttempt {
+                engine: "local".to_string(),
+                kind: TranslateAttemptKind::Llm {
+                    gateway: Arc::new(FixedGateway("Hello, world")),
+                    prompt: "translate_minimal".to_string(),
+                },
+            },
+            TranslateAttempt {
+                engine: "deepseek".to_string(),
+                kind: TranslateAttemptKind::Llm {
+                    gateway: Arc::new(FixedGateway("你好，世界")),
+                    prompt: "translate".to_string(),
+                },
+            },
+        ];
+        let request = TranslateRequest::new("Hello, world", "zh-CHS", Mode::Quick);
+        let outcome = translate_with_fallback(&attempts, &request)
+            .await
+            .expect("本地回显应判定失败并降级到云端成功");
+        assert_eq!(outcome.engine, "deepseek");
+        assert_eq!(outcome.text, "你好，世界");
+    }
+
+    #[tokio::test]
+    async fn local_echo_only_reports_actionable_error() {
+        let attempts = vec![TranslateAttempt {
+            engine: "local".to_string(),
+            kind: TranslateAttemptKind::Llm {
+                gateway: Arc::new(FixedGateway("Hello, world")),
+                prompt: "translate_minimal".to_string(),
+            },
+        }];
+        let request = TranslateRequest::new("Hello, world", "zh-CHS", Mode::Quick);
+        let error = translate_with_fallback(&attempts, &request)
+            .await
+            .expect_err("只有回显原文的本地后端时应报错，不能伪造成功");
+        assert_eq!(error.code, ErrorCode::InvalidState);
+        assert!(
+            error.message.contains("全部翻译后端均失败"),
+            "message={}",
+            error.message
+        );
+        assert_eq!(
+            error.fallback,
+            vec!["retry".to_string(), "open_settings".to_string()]
+        );
+        assert!(error.context.is_some());
+    }
+
+    #[tokio::test]
+    async fn cover_translation_marks_echo_as_failed() {
+        let translator = CoverTranslator::with_gateway(
+            "local",
+            Arc::new(FixedGateway("Hello, world")),
+            Mode::Quick,
+            "zh-CHS",
+        );
+        let covered = translator
+            .translate_blocks(&[crate::contract::types::CoverBlock {
+                id: "b0".to_string(),
+                text: "Hello, world".to_string(),
+                bbox: crate::contract::types::RectPhys {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 10.0,
+                    height: 10.0,
+                },
+                confidence: 0.9,
+            }])
+            .await;
+        assert_eq!(covered.len(), 1);
+        assert!(covered[0].failed, "回显原文必须标记失败，不伪造成功");
+        assert_eq!(covered[0].translation, "Hello, world");
+    }
+
+    #[test]
+    fn cover_prompt_uses_language_name() {
+        let prompt = cover_prompt("Hello, world", "zh-CHS");
+        assert!(prompt.contains("简体中文"), "prompt={prompt}");
+        assert!(!prompt.contains("zh-CHS"), "prompt={prompt}");
+        assert!(prompt.contains("Hello, world"));
+        // 英文目标同样渲染为中文语言名。
+        let prompt = cover_prompt("你好", "en");
+        assert!(prompt.contains("英文"), "prompt={prompt}");
+    }
 }
 
 /* ═══════════════════════ 覆盖式翻译（契约 v4 / 研究 §2.4） ═══════════════════════ */
@@ -1460,10 +2113,13 @@ impl Default for CoverCache {
 
 /// 覆盖翻译提示词（每块独立请求，便于并行/分批与失败隔离）。
 ///
-/// TODO(prompt): 真实链路就绪后改走 `prompt_engine` 的 `translate.md` 模板
-/// （含 `{glossary}` / `{targetLang}` 变量）；当前先给最小可用提示词。
+/// 与 `translate_minimal.md` 同形态：一行指令 + 空行 + 原文。目标语言渲染为**中文语言名**
+/// （本地小模型不认 `zh-CHS` 这类 BCP-47 码，会原样回显原文；v1.0.4 真机实测修复）。
 pub fn cover_prompt(text: &str, target_lang: &str) -> String {
-    format!("把下面的文字翻译成 {target_lang}，只输出译文，不要解释：\n{text}")
+    format!(
+        "把下面的文本翻译成{}，只输出译文：\n\n{text}",
+        prompt_language_name(target_lang)
+    )
 }
 
 /// 覆盖翻译执行器。
@@ -1552,7 +2208,19 @@ impl CoverTranslator {
 
             let outcome = gateway.stream(&request, &sink).await;
             let translation = collected.lock().trim().to_string();
-            let failed = outcome.is_err() || translation.is_empty();
+            let request_failed = outcome.is_err() || translation.is_empty();
+            // 本地/云端都可能把原文原样吐回（v1.0.3 用户反馈的覆盖翻译路径根因）：
+            // 命中复述检测时标记失败并保留原文，**不伪造成功**（不写缓存，见命令层）。
+            let echoed =
+                !request_failed && looks_untranslated(&source, &translation, &self.target_lang);
+            if echoed {
+                tracing::warn!(
+                    engine = %self.engine,
+                    target_lang = %self.target_lang,
+                    "覆盖翻译返回原文（未翻译），标记失败并保留原文"
+                );
+            }
+            let failed = request_failed || echoed;
             results.push(CoveredBlock {
                 id: block.id.clone(),
                 source: source.clone(),

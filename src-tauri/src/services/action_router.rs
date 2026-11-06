@@ -10,7 +10,7 @@
 //! | 翻译 | 云端 | 本地模型 | 另一云端供应商 | 提示失败 |
 //! | 解答 | 云端多模态 | 纯文本 | 本地模型 | 提示失败 |
 
-use crate::contract::config::{Config, SearchMode, TranslateBackend};
+use crate::contract::config::{Config, GlossaryEntry, SearchMode, TranslateBackend};
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
 use crate::contract::types::{ActionId, EngineId, Mode};
 use crate::domain::task::TaskKind;
@@ -177,6 +177,29 @@ pub fn translate_prompt_key(config: &Config) -> &'static str {
     }
 }
 
+/// 翻译提示词 key（含**术语表分支**，供本地精简模型使用）。
+///
+/// 本地精简模型 + 有效术语表非空 → `translate_minimal_glossary`（把术语表追加到指令行，
+/// 实测三模型不会把术语表行复述进译文）；否则退回 [`translate_prompt_key`]。
+///
+/// 术语表来源有两处，必须都判断：请求级 `request.glossary` 优先（渲染侧口径），
+/// 否则看配置级 `config.translate.glossary`；只保留「原文与译文都非空」的条目。
+pub fn translate_prompt_key_for(
+    config: &Config,
+    request_glossary: &[GlossaryEntry],
+) -> &'static str {
+    let key = translate_prompt_key(config);
+    if key == "translate_minimal"
+        && !crate::services::translator::effective_glossary(config, request_glossary)
+            .trim()
+            .is_empty()
+    {
+        "translate_minimal_glossary"
+    } else {
+        key
+    }
+}
+
 /// 降级链的可执行动作名（用于 `task:error.fallback` 与前端提示）。
 pub fn fallback_labels(fallback: &[EngineId]) -> Vec<String> {
     fallback.to_vec()
@@ -311,6 +334,53 @@ mod tests {
         // 大小写不敏感（配置可能来自用户输入/迁移）。
         config.local.model = "HY-MT-1.8B-Q4".to_string();
         assert_eq!(translate_prompt_key(&config), "translate_minimal");
+    }
+
+    #[test]
+    fn translate_prompt_key_for_selects_glossary_template() {
+        let glossary = vec![GlossaryEntry {
+            from: "API".to_string(),
+            to: "接口".to_string(),
+            extra: serde_json::Map::new(),
+        }];
+
+        // 本地精简模型 + 请求级有效术语表 → 术语表模板。
+        let mut config = Config::default();
+        config.translate = TranslatePrefs {
+            backend: TranslateBackend::Local,
+            ..TranslatePrefs::default()
+        };
+        config.local.model = "qwen2.5-0.5b-instruct-q4".to_string();
+        assert_eq!(
+            translate_prompt_key_for(&config, &glossary),
+            "translate_minimal_glossary"
+        );
+        // 无术语表 → 极简模板。
+        assert_eq!(translate_prompt_key_for(&config, &[]), "translate_minimal");
+        // 只有空条目 → 等同无有效术语表。
+        let empty_entries = vec![GlossaryEntry {
+            from: "  ".to_string(),
+            to: "".to_string(),
+            extra: serde_json::Map::new(),
+        }];
+        assert_eq!(
+            translate_prompt_key_for(&config, &empty_entries),
+            "translate_minimal"
+        );
+
+        // 配置级术语表（请求级为空）同样触发术语表模板（渲染侧 `{glossary}` 口径一致）。
+        config.translate.glossary = glossary.clone();
+        assert_eq!(
+            translate_prompt_key_for(&config, &[]),
+            "translate_minimal_glossary"
+        );
+        config.translate.glossary.clear();
+
+        // 本地非精简模型 / 云端：始终用产品长提示词（不分支）。
+        config.local.model = "qwen3-4b-q4".to_string();
+        assert_eq!(translate_prompt_key_for(&config, &glossary), "translate");
+        let cloud = Config::default();
+        assert_eq!(translate_prompt_key_for(&cloud, &glossary), "translate");
     }
 
     #[test]

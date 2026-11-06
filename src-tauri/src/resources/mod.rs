@@ -20,6 +20,13 @@ pub const PROMPT_TRANSLATE: &str = include_str!("../../../resources/prompts/tran
 pub const PROMPT_TRANSLATE_MINIMAL: &str =
     include_str!("../../../resources/prompts/translate_minimal.md");
 
+/// 本地「极小模型」精简翻译提示词（术语表非空分支）。
+///
+/// 与 [`PROMPT_TRANSLATE_MINIMAL`] 的唯一区别是把术语表追加到指令行（避免空术语表行被小模型复述）；
+/// 仅当本地精简模型 + 有效术语表非空时使用。
+pub const PROMPT_TRANSLATE_MINIMAL_GLOSSARY: &str =
+    include_str!("../../../resources/prompts/translate_minimal_glossary.md");
+
 /// 解答提示词（变量 `{text}` `{lang}` `{mode}`）。
 pub const PROMPT_ANSWER: &str = include_str!("../../../resources/prompts/answer.md");
 
@@ -48,6 +55,10 @@ mod tests {
             ("image_search", PROMPT_IMAGE_SEARCH),
             ("translate", PROMPT_TRANSLATE),
             ("translate_minimal", PROMPT_TRANSLATE_MINIMAL),
+            (
+                "translate_minimal_glossary",
+                PROMPT_TRANSLATE_MINIMAL_GLOSSARY,
+            ),
             ("answer", PROMPT_ANSWER),
             ("followup", PROMPT_FOLLOWUP),
             ("models.manifest", MODELS_MANIFEST),

@@ -8,8 +8,70 @@
 
 ### 计划中
 
-- 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）、
-  卸载时可选删除本地数据。**自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
+- 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）。
+  **自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
+
+## [1.0.4] - 2026-11-06（用户反馈修复）
+
+> 修复版：处理两项用户反馈（本地翻译仍显示原文 / 卸载残留模型与配置）。**无契约变更**
+> （配置 Schema 6 / 43 命令 / 15 事件 / `IPC_CONTRACT_VERSION = 1` 均不变），不改变数据收集与存储方式。
+
+### 修复
+
+- **本地翻译「翻译后仍然为原文」**：根因是本地精简提示词把 BCP-47 语言码（`zh-CHS` 等）直接发给本地小模型
+  （Qwen2.5 0.5B/1.5B、HY-MT1.5-1.8B），真实模型不认识语言码、**原样复述原文**；且非空结果被当作成功，
+  既不触发云端降级也不报错。修复：
+  - 新增 `translator::prompt_language_name`，把本地精简提示词与覆盖翻译提示词里的语言码渲染为中文语言名
+    （如 `zh-CHS` → `简体中文`）；云端 `translate.md` 保持 BCP-47 码（云端已验证正常）；
+  - 新增内部提示词 `translate_minimal_glossary.md`：术语表非空时把术语表与指令放在同一段，避免空术语表行
+    被小模型复述进译文（`action_router::translate_prompt_key_for` 选择）；
+  - 新增本地复述检测 `looks_untranslated`：仅当「归一化后与原文完全相同且不含目标语言文字」时判为未翻译
+    （`SA-1099`），按降级链自动改走云端/返回可操作错误；试译、框选翻译、覆盖翻译三条路径都接入，
+    覆盖翻译命中时 `failed=true` 并保留原文、不写缓存；
+  - 本地翻译任务改为「缓冲输出 → 校验通过才推送前端」，避免先把原文推给用户再报错/串台；云端流式不变。
+  - **真实 App 命令路径验证（PASS）**：qwen2.5-0.5b-instruct-q4 + 目标 `zh-CHS`（用户报告原场景），
+    `The quick brown fox jumps over the lazy dog.` → `那只敏捷的棕色狐狸跳过了那只懒惰的狗。`（788ms），
+    第二句同样为中文译文、`sameAsInput=false`；三模型提示词矩阵 9/9 不再回显原文
+    （证据 `.verify/v1/fix/v104-local-translate.json`、`v104-local-prompt-matrix.json`）。
+- **卸载程序无法完全卸载（含已下载模型）**：根因是 Tauri NSIS 内置「删除应用数据」复选框只删除
+  `%APPDATA%\com.snipask.app` / `%LOCALAPPDATA%\com.snipask.app`（`BUNDLEID`），而本应用数据实际在
+  `%APPDATA%\SnipAsk`（配置/历史/日志/提示词/后端）与 `%LOCALAPPDATA%\SnipAsk`（模型/缓存/运行时）→
+  卸载后模型与后端残留。修复：新增 `src-tauri/nsis/installer-hooks.nsh`（`bundle.windows.nsis.installerHooks`）：
+  - 静默卸载 `/S` → 彻底清理；交互卸载勾选「删除应用数据」→ 清理；未勾选时弹确认框（默认「是」，选「否」保留）；
+  - 清理 `%APPDATA%\SnipAsk`、`%LOCALAPPDATA%\SnipAsk`（含 `models/`、`backends/`、`runtime/`）、
+    `com.snipask.app` 与 HKCU Run/安装器元数据/卸载注册项；
+  - `$UpdateMode=1`（覆盖安装/更新）**一律保留用户数据**；删除前 `SetOutPath "$TEMP"` 解锁同名安装目录，
+    被占用文件以 `/REBOOTOK` 兜底；
+  - 安装冒烟新增「模型探针 + 4 个数据目录残留」断言并纳入 pass 门禁（`dataRemoved=true / dataResidue=[]`）。
+
+### 双安装包（重建，最终归档）
+
+- 用 Tauri 2.12.4 + NSIS 3.13 基于 v1.0.4 源码重建并归档到 [release/](release/README.md)：
+  - **在线安装版** `SnipAsk_1.0.4_x64-setup.exe` **7,784,602 B（7.42 MiB）**，
+    SHA256 `7269e25bc75f76fc786357fe815f13c8610e6c406d78c515776d8bd0cf9efcdd`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.4_x64-full-setup.exe` **22,567,768 B（21.52 MiB）**，
+    SHA256 `21944e24504edc98760d8514a6a5085d30d6d8a6e5cd5f716cfe422a67bf8264`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB），双版本主程序 SHA256 不同（edition 注入生效）。
+- 安装冒烟 PASS：两版静默安装 `/S`（3.4s / 4.4s）→ 启动主窗口可见 → 静默卸载 `/S` 退出码 0；
+  **卸载后 `%LOCALAPPDATA%\SnipAsk`、`%APPDATA%\SnipAsk`、`com.snipask.app` 与模型探针全部不存在
+  （`dataRemoved=true`、`dataResidue=[]`、安装目录无残留）**；用户真实数据（配置/历史/模型/后端）冒烟后恢复。
+  两版均 `NotSigned`。v1.0.3 安装包已从 `release/` 移除，历史版本见提交历史。
+
+### 验证
+
+- **最终门禁（全绿）**：`cargo fmt --check` PASS（0）；`cargo clippy --all-targets -- -D warnings` PASS（0 warning）；
+  `cargo test --all-targets` **495 passed / 0 failed / 20 ignored**（lib 356，新增 11 个单测）；
+  `pnpm typecheck` 0、`pnpm test` **48/48**、`pnpm build:web` 0；双安装包构建 + 冒烟 PASS。
+- **真实 App 命令路径 E2E（PASS，`.verify/v1/fix/v104-local-translate.{json,md}`）**：applab 便携 debug 构建
+  （`app_stats.version=1.0.4`、`edition=dev`），`translate.backend=local` + `local.model=qwen2.5-0.5b-instruct-q4`
+  + `privacy.localOnly=true`（排除云端），`local_engine_status` = ready / **vulkan** / gpu / RTX 4060 Laptop /
+  offload 25 层 / port 39287；`translate_test` 两条输入均输出中文译文（788ms / 768ms，`sameAsInput=false`）；
+  引擎日志 prompt tokens 54/55（旧提示词为 86，实测旧提示词下只生成 11 tokens 复述原文）。
+- **提示词矩阵**：0.5B / 1.5B / HY-MT1.8B × 极简 / 术语表 / 英文目标共 9 组，改后全部正确翻译、
+  不再回显原文、不再输出术语表行；旧提示词在 0.5B / 1.5B 上分别复现「原样复述」与「术语表行残留」。
+- 卸载冒烟证据：`.verify/v1/installer/smoke-slim.json`、`smoke-full.json`（`steps.uninstall.dataRemoved=true` /
+  `dataResidue=[]` / `registryResidue` 无残留）；`.verify/verify-v1.0.4/SUMMARY.md`（gitignored）。
+
 - 遗留验证：**AMD / Intel 实机 GPU**（Vulkan 路径已论证厂商无关、本机未实测）、8GB 内存机降档提示（S-13）、
   DashScope Qwen-MT 真实翻译（本机无 Key）、受保护内容（DRM）下的覆盖翻译、真实流式 TTFT 补测。
 - 跨环境验收：Win10 干净机、国产杀软（火绒/360 等）、SmartScreen 交互 UI、S-19 真人可用性走查。

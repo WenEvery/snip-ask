@@ -904,7 +904,6 @@ async fn run_translate_task(
         check_cancel(cancel)?;
         match &attempt.kind {
             TranslateAttemptKind::Llm { gateway, prompt } => {
-                let before = collected.lock().chars().count();
                 let llm_request = LlmRequest {
                     task: task_id.clone(),
                     session: request.session.clone(),
@@ -916,6 +915,70 @@ async fn run_translate_task(
                     image_data_url: None,
                     cancel: cancel.clone(),
                 };
+                if attempt.engine == "local" {
+                    // 本地后端：先缓冲流式输出，校验通过后才推送前端。
+                    // 否则小模型回显原文时，用户会先看到原文再收到「失败/降级」提示（重复/串台）。
+                    let local_buffer = Arc::new(Mutex::new(String::new()));
+                    let local_collected = local_buffer.clone();
+                    let local_sink = move |chunk: StreamChunk| {
+                        if chunk.kind == StreamKind::Text {
+                            local_collected.lock().push_str(&chunk.chunk);
+                        }
+                    };
+                    match gateway.stream(&llm_request, &local_sink).await {
+                        Ok(outcome) => {
+                            let text = local_buffer.lock().trim().to_string();
+                            if text.is_empty() {
+                                failures.push(format!("{}:EMPTY", attempt.engine));
+                                last_error = Some(AppError::invalid_state("翻译后端未返回内容"));
+                                continue;
+                            }
+                            if translator::looks_untranslated(
+                                &translate_request.text,
+                                &text,
+                                &target_lang,
+                            ) {
+                                let err = translator::untranslated_output_error(&target_lang);
+                                tracing::warn!(
+                                    engine = %attempt.engine,
+                                    code = %err.code,
+                                    "本地翻译返回原文（未翻译）：不推送前端，继续云端降级"
+                                );
+                                failures.push(format!("{}:{}", attempt.engine, err.code));
+                                last_error = Some(err);
+                                continue;
+                            }
+                            emit_task_delta(
+                                app,
+                                &TaskDeltaPayload {
+                                    task: task_id.clone(),
+                                    kind: StreamKind::Text,
+                                    chunk: text.clone(),
+                                },
+                            );
+                            return Ok(ExecutedTask {
+                                outcome: TaskOutcome {
+                                    usage: outcome.usage,
+                                    latency_ms: started.elapsed().as_millis() as u64,
+                                    engine: attempt.engine.clone(),
+                                    sources: Vec::new(),
+                                },
+                                text,
+                            });
+                        }
+                        Err(err) => {
+                            tracing::warn!(
+                                engine = %attempt.engine,
+                                code = %err.code,
+                                "本地翻译后端失败（尚未推送任何正文），尝试下一个"
+                            );
+                            failures.push(format!("{}:{}", attempt.engine, err.code));
+                            last_error = Some(err);
+                            continue;
+                        }
+                    }
+                }
+                let before = collected.lock().chars().count();
                 match gateway.stream(&llm_request, &sink).await {
                     Ok(outcome) => {
                         let text = collected.lock().clone();

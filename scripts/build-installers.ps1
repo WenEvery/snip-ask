@@ -16,9 +16,12 @@
       3) 产物改名归档到 release/：SnipAsk_<ver>_x64-setup.exe（slim）、SnipAsk_<ver>_x64-full-setup.exe（full）；
       4) 体积门禁：slim ≤ 25 MiB，full ≤ 60 MiB；生成 release/SHA256SUMS.txt；
       5) 默认执行真实安装冒烟（-SkipSmoke 可跳过）：静默安装 /S → 校验安装目录资源布局 → 启动 6s
-         （进程存活 + 主窗口可见 + 截图）→ 静默卸载 /S → 残留检查。
-         冒烟前把用户现有 %APPDATA%\SnipAsk、%LOCALAPPDATA%\SnipAsk、WebView2 数据目录与 HKCU Run 值
-         临时移走（同卷重命名，快速且不破坏数据），冒烟结束（含失败）在 finally 中恢复。
+         （进程存活 + 主窗口可见 + 截图）→ 关闭应用及本应用 llama-server 子进程 → 写入模型探针 →
+         静默卸载 /S → 残留检查（卸载退出码、%LOCALAPPDATA%\SnipAsk、%APPDATA%\SnipAsk、
+         %LOCALAPPDATA%\com.snipask.app、模型探针），并作为 pass 门禁写入 smoke JSON。
+         冒烟前把用户现有 %APPDATA%\SnipAsk、%LOCALAPPDATA%\SnipAsk、WebView2 数据目录、
+         HKCU Run 值与安装器元数据键（HKCU\Software\SnipAsk\SnipAsk）临时移走
+         （目录为同卷重命名，快速且不破坏数据），冒烟结束（含失败）在 finally 中恢复。
       6) 构建日志 / 体积 / SHA256 / 冒烟 JSON / 截图 → .verify/v1/installer/。
 
 .PARAMETER Edition
@@ -161,6 +164,44 @@ function Get-SnipAskProcesses {
     return @(Get-Process -Name 'snip-ask' -ErrorAction SilentlyContinue)
 }
 
+# 本应用本地引擎子进程：llama-server.exe 位于 %APPDATA%\SnipAsk\backends\<runtime>\ 下。
+# 冒烟卸载前必须终止它，否则它持有的 models\*.gguf 会让卸载钩子的 RMDir /r 只能落
+# /REBOOTOK，静默卸载后立即断言会看到「残留」。只按路径/命令行精确匹配本应用目录，
+# 绝不误杀其它应用的 llama-server（LM Studio / Ollama 等）。
+function Get-SnipAskBackendProcesses {
+    $found = @()
+    foreach ($p in @(Get-CimInstance Win32_Process -Filter "Name = 'llama-server.exe'" -ErrorAction SilentlyContinue)) {
+        $exe = [string]$p.ExecutablePath
+        $cmd = [string]$p.CommandLine
+        $isOurs = ($exe -like '*\SnipAsk\backends\*') -or ($cmd -like '*\SnipAsk\backends\*')
+        if ($isOurs) { $found += $p }
+    }
+    return $found
+}
+
+function Stop-SnipAskBackendProcesses {
+    $killed = @()
+    foreach ($p in @(Get-SnipAskBackendProcesses)) {
+        $killed += [ordered]@{
+            pid            = [int]$p.ProcessId
+            name           = [string]$p.Name
+            executablePath = [string]$p.ExecutablePath
+            commandLine    = [string]$p.CommandLine
+        }
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+    $gone = $true
+    if ($killed.Count -gt 0) {
+        $gone = Wait-Until -TimeoutMs 15000 -IntervalMs 250 -Condition { @(Get-SnipAskBackendProcesses).Count -eq 0 }
+    }
+    return [ordered]@{
+        found              = @($killed | ForEach-Object { $_.executablePath })
+        killed             = $killed
+        exitedWithinTimeout = $gone
+        left               = @(Get-SnipAskBackendProcesses | ForEach-Object { [int]$_.ProcessId })
+    }
+}
+
 function Get-SnipAskShortcuts {
     $roots = @(
         (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'),
@@ -240,12 +281,42 @@ function New-UserStateBackup([string]$EvidenceDir) {
         roamingWebview     = (Join-Path $env:APPDATA 'com.snipask.app')
         localWebview       = (Join-Path $env:LOCALAPPDATA 'com.snipask.app')
     }
+    # 安装器元数据（Tauri 模板 MANUPRODUCTKEY = HKCU\Software\<厂商>\<产品>，默认值=安装位置，
+    # 另有 "Installer Language"）。记录后移除：① 让冒烟安装到默认目录、不覆盖用户真实安装位置；
+    # ② 新版卸载钩子会清理该键（静默彻底卸载语义），冒烟结束必须恢复，避免破坏用户状态。
+    $manuProductKeyPath = 'HKCU:\Software\SnipAsk\SnipAsk'
+    $manuProductKey = [ordered]@{
+        key                   = $manuProductKeyPath
+        existed               = $false
+        installLocation       = $null
+        installLocationKind   = $null
+        installerLanguage     = $null
+        installerLanguageKind = $null
+    }
+    if (Test-Path -LiteralPath $manuProductKeyPath) {
+        $manuProductKey.existed = $true
+        try {
+            $manuKey = Get-Item -LiteralPath $manuProductKeyPath -ErrorAction Stop
+            try {
+                $manuProductKey.installLocation = $manuKey.GetValue('', $null)
+                $manuProductKey.installLocationKind = $manuKey.GetValueKind('').ToString()
+            } catch { }
+            try {
+                $manuProductKey.installerLanguage = $manuKey.GetValue('Installer Language', $null)
+                $manuProductKey.installerLanguageKind = $manuKey.GetValueKind('Installer Language').ToString()
+            } catch { }
+        } catch { }
+        Remove-Item -LiteralPath $manuProductKeyPath -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host ("      [备份] 注册项 {0}（安装位置/安装语言）" -f $manuProductKeyPath) -ForegroundColor DarkGray
+    }
+
     $state = [ordered]@{
         backupRoot = $backupRoot
         moved      = @()
         dirs       = $dirs
         runValue   = (Get-RunValue)
-        note       = '冒烟期间临时移走用户数据；结束后 finally 恢复。'
+        manuProductKey = $manuProductKey
+        note       = '冒烟期间临时移走用户数据/注册项；结束后 finally 恢复。'
     }
     foreach ($key in $dirs.Keys) {
         $path = $dirs[$key]
@@ -265,6 +336,9 @@ function Restore-UserState($State, [string]$EvidenceDir) {
     if (-not $State) { return }
     $results = @()
     foreach ($p in Get-SnipAskProcesses) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+    # 恢复前也清理本应用 llama-server 子进程：否则它可能仍持有冒烟目录中的模型文件，
+    # 导致「删除冒烟产物 / 移回用户备份」失败。
+    $null = Stop-SnipAskBackendProcesses
     Start-Sleep -Milliseconds 500
     # 先清掉冒烟新建的目录（此时原数据已移走，目录内必为测试产物）
     foreach ($key in $State.dirs.Keys) {
@@ -287,6 +361,27 @@ function Restore-UserState($State, [string]$EvidenceDir) {
             $results += [ordered]@{ action = 'restored-run-value'; name = 'SnipAsk'; value = $State.runValue; restored = ((Get-RunValue) -eq $State.runValue) }
         } catch {
             $results += [ordered]@{ action = 'restore-run-value-failed'; error = $_.Exception.Message }
+        }
+    }
+    # 恢复安装器元数据键（安装位置 / 安装语言）；卸载钩子会删除它，冒烟后必须还原。
+    # 注意：Get-Item 返回的 RegistryKey 是只读句柄，写入必须走 Registry provider 的 cmdlet。
+    if ($State.manuProductKey -and $State.manuProductKey.existed) {
+        try {
+            $keyPath = $State.manuProductKey.key
+            if (-not (Test-Path -LiteralPath $keyPath)) { New-Item -Path $keyPath -Force | Out-Null }
+            if ($null -ne $State.manuProductKey.installLocation) {
+                # Registry provider 语义：Set-Item 写入键的默认值
+                Set-Item -LiteralPath $keyPath -Value $State.manuProductKey.installLocation -ErrorAction Stop
+            }
+            if ($null -ne $State.manuProductKey.installerLanguage) {
+                $valueType = 'String'
+                if ($State.manuProductKey.installerLanguageKind -eq 'DWord') { $valueType = 'DWord' }
+                elseif ($State.manuProductKey.installerLanguageKind -eq 'QWord') { $valueType = 'QWord' }
+                New-ItemProperty -LiteralPath $keyPath -Name 'Installer Language' -Value $State.manuProductKey.installerLanguage -PropertyType $valueType -Force | Out-Null
+            }
+            $results += [ordered]@{ action = 'restored-manu-product-key'; key = $keyPath; restored = (Test-Path -LiteralPath $keyPath) }
+        } catch {
+            $results += [ordered]@{ action = 'restore-manu-product-key-failed'; error = $_.Exception.Message }
         }
     }
     if ((Test-Path -LiteralPath $State.backupRoot) -and -not (Get-ChildItem -LiteralPath $State.backupRoot -Force -ErrorAction SilentlyContinue)) {
@@ -331,6 +426,17 @@ function Invoke-InstallSmoke([string]$SetupExe, [string]$EditionName, [string]$V
             $result.verdict.warnings += ("冒烟前发现 {0} 个 snip-ask 进程，已强制退出" -f $running.Count)
             foreach ($p in $running) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
             Start-Sleep -Seconds 1
+        }
+        # 本应用 llama-server 子进程也必须在「备份用户数据」之前退出：
+        # 其 exe 位于 %APPDATA%\SnipAsk\backends（会被备份移动），且可能持有
+        # %LOCALAPPDATA%\SnipAsk\models\*.gguf（会被卸载钩子删除）。只清理本应用目录下的进程。
+        $backendBefore = Stop-SnipAskBackendProcesses
+        if ($backendBefore.killed.Count -gt 0) {
+            $result.verdict.warnings += ("冒烟前发现 {0} 个本应用 llama-server 子进程，已强制退出" -f $backendBefore.killed.Count)
+        }
+        $result.steps.backendProcessesBeforeSmoke = $backendBefore
+        if (-not $backendBefore.exitedWithinTimeout) {
+            $result.verdict.warnings += ('冒烟前本应用 llama-server 子进程未在 15s 内退出：{0}' -f (($backendBefore.left) -join ', '))
         }
         $state = New-UserStateBackup $evidenceBackupDir
         $result.steps.backup = [ordered]@{
@@ -508,9 +614,54 @@ function Invoke-InstallSmoke([string]$SetupExe, [string]$EditionName, [string]$V
         $result.steps.launch = $launch
 
         # ---------- 4) 静默卸载 ----------
+        # 卸载前应用主进程已退出，但本地引擎子进程 llama-server.exe
+        #（位于 %APPDATA%\SnipAsk\backends\<runtime>\ 下）可能仍持有
+        # %LOCALAPPDATA%\SnipAsk\models\*.gguf，导致卸载钩子的 RMDir /r 只能落 /REBOOTOK，
+        # 静默卸载后立即断言会看到「残留」。这里只终止「路径/命令行位于本应用
+        # %APPDATA%\SnipAsk\backends 下」的 llama-server，绝不误杀其它应用的同名进程。
         $uninstall = [ordered]@{}
         foreach ($p in Get-SnipAskProcesses) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+        $uninstall.backendProcesses = Stop-SnipAskBackendProcesses
+        if (-not $uninstall.backendProcesses.exitedWithinTimeout) {
+            $result.verdict.warnings += ('卸载前本应用 llama-server 子进程未在 15s 内退出：{0}' -f (($uninstall.backendProcesses.left) -join ', '))
+        }
+        if ($uninstall.backendProcesses.killed.Count -gt 0) {
+            Write-Host ("      [清理] 终止本应用 llama-server 子进程 {0} 个" -f $uninstall.backendProcesses.killed.Count) -ForegroundColor DarkGray
+        }
         Start-Sleep -Milliseconds 500
+
+        # 写入「已下载模型」探针：验证卸载器 / NSIS 卸载钩子是否真的清理本地数据。
+        # 真实用户数据已在备份步骤移走，这里只会写到测试产生的目录；探针大小 2 MiB。
+        $localDataRoot = Join-Path $env:LOCALAPPDATA 'SnipAsk'
+        $roamingDataRoot = Join-Path $env:APPDATA 'SnipAsk'
+        $probeDir = Join-Path (Join-Path $localDataRoot 'models') 'e2e-uninstall-probe'
+        $probeFile = Join-Path $probeDir 'probe.gguf'
+        $roamingProbe = Join-Path $roamingDataRoot 'e2e-uninstall-probe.txt'
+        try {
+            New-Item -ItemType Directory -Force -Path $probeDir | Out-Null
+            $probePayload = New-Object 'byte[]' (2MB)
+            [System.IO.File]::WriteAllBytes($probeFile, $probePayload)
+            New-Item -ItemType Directory -Force -Path $roamingDataRoot | Out-Null
+            [System.IO.File]::WriteAllText($roamingProbe, "SnipAsk uninstall probe`n", (New-Object System.Text.UTF8Encoding($false)))
+        } catch {
+            $result.verdict.criticalFailures += ('写入卸载探针失败：{0}' -f $_.Exception.Message)
+        }
+        $localFilesBefore = @(Get-ChildItem -LiteralPath $localDataRoot -Force -Recurse -File -ErrorAction SilentlyContinue)
+        $roamingFilesBefore = @(Get-ChildItem -LiteralPath $roamingDataRoot -Force -Recurse -File -ErrorAction SilentlyContinue)
+        $uninstall.preState = [ordered]@{
+            localDataRoot        = $localDataRoot
+            localDataFileCount   = $localFilesBefore.Count
+            localDataBytes       = if ($localFilesBefore.Count -gt 0) { [int64](($localFilesBefore | Measure-Object -Property Length -Sum).Sum) } else { [int64]0 }
+            roamingDataRoot      = $roamingDataRoot
+            roamingDataFileCount = $roamingFilesBefore.Count
+            roamingDataBytes     = if ($roamingFilesBefore.Count -gt 0) { [int64](($roamingFilesBefore | Measure-Object -Property Length -Sum).Sum) } else { [int64]0 }
+            modelProbe           = $probeFile
+            modelProbeBytes      = if (Test-Path -LiteralPath $probeFile) { (Get-Item -LiteralPath $probeFile).Length } else { $null }
+            modelProbeSha256     = if (Test-Path -LiteralPath $probeFile) { Get-FileSha256 $probeFile } else { $null }
+            roamingProbe         = $roamingProbe
+            roamingProbeExists   = (Test-Path -LiteralPath $roamingProbe)
+        }
+
         if (Test-Path -LiteralPath $uninstaller) {
             $sw = [Diagnostics.Stopwatch]::StartNew()
             $up = Start-Process -FilePath $uninstaller -ArgumentList '/S' -PassThru -ErrorAction Stop
@@ -520,7 +671,13 @@ function Invoke-InstallSmoke([string]$SetupExe, [string]$EditionName, [string]$V
             $uninstall.exitedWithinTimeout = $uExited
             $uninstall.durationMs = [int]$sw.ElapsedMilliseconds
             try { $uninstall.exitCode = $up.ExitCode } catch { }
-            if ($uExited -and $uninstall.exitCode -ne 0) { $result.verdict.warnings += ('卸载器退出码非 0：{0}' -f $uninstall.exitCode) }
+            if (-not $uExited) {
+                $result.verdict.criticalFailures += '卸载器在 240s 内未退出'
+            } elseif ($null -eq $uninstall.exitCode) {
+                $result.verdict.warnings += '无法读取卸载器退出码（Start-Process 未返回 ExitCode）'
+            } elseif ($uninstall.exitCode -ne 0) {
+                $result.verdict.criticalFailures += ('卸载器退出码非 0：{0}' -f $uninstall.exitCode)
+            }
             $removed = Wait-Until -TimeoutMs 180000 -Condition {
                 $e = Get-UninstallEntries
                 return (($e.Count -eq 0) -and (-not (Test-Path -LiteralPath $installedExe)))
@@ -534,6 +691,63 @@ function Invoke-InstallSmoke([string]$SetupExe, [string]$EditionName, [string]$V
         $leftShortcuts = @(Get-SnipAskShortcuts)
         $uninstall.shortcutsLeft = $leftShortcuts
         if ($leftShortcuts.Count -gt 0) { $result.verdict.warnings += ('卸载后残留快捷方式：{0}' -f ($leftShortcuts -join '; ')) }
+
+        # ---------- 4b) 卸载后数据清理断言（必须在 finally 恢复用户备份之前）----------
+        # 静默卸载 /S 的约定是「彻底删除本地数据」；轮询 15s 以吸收 NSIS 卸载器退出后的极短尾延迟
+        #（以及 /REBOOTOK 之外可能的重试窗口）。三处核心路径 + 模型探针必须全部消失。
+        $dataRoots = [ordered]@{
+            localAppDataSnipAsk    = $localDataRoot
+            roamingAppDataSnipAsk  = $roamingDataRoot
+            localAppDataWebView2   = (Join-Path $env:LOCALAPPDATA 'com.snipask.app')
+            roamingAppDataWebView2 = (Join-Path $env:APPDATA 'com.snipask.app')
+        }
+        $dataClean = Wait-Until -TimeoutMs 15000 -IntervalMs 250 -Condition {
+            $left = @($dataRoots.Values | Where-Object { Test-Path -LiteralPath $_ })
+            return ($left.Count -eq 0)
+        }
+        $residue = @()
+        foreach ($key in $dataRoots.Keys) {
+            $path = $dataRoots[$key]
+            if (-not (Test-Path -LiteralPath $path)) { continue }
+            $files = @(Get-ChildItem -LiteralPath $path -Force -Recurse -File -ErrorAction SilentlyContinue)
+            $residue += [ordered]@{
+                key         = $key
+                path        = $path
+                fileCount   = $files.Count
+                totalBytes  = if ($files.Count -gt 0) { [int64](($files | Measure-Object -Property Length -Sum).Sum) } else { [int64]0 }
+                sampleFiles = @($files | Select-Object -First 10 -ExpandProperty FullName)
+            }
+        }
+        $uninstall.dataRoots = $dataRoots
+        $uninstall.dataCleanedWithinWait = $dataClean
+        $uninstall.modelProbeRemoved = -not (Test-Path -LiteralPath $probeFile)
+        $uninstall.roamingProbeRemoved = -not (Test-Path -LiteralPath $roamingProbe)
+        $uninstall.dataResidue = @($residue)
+        $uninstall.dataRemoved = ($dataClean -and (@($residue).Count -eq 0) -and $uninstall.modelProbeRemoved -and $uninstall.roamingProbeRemoved)
+        if (-not $uninstall.modelProbeRemoved) {
+            $result.verdict.criticalFailures += ('卸载后模型探针仍存在（卸载器未清理 %LOCALAPPDATA%\SnipAsk\models）：{0}' -f $probeFile)
+        }
+        if (-not $uninstall.dataRemoved) {
+            $desc = @($residue | ForEach-Object { '{0}（{1} 个文件，{2:N0} B）' -f $_.path, $_.fileCount, $_.totalBytes }) -join '; '
+            $result.verdict.criticalFailures += ('静默卸载后本地数据残留：{0}' -f $desc)
+        }
+        $uninstall.registryResidue = [ordered]@{
+            manuProductKey = (Test-Path -LiteralPath 'HKCU:\Software\SnipAsk\SnipAsk')
+            runValue       = [bool](Get-RunValue)
+        }
+        if ($uninstall.registryResidue.manuProductKey -or $uninstall.registryResidue.runValue) {
+            $registryLeft = @()
+            if ($uninstall.registryResidue.manuProductKey) { $registryLeft += 'HKCU\Software\SnipAsk\SnipAsk' }
+            if ($uninstall.registryResidue.runValue) { $registryLeft += 'HKCU ...\Run\SnipAsk' }
+            $result.verdict.warnings += ('卸载后仍残留注册项：{0}' -f ($registryLeft -join '; '))
+        }
+        $uninstall.behaviorMatrix = [ordered]@{
+            silent               = '自动化验证（发布门禁）：/S 静默卸载必须删除数据目录与模型探针'
+            updateMode           = '未自动覆盖：$UpdateMode=1（覆盖安装/更新）必须保留数据，需按人工清单验证'
+            interactiveChecked   = '未自动覆盖：交互卸载勾选「删除应用数据」必须清理数据'
+            interactiveUnchecked = '未自动覆盖：交互卸载未勾选时弹 MessageBox（默认 Yes=清理，No=保留）'
+            note                 = '未自动覆盖项为人工/后续专项自动化验证；静默路径为发布必过项。'
+        }
         $uninstall.installDirLeft = [ordered]@{
             path   = $installDir
             exists = (Test-Path -LiteralPath $installDir)
@@ -842,7 +1056,17 @@ if (-not $SkipSmoke) {
     foreach ($artifact in $builtArtifacts) {
         Write-Host ("      ---- {0}：{1}" -f $artifact.edition, $artifact.artifact) -ForegroundColor Cyan
         $smoke = Invoke-InstallSmoke -SetupExe $artifact.artifact -EditionName $artifact.edition -Version $version -EvidenceDir $EvidenceDir -FullAssetNames $FullModelAssets -ExpectedDocTargets $expectedDocTargets
-        $result.smoke += [ordered]@{ edition = $artifact.edition; pass = [bool]$smoke.verdict.pass; criticalFailures = $smoke.verdict.criticalFailures; warnings = $smoke.verdict.warnings; evidence = (Join-Path $EvidenceDir ('smoke-' + $artifact.edition + '.json')) }
+        $smokeUninstall = $smoke.steps.uninstall
+        $result.smoke += [ordered]@{
+            edition          = $artifact.edition
+            pass             = [bool]$smoke.verdict.pass
+            dataRemoved      = [bool]$smokeUninstall.dataRemoved
+            dataResidue      = @($smokeUninstall.dataResidue)
+            exitCode         = $smokeUninstall.exitCode
+            criticalFailures = $smoke.verdict.criticalFailures
+            warnings         = $smoke.verdict.warnings
+            evidence         = (Join-Path $EvidenceDir ('smoke-' + $artifact.edition + '.json'))
+        }
         if (-not $smoke.verdict.pass) { Add-Failure ("{0} 版安装冒烟失败" -f $artifact.edition) }
     }
 } else {
