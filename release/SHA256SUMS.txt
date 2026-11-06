@@ -1,2 +1,2 @@
-f6b807138a2d692cb08a9343c409cb194fca544b4950df53fc2c1ec599445304  SnipAsk_1.1.0_x64-full-setup.exe
-debe34a4cf697eeee2b70461feb9401c6d56e9ee7ba522399a400211e59d8fc8  SnipAsk_1.1.0_x64-setup.exe
+deaeb408ca932ebfdcc164e4bc5e5262f787755c1dc89c8fbbcc1db994455e14  SnipAsk_1.1.0_x64-full-setup.exe
+ace7064152cdac0283fd3fe215d9295898187b7a3c5a9c20f6a713d1226282ca  SnipAsk_1.1.0_x64-setup.exe

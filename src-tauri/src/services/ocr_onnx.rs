@@ -29,7 +29,9 @@
 //! - **rec**：按框裁切（高/宽 ≥ 1.5 先旋转 90°，与 RapidOCR 一致）→ 高 48、宽
 //!   `ceil(48 × w/h)`（批内 `max_wh_ratio`、上限 `48×320/48`）→ 归一化 + 右侧 0 填充 →
 //!   CTC 贪心解码（去重复、去 blank、置信度 = 选中列概率均值）。
-//! - **cls**：高 48、宽 ≤ 192；`180°` 概率 > 0.9 时把裁切图旋转 180° 再送 rec。
+//! - **cls**：高 48、宽 ≤ 192；`180°` 概率 > 0.9 时把裁切图旋转 180° 再送 rec。仅对宽高比
+//!   ≤ 4（`cls_image_shape` 的有效域）的裁切执行——超宽行裁切会被压扁成分布外输入，
+//!   `p1` 近似随机，会把正向行误转 180° 产生乱码/漏行（[`CLS_MAX_ASPECT_RATIO`]）。
 //!
 //! # 与骨架实现的差异（如实记录）
 //!
@@ -111,6 +113,15 @@ pub const CLS_IMG_MAX_WIDTH: u32 = 192;
 pub const CLS_BATCH_NUM: usize = 6;
 /// cls 判 180° 的阈值（`cls_thresh`）。
 pub const CLS_THRESH: f32 = 0.9;
+/// cls 输入允许的最大宽高比（`cls_image_shape` = 3×48×192 → 4:1）。
+///
+/// 正常文本行裁切通常 20–60:1；把它送进 cls 会被前处理强制压扁到 192 宽（横向压缩
+/// 10–15 倍、纵向拉伸 1.8–3 倍），属于严重分布外输入：实测正向行的 `p1` 会随机达到
+/// 0.9–0.999，导致整行被误转 180°——翻转后 rec 输出伪英文乱码（且置信度可能 > 0.6 被
+/// 显示），或置信度不足被 `textThreshold` 过滤成静默漏行。轴对齐 DB 框本身就是水平文本
+/// 行（竖排框已先由 `crop_for_rec` 旋转 90°），因此只有比例在 cls 有效域内的裁切才做
+/// 方向判定，超宽裁切直接跳过。
+pub const CLS_MAX_ASPECT_RATIO: f32 = 4.0;
 
 /// letterbox 触发的最小高度（`Global.min_height`）。
 pub const MIN_TEXT_HEIGHT: u32 = 30;
@@ -625,6 +636,16 @@ fn crop_for_rec(image: &OcrImage, bbox: &RectPhys) -> Option<OcrImage> {
     } else {
         Some(crop)
     }
+}
+
+/// 是否对该裁切执行 180° 方向分类（cls）。
+///
+/// cls 的输入形状是 48×192（宽高比 ≤ [`CLS_MAX_ASPECT_RATIO`]）；超宽行裁切送进 cls 会被
+/// 压扁成分布外输入，`p1` 近似随机——正向行可能被判成 180°，整行翻转后 rec 变成伪英文
+/// 乱码或被阈值过滤成漏行。轴对齐水平框不需要 180° 判定，因此超宽裁切直接跳过。
+pub fn needs_angle_cls(width: u32, height: u32) -> bool {
+    let ratio = width as f32 / height.max(1) as f32;
+    ratio <= CLS_MAX_ASPECT_RATIO
 }
 
 // ─────────────────────── 多行合并框拆分（v1.0.5） ───────────────────────
@@ -1228,6 +1249,8 @@ impl LoadedOcr {
         }
 
         // 2) cls：分批推理，>0.9 的 180° 旋转裁切图。
+        //    仅对宽高比在 cls 有效域（≤ CLS_MAX_ASPECT_RATIO）内的裁切执行；超宽行裁切
+        //    会被压扁成分布外输入导致随机误翻转（乱码/漏行），直接跳过方向判定。
         self.classify_crops(&mut crops)?;
 
         // 3) rec：分批推理，CTC 解码。
@@ -1243,7 +1266,12 @@ impl LoadedOcr {
         let indices: Vec<usize> = crops
             .iter()
             .enumerate()
-            .filter_map(|(idx, crop)| crop.as_ref().map(|_| idx))
+            .filter_map(|(idx, crop)| {
+                // 超宽行裁切送 cls 是分布外输入（见 CLS_MAX_ASPECT_RATIO），跳过方向判定。
+                crop.as_ref()
+                    .filter(|crop| needs_angle_cls(crop.width, crop.height))
+                    .map(|_| idx)
+            })
             .collect();
         if indices.is_empty() {
             return Ok(());
@@ -1775,6 +1803,20 @@ mod tests {
         let pad = letterbox_padding(1000, 40);
         let (rw, rh) = det_resize_size(1000, 40 + pad * 2, 3200);
         assert_eq!((rw, rh), (992, 224));
+    }
+
+    #[test]
+    fn angle_cls_only_runs_on_crops_inside_model_domain() {
+        // cls 输入为 48×192（4:1）：只有该比例内的裁切才做 180° 方向判定。
+        assert!(needs_angle_cls(192, 48), "4:1 在 cls 有效域内");
+        assert!(needs_angle_cls(48, 48), "近方形裁切应做方向判定");
+        assert!(needs_angle_cls(96, 48), "2:1 在 cls 有效域内");
+        // 超过 4:1 的普通文本行裁切跳过（例：本次故障行 1146×25 ≈ 45.8:1）。
+        assert!(!needs_angle_cls(193, 48), "刚超过 4:1 应跳过");
+        assert!(!needs_angle_cls(1146, 25), "45.8:1 的行裁切应跳过");
+        assert!(!needs_angle_cls(1200, 27), "44:1 的行裁切应跳过");
+        // 极端防御：高度为 0 时不能除零/误判。
+        assert!(!needs_angle_cls(100, 0));
     }
 
     // ───────── CTC 解码 ─────────

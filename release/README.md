@@ -33,8 +33,8 @@
 
 | 文件 | 版本类型 | 大小 | SHA256 |
 | --- | --- | --- | --- |
-| [`SnipAsk_1.1.0_x64-setup.exe`](SnipAsk_1.1.0_x64-setup.exe) | **slim**（安装后下载版） | 7,816,641 B（7.45 MiB） | `debe34a4cf697eeee2b70461feb9401c6d56e9ee7ba522399a400211e59d8fc8` |
-| [`SnipAsk_1.1.0_x64-full-setup.exe`](SnipAsk_1.1.0_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,606,726 B（21.56 MiB） | `f6b807138a2d692cb08a9343c409cb194fca544b4950df53fc2c1ec599445304` |
+| [`SnipAsk_1.1.0_x64-setup.exe`](SnipAsk_1.1.0_x64-setup.exe) | **slim**（安装后下载版） | 7,817,998 B（7.46 MiB） | `ace7064152cdac0283fd3fe215d9295898187b7a3c5a9c20f6a713d1226282ca` |
+| [`SnipAsk_1.1.0_x64-full-setup.exe`](SnipAsk_1.1.0_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,607,475 B（21.56 MiB） | `deaeb408ca932ebfdcc164e4bc5e5262f787755c1dc89c8fbbcc1db994455e14` |
 | [`SHA256SUMS.txt`](SHA256SUMS.txt) | — | — | 上述两个安装包的机器可读校验和 |
 
 - 产物类型：NSIS 安装包（Windows x64），`installMode=currentUser`（当前用户安装，不需要管理员权限、不写 HKLM）；

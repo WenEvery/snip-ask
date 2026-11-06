@@ -31,8 +31,8 @@
 
 | 产物 | 说明 | 体积 / 门禁 |
 | --- | --- | --- |
-| [`release/SnipAsk_1.1.0_x64-setup.exe`](release/SnipAsk_1.1.0_x64-setup.exe) | **在线安装版（在线下载 OCR 模型）**：内置应用 + 文字识别运行时 + `docs/`；首次使用文字识别时下载 4 个模型/字典（约 16 MB） | **7,816,641 B（7.45 MiB）** / ≤ 25 MiB |
-| [`release/SnipAsk_1.1.0_x64-full-setup.exe`](release/SnipAsk_1.1.0_x64-full-setup.exe) | **内置 OCR 模型版**：在线安装版的全部内容 + 文字识别模型/字典，离线开箱即用 | **22,606,726 B（21.56 MiB）** / ≤ 60 MiB |
+| [`release/SnipAsk_1.1.0_x64-setup.exe`](release/SnipAsk_1.1.0_x64-setup.exe) | **在线安装版（在线下载 OCR 模型）**：内置应用 + 文字识别运行时 + `docs/`；首次使用文字识别时下载 4 个模型/字典（约 16 MB） | **7,817,998 B（7.46 MiB）** / ≤ 25 MiB |
+| [`release/SnipAsk_1.1.0_x64-full-setup.exe`](release/SnipAsk_1.1.0_x64-full-setup.exe) | **内置 OCR 模型版**：在线安装版的全部内容 + 文字识别模型/字典，离线开箱即用 | **22,607,475 B（21.56 MiB）** / ≤ 60 MiB |
 | [`release/SHA256SUMS.txt`](release/SHA256SUMS.txt) | 两个安装包的 SHA256 校验和 | — |
 | [`release/README.md`](release/README.md) | 发行说明：逐包体积/SHA256、构建信息、安装/卸载、已知限制 | — |
 
