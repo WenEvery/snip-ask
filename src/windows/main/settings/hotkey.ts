@@ -36,16 +36,16 @@ export function hotkeyLabel(spec: string): string {
   return spec.trim() ? spec.trim() : "未绑定";
 }
 
-/** 热键行定义（设置页与引导共用字段顺序，各自渲染） */
+/** 热键行定义（设置页与引导共用字段顺序，各自渲染）。
+ *
+ * v1.0.6：只展示**真实可用**的热键——划词翻译 / 翻译选区 / 切换模式此前仅发了一个前端未处理的事件，
+ * 已从界面移除（配置字段保留兼容，不再注册）。 */
 export const HOTKEY_ROWS: { key: keyof Hotkeys; label: string; description: string }[] = [
-  { key: "capture", label: "框选并唤起", description: "全局默认 Ctrl+Q" },
-  { key: "wordGrab", label: "划词翻译", description: "选中文字后触发翻译" },
-  { key: "quickTranslate", label: "快速翻译", description: "剪贴板文本一键翻译" },
-  { key: "imageSearch", label: "图片搜索", description: "框选区域直接以图搜" },
-  { key: "translate", label: "翻译选区", description: "框选文字直接翻译" },
-  { key: "answer", label: "解答选区", description: "框选内容直接解答" },
-  { key: "toggleMode", label: "切换快速 / 深度", description: "临时切换下一动作模式" },
-  { key: "togglePause", label: "暂停 / 恢复热键", description: "游戏等场景临时暂停" },
+  { key: "capture", label: "开始框选", description: "按下后冻结屏幕并框选（默认 Ctrl+Q）" },
+  { key: "quickTranslate", label: "快速翻译（剪贴板）", description: "读取剪贴板文字并直接翻译" },
+  { key: "imageSearch", label: "图片搜索（框选）", description: "按下后框选，选完自动以图搜索" },
+  { key: "answer", label: "解答选区（框选）", description: "按下后框选，选完自动解答" },
+  { key: "togglePause", label: "暂停 / 恢复热键", description: "游戏等场景临时暂停全部全局热键" },
   { key: "openSettings", label: "打开设置", description: "直接打开本设置窗口" },
 ];
 

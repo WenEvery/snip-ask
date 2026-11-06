@@ -164,7 +164,7 @@ export function ActionsHotkeysSection(props: SectionProps) {
 
       <Panel
         title="全局热键"
-        description="点击热键框后按下组合键；至少包含一个修饰键（Ctrl / Alt / Shift / Win）加字母或数字。"
+        description="点击热键框后按下组合键（至少一个修饰键 + 字母/数字）；留空表示不使用。图片搜索/解答选区按下后会先进入框选，选完自动执行对应动作。"
         actions={
           <Button
             variant="ghost"

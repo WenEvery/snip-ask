@@ -72,31 +72,29 @@ impl HotkeyAction {
     }
 }
 
-/// 全部热键动作。
-pub const ACTIONS: [HotkeyAction; 8] = [
+/// 全部热键动作（v1.0.6 起只保留**真实可用**的动作）。
+///
+/// 已移除：`wordGrab`（需读取其它应用选中文字，未实现）、`translate`（与默认动作重复）、
+/// `toggleMode`（无对应运行期状态）。配置字段仍保留兼容，但不再注册/展示。
+pub const ACTIONS: [HotkeyAction; 6] = [
     HotkeyAction::Capture,
-    HotkeyAction::WordGrab,
     HotkeyAction::QuickTranslate,
     HotkeyAction::ImageSearch,
-    HotkeyAction::Translate,
     HotkeyAction::Answer,
     HotkeyAction::TogglePause,
     HotkeyAction::OpenSettings,
 ];
 
-/// 配置中的热键字段（用于冲突检测）。
-pub fn hotkey_fields(config: &Config) -> [(&'static str, &str); 9] {
+/// 配置中的热键字段（仅**生效中**的动作；用于冲突检测与设置页提示）。
+pub fn hotkey_fields(config: &Config) -> [(&'static str, &str); 6] {
     [
         ("hotkeys.capture", config.hotkeys.capture.as_str()),
-        ("hotkeys.wordGrab", config.hotkeys.word_grab.as_str()),
         (
             "hotkeys.quickTranslate",
             config.hotkeys.quick_translate.as_str(),
         ),
         ("hotkeys.imageSearch", config.hotkeys.image_search.as_str()),
-        ("hotkeys.translate", config.hotkeys.translate.as_str()),
         ("hotkeys.answer", config.hotkeys.answer.as_str()),
-        ("hotkeys.toggleMode", config.hotkeys.toggle_mode.as_str()),
         ("hotkeys.togglePause", config.hotkeys.toggle_pause.as_str()),
         (
             "hotkeys.openSettings",
@@ -344,10 +342,58 @@ pub fn on_shortcut(app: &AppHandle, shortcut: &Shortcut, state: ShortcutState) {
     }
     match action {
         HotkeyAction::Capture => {
+            app_state.set_pending_action(None);
             let app = app.clone();
             let _handle = tauri::async_runtime::spawn(async move {
                 if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
                     tracing::warn!(code = %err.code, message = %err.message, "热键触发框选失败");
+                }
+            });
+        }
+        HotkeyAction::QuickTranslate => {
+            // 剪贴板文本 → 直接翻译任务（不截图、不弹框选）。
+            let text = crate::platform::clipboard::get_text();
+            if text.trim().is_empty() {
+                tracing::warn!("快速翻译热键：剪贴板为空，已忽略");
+                return;
+            }
+            let app = app.clone();
+            let _handle = tauri::async_runtime::spawn(async move {
+                let state = app.state::<crate::app::state::AppState>();
+                if let Err(err) = crate::commands::action::execute_text_action(
+                    &app,
+                    &state,
+                    crate::contract::types::ActionId::Translate,
+                    text,
+                )
+                .await
+                {
+                    tracing::warn!(
+                        code = %err.code,
+                        message = %err.message,
+                        "快速翻译热键执行失败"
+                    );
+                }
+            });
+        }
+        HotkeyAction::ImageSearch | HotkeyAction::Answer => {
+            // 带动作框选：捕获 → 用户框选 → selection_commit 自动执行该动作。
+            let action = if action == HotkeyAction::ImageSearch {
+                crate::contract::types::ActionId::ImageSearch
+            } else {
+                crate::contract::types::ActionId::Answer
+            };
+            app_state.set_pending_action(Some(action));
+            let app = app.clone();
+            let _handle = tauri::async_runtime::spawn(async move {
+                if let Err(err) = crate::commands::capture::do_capture_freeze(&app).await {
+                    app.state::<crate::app::state::AppState>()
+                        .set_pending_action(None);
+                    tracing::warn!(
+                        code = %err.code,
+                        message = %err.message,
+                        "热键触发框选失败（已清除待执行动作）"
+                    );
                 }
             });
         }
@@ -422,8 +468,18 @@ mod tests {
         config.hotkeys.open_settings = "win+,".to_string();
         assert_eq!(HotkeyAction::Capture.config_spec(&config), "Ctrl+Q");
         assert_eq!(HotkeyAction::OpenSettings.config_spec(&config), "win+,");
-        assert_eq!(ACTIONS.len(), 8);
-        assert_eq!(hotkey_fields(&config).len(), 9);
+        assert_eq!(ACTIONS.len(), 6);
+        assert_eq!(hotkey_fields(&config).len(), 6);
+        // v1.0.6：不再注册/展示无效热键（划词翻译 / 翻译选区 / 切换模式）。
+        assert!(!ACTIONS.contains(&HotkeyAction::WordGrab));
+        assert!(!ACTIONS.contains(&HotkeyAction::Translate));
+        let fields: Vec<&str> = hotkey_fields(&config)
+            .iter()
+            .map(|(name, _)| *name)
+            .collect();
+        assert!(!fields.contains(&"hotkeys.wordGrab"));
+        assert!(!fields.contains(&"hotkeys.translate"));
+        assert!(!fields.contains(&"hotkeys.toggleMode"));
     }
 
     fn default_config() -> Config {
@@ -483,8 +539,8 @@ mod tests {
     #[test]
     fn probe_os_duplicate_binding_detected_even_if_registered() {
         let mut config = default_config();
-        // 同一组合被 capture / translate 重复绑定 → 即使应用当前持有该键，也应报配置内冲突
-        config.hotkeys.translate = "ctrl+q".to_string();
+        // 同一组合被 capture / imageSearch 重复绑定 → 即使应用当前持有该键，也应报配置内冲突
+        config.hotkeys.image_search = "ctrl+q".to_string();
         let status = probe_os_with(&config, "Ctrl+Q", |_| OsProbe::RegisteredByApp);
         assert!(!status.available);
         assert_eq!(status.conflict_with.as_deref(), Some("hotkeys.capture"));
@@ -528,7 +584,7 @@ mod tests {
     fn probe_os_mapping_matrix_is_total() {
         // 覆盖 (格式, 配置内冲突, OS 探测) 的完整映射矩阵，断言 100% 归一到契约语义。
         let mut duplicated = default_config();
-        duplicated.hotkeys.word_grab = "Ctrl+Q".to_string();
+        duplicated.hotkeys.image_search = "Ctrl+Q".to_string();
         let cases: [(Config, &str, OsProbe, bool, Option<&str>); 10] = [
             (default_config(), "Ctrl+Shift+Y", OsProbe::Free, true, None),
             (

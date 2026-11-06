@@ -13,7 +13,7 @@ use tauri::{AppHandle, State};
 use crate::app::state::AppState;
 use crate::contract::errors::{AppError, AppResult};
 use crate::contract::types::{
-    ActionId, Mode, RunActionOptions, SelectionResult, SessionId, TaskId,
+    ActionId, FrozenFrameMeta, Mode, RectPhys, RunActionOptions, SelectionResult, SessionId, TaskId,
 };
 use crate::domain::action::mode_for;
 use crate::domain::session::{Session, SessionPhase};
@@ -95,6 +95,18 @@ pub async fn menu_execute(
     mode: Option<Mode>,
     options: Option<RunActionOptions>,
 ) -> AppResult<TaskId> {
+    execute_action(&app, &state, session, action, mode, options).await
+}
+
+/// 动作执行核心（命令层与全局热键/自动执行共用；不含 Tauri `State` 包装）。
+pub(crate) async fn execute_action(
+    app: &AppHandle,
+    state: &AppState,
+    session: SessionId,
+    action: ActionId,
+    mode: Option<Mode>,
+    options: Option<RunActionOptions>,
+) -> AppResult<TaskId> {
     let config = state.snapshot_config();
     let options = options.unwrap_or_default();
 
@@ -145,7 +157,7 @@ pub async fn menu_execute(
         input_text.clone()
     } else {
         render_prompt(
-            &state,
+            state,
             &routed.prompt_key,
             &input_text,
             &config,
@@ -155,24 +167,50 @@ pub async fn menu_execute(
     };
 
     // 显示结果窗（前端据此初始化流式容器）。
-    if let Err(err) = crate::app::windows::show_result(&app) {
+    if let Err(err) = crate::app::windows::show_result(app) {
         tracing::warn!(code = %err.code, "显示结果窗失败");
     }
 
-    // 图片搜索：取冻结帧 dataUrl（受 privacy.allowImageUpload / localOnly 约束）。
-    // 未允许上传或未取到帧时不带图，task_runner 会退化为「本地 OCR 文本 → 检索 → 摘要」
-    // 并在回答里如实标注「未上传图片」。
+    // 图片搜索：**只上传用户框选的区域**（v1.0.6 修复：此前误传整张虚拟桌面冻结帧），
+    // 受 privacy.allowImageUpload / localOnly 约束。未允许上传或裁切失败时不带图，
+    // task_runner 会退化为「本地 OCR 文本 → 检索 → 摘要」并如实标注「未上传图片」。
     let image_data_url = if action == ActionId::ImageSearch {
         if config.privacy.allow_image_upload && !config.privacy.local_only {
-            let data_url = state.frozen_frame().and_then(|frame| frame.data_url);
-            match data_url.as_deref() {
-                Some(url) => tracing::info!(
-                    data_url_chars = url.chars().count(),
-                    "图片搜索：已附带冻结帧 dataUrl（不上传日志内容）"
-                ),
-                None => tracing::info!("图片搜索：未取到冻结帧 dataUrl，回退本地 OCR 文本"),
+            let desktop = crate::services::capture_service::virtual_desktop(app);
+            let cropped = state.frozen_frame().map(|frame| {
+                crate::platform::capture::cropped_data_url(
+                    &frame,
+                    &desktop.rect,
+                    &selection.rect_phys,
+                )
+            });
+            match cropped {
+                Some(Ok(Some(url))) => {
+                    tracing::info!(
+                        data_url_chars = url.chars().count(),
+                        selection_width = selection.rect_phys.width,
+                        selection_height = selection.rect_phys.height,
+                        "图片搜索：已附带选区截图（仅框选区域，不含整桌面）"
+                    );
+                    Some(url)
+                }
+                Some(Ok(None)) => {
+                    tracing::info!("图片搜索：未能从冻结帧裁出选区，回退本地 OCR 文本");
+                    None
+                }
+                Some(Err(err)) => {
+                    tracing::warn!(
+                        code = %err.code,
+                        detail = %err.detail.as_deref().unwrap_or(""),
+                        "图片搜索：选区截图编码失败，回退本地 OCR 文本"
+                    );
+                    None
+                }
+                None => {
+                    tracing::info!("图片搜索：未取到冻结帧，回退本地 OCR 文本");
+                    None
+                }
             }
-            data_url
         } else {
             tracing::info!("图片搜索：隐私设置禁止上传图片，回退本地 OCR 文本");
             None
@@ -194,7 +232,63 @@ pub async fn menu_execute(
         image_data_url,
         options,
     };
-    task_runner::spawn(app, request)
+    task_runner::spawn(app.clone(), request)
+}
+
+/// 无屏幕选区的文本动作（当前用于「快速翻译」剪贴板热键）。
+///
+/// 复用正常任务链路：创建一个仅含文本的会话/选区（无真实截图），再调用 [`execute_action`]。
+/// 这样结果窗、历史轮次、重答与错误展示都与普通动作一致，不需要新增命令或事件。
+pub(crate) async fn execute_text_action(
+    app: &AppHandle,
+    state: &AppState,
+    action: ActionId,
+    text: String,
+) -> AppResult<TaskId> {
+    if text.trim().is_empty() {
+        return Err(
+            AppError::invalid_config("text", "剪贴板为空，没有可翻译的文字")
+                .with_message("剪贴板里没有可翻译的文字：请先复制文本再按快速翻译热键")
+                .with_fallback(vec!["retry"]),
+        );
+    }
+    let start = { state.session.lock().begin_capture() };
+    for task in &start.replaced_tasks {
+        state.tasks.lock().cancel(task);
+    }
+    if let Some(replaced) = start.replaced_session.as_ref() {
+        state.turns.lock().drop_session(replaced);
+    }
+    let session = start.session;
+    {
+        let mut store = state.session.lock();
+        store.attach_frame(
+            &session,
+            FrozenFrameMeta {
+                width: 1,
+                height: 1,
+                data_url: None,
+            },
+        )?;
+        store.set_selecting(&session)?;
+        store.commit_selection(
+            &session,
+            SelectionResult {
+                session: session.clone(),
+                rect_phys: RectPhys {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 1.0,
+                    height: 1.0,
+                },
+                has_text: true,
+                preview: text,
+                boxes: Vec::new(),
+            },
+        )?;
+    }
+    state.clear_frozen_frame();
+    execute_action(app, state, session, action, None, None).await
 }
 
 /// 命令：取消任务（停止流，不再推送该任务事件）。

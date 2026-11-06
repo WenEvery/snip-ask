@@ -5,9 +5,11 @@
 
 use windows::Win32::Foundation::{GlobalFree, HANDLE, HGLOBAL};
 use windows::Win32::System::DataExchange::{
-    CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData,
+    CloseClipboard, EmptyClipboard, GetClipboardData, OpenClipboard, SetClipboardData,
 };
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
+use windows::Win32::System::Memory::{
+    GlobalAlloc, GlobalLock, GlobalSize, GlobalUnlock, GMEM_MOVEABLE,
+};
 
 use crate::contract::errors::{AppError, AppResult};
 
@@ -59,6 +61,40 @@ pub fn set_text(text: &str) -> AppResult<()> {
     }
 }
 
+/// 读取系统剪贴板文本（`CF_UNICODETEXT`）；无文本/不可用时返回空串。
+///
+/// 用于「快速翻译」热键：读取用户从其它程序复制的文字；不写日志正文。
+pub fn get_text() -> String {
+    // SAFETY：Win32 调用成对闭合；`GlobalSize/GlobalLock` 只在 OpenClipboard 成功后使用。
+    unsafe {
+        if OpenClipboard(None).is_err() {
+            return String::new();
+        }
+        let result = (|| -> String {
+            let Ok(handle) = GetClipboardData(CF_UNICODETEXT) else {
+                return String::new();
+            };
+            let memory = HGLOBAL(handle.0);
+            let size = GlobalSize(memory);
+            if size < 2 {
+                return String::new();
+            }
+            let pointer = GlobalLock(memory);
+            if pointer.is_null() {
+                return String::new();
+            }
+            let units = size / std::mem::size_of::<u16>();
+            let utf16 = std::slice::from_raw_parts(pointer as *const u16, units);
+            let length = utf16.iter().position(|unit| *unit == 0).unwrap_or(units);
+            let text = String::from_utf16_lossy(&utf16[..length]);
+            let _ = GlobalUnlock(memory);
+            text
+        })();
+        let _ = CloseClipboard();
+        result
+    }
+}
+
 fn clipboard_error(detail: impl Into<String>) -> AppError {
     AppError::io_failed(detail.into())
         .with_message("复制到剪贴板失败：请稍后重试，或手动选择文本复制")
@@ -73,10 +109,12 @@ mod tests {
     #[test]
     #[ignore = "会覆盖当前系统剪贴板，需手动 --ignored 运行"]
     fn real_clipboard_roundtrip() {
-        set_text("SnipAsk clipboard test 512").expect("write clipboard");
-        // 简单验证：再次写入不报错且空文本可写（读取接口不在产品范围内）。
+        let marker = "SnipAsk clipboard test 512";
+        set_text(marker).expect("write clipboard");
+        assert_eq!(get_text(), marker);
         set_text("").expect("empty write");
-        set_text("SnipAsk clipboard test 512").expect("rewrite");
+        assert_eq!(get_text(), "");
+        set_text(marker).expect("rewrite");
     }
 
     #[test]

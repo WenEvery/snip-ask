@@ -275,6 +275,8 @@ pub async fn capture_cancel(
     state: State<'_, AppState>,
     session: SessionId,
 ) -> AppResult<()> {
+    // 用户取消框选：清除热键设置的「框选后自动执行动作」，避免影响下一次普通 Ctrl+Q。
+    state.set_pending_action(None);
     {
         let mut tasks = state.tasks.lock();
         tasks.cancel_session(&session);

@@ -112,6 +112,54 @@ pub async fn selection_commit(
         result.has_text,
         &capabilities,
     );
+    // 热键「图片搜索 / 解答选区」：框选提交后自动执行一次对应动作（v1.0.6）。
+    let pending_action = state.take_pending_action();
+    if let Some(action) = pending_action {
+        let enabled = items.iter().any(|item| item.id == action && item.enabled);
+        if enabled {
+            emit_ocr_status(
+                &app,
+                &OcrStatusPayload {
+                    session: result.session.clone(),
+                    state: OcrStatusState::Done,
+                    boxes: Some(result.boxes.clone()),
+                },
+            );
+            let mode = crate::domain::action::mode_for(&config, action);
+            match crate::commands::action::execute_action(
+                &app,
+                &state,
+                result.session.clone(),
+                action,
+                Some(mode),
+                None,
+            )
+            .await
+            {
+                Ok(_) => {
+                    crate::app::windows::hide_overlay(&app);
+                    return Ok(result);
+                }
+                Err(err) => {
+                    tracing::warn!(
+                        action = action.as_str(),
+                        code = %err.code,
+                        message = %err.message,
+                        "热键动作自动执行失败，回退显示动作菜单"
+                    );
+                }
+            }
+        } else {
+            tracing::info!(
+                action = action.as_str(),
+                "热键动作当前不可用，回退显示动作菜单"
+            );
+        }
+    }
+
+    // 异步：先 ocr:status(done)，再 menu:ready（不阻塞命令返回）。
+    // S-07 受限模式：按运行时能力（云端 Key / 本地模型）决定云动作可用性。
+    // 注意：`config_view()` 会 await 凭据存储，必须放在 session 锁作用域之外。
     let background_app = app.clone();
     let background_result = result.clone();
     let _handle = tauri::async_runtime::spawn(async move {

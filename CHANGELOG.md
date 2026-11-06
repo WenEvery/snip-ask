@@ -11,6 +11,53 @@
 - 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）。
   **自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
 
+## [1.0.6] - 2026-11-06（用户反馈修复）
+
+> 修复版：处理两项用户反馈（图片搜索上传了整张桌面 / 部分全局热键无效）。**无契约变更**
+> （配置 Schema 6 / 43 命令 / 15 事件 / `IPC_CONTRACT_VERSION = 1` 均不变；无效热键字段保留兼容）。
+
+### 修复
+
+- **图片搜索上传整张桌面而不是框选区域（隐私问题）**：`menu_execute` 此前直接把冻结帧的整张虚拟桌面
+  PNG `data_url` 传给 DeepSeek，用户只选择了一小块区域，上传的却是整个屏幕。修复：
+  - 新增 `platform::capture::cropped_data_url(frame, frame_origin, selection_rect)`：按选区绝对物理矩形
+    从冻结帧裁切 BGRA，仅编码选区 PNG（负原点/多屏/边界裁剪均处理）；
+  - 图片搜索只上传该选区截图；裁切失败/无帧/隐私禁止时**不上传整桌面**，退化为本地 OCR 文本并如实标注；
+  - 日志记录选区宽高与 data URL 字符数（不记录图像内容）；新增 2 个单元测试覆盖裁切尺寸、
+    负原点、越界与骨架帧。
+- **部分全局热键无效**：`wordGrab` / `translate` / `toggleMode` 从未注册或只发了一个前端未处理的事件；
+  `imageSearch` / `answer` / `quickTranslate` 也只发事件，点了没反应。修复/精简：
+  - 只注册并展示 **6 个真实可用**热键：开始框选、**快速翻译（剪贴板）**、**图片搜索（框选）**、
+    **解答选区（框选）**、暂停/恢复、打开设置；移除划词翻译、翻译选区、切换模式（配置字段保留兼容）；
+  - 快速翻译：读取系统剪贴板文本（新增 `clipboard::get_text`），不截图，直接创建文本动作会话并执行翻译，
+    结果窗/重答/错误展示与普通动作一致；
+  - 图片搜索/解答选区：热键先进入框选，`selection_commit` 消费 `pending_action` 并自动执行对应动作
+    （取消框选/捕获失败时清除，避免影响下一次普通 Ctrl+Q）；
+  - `hotkey_probe` 配置内冲突检测只针对生效中的 6 个字段，避免旧隐藏字段造成幽灵冲突；
+  - 设置页热键行精简为 6 项并改写文案（说明「按下后先框选、选完自动执行」）。
+  - **真实 App 验证 PASS**（`.verify/v1/fix/v106-hotkeys-e2e.json`）：系统级注入热键后，
+    快速翻译（剪贴板）产出中文译文（`来自剪贴板的问候 512，请翻译我。`）；图片搜索/解答热键均
+    真实进入捕获态（`activeSession` 非空）；三个热键 `hotkey_probe` 均 `available=true`。
+
+### 双安装包（重建，最终归档）
+
+- 用 Tauri 2.12.4 基于 v1.0.6 源码重建并归档到 [release/](release/README.md)：
+  - **在线安装版** `SnipAsk_1.0.6_x64-setup.exe` **7,792,690 B（7.43 MiB）**，
+    SHA256 `81ccf21488a0a4eed5cf072e44a40053014a1c639fbfe3e7e1f305c2dce3b84f`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.6_x64-full-setup.exe` **22,582,336 B（21.54 MiB）**，
+    SHA256 `9b33593edacf87cb6ed0941dea6928e071b8e82409e5ca1704f97d98793f71e5`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB）、双版本主程序 SHA256 不同；v1.0.5 安装包从 `release/` 移除。
+- 安装冒烟 PASS：两版静默安装 `/S` → 启动 → 静默卸载 `/S`；卸载后数据目录/模型探针/注册项无残留
+  （`dataRemoved=true`、`dataResidue=[]`），用户真实数据冒烟后恢复；两版 `NotSigned`。
+
+### 验证
+
+- **最终门禁（全绿）**：`cargo fmt --check` PASS；`cargo clippy --all-targets -- -D warnings` PASS；
+  `cargo test --all-targets` **501 passed / 0 failed / 21 ignored**（新增选区裁切/热键/待执行动作等测试）；
+  `pnpm typecheck` 0、`pnpm test` 48/48、`pnpm build:web` 0；双安装包构建 + 冒烟 PASS。
+- 证据：`.verify/v1/fix/v106-hotkeys-e2e.json`（真实热键）、`.verify/v1/fix/v106-image-crop.md`
+  （图片搜索裁切代码路径与单测说明）、`.verify/v1/fix/v106-gate.log`。
+
 ## [1.0.5] - 2026-11-06（用户反馈修复）
 
 > 修复版：处理用户反馈「复制文字动作变成 AI 解答、剪贴板没有原文」与「部分文字无法识别」。

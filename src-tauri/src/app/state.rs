@@ -11,7 +11,7 @@ use parking_lot::{Mutex, RwLock};
 
 use crate::contract::config::{Config, ConfigView};
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
-use crate::contract::types::{EngineStatus, OnboardingState, SessionId};
+use crate::contract::types::{ActionId, EngineStatus, OnboardingState, SessionId};
 use crate::domain::session::{SessionPhase, SessionStore};
 use crate::domain::task::TaskStore;
 use crate::domain::turn::TurnStore;
@@ -68,6 +68,10 @@ pub struct AppState {
     pub started_at: Instant,
     /// 热键是否暂停。
     pub paused: AtomicBool,
+    /// 全局热键触发的「捕获后自动执行动作」（图片搜索 / 解答选区）：`selection_commit` 消费一次。
+    ///
+    /// 只用于热键语义，不进入配置/契约；用户取消框选或捕获失败时必须清空。
+    pub pending_action: RwLock<Option<ActionId>>,
     /// 当前冻结帧（真实捕获含 BGRA 像素与 PNG data URL；T2/T3 共用）。
     pub frozen: RwLock<Option<FrozenFrame>>,
     /// 本地引擎未启动的可读原因（用于设置页展示；启动成功后清空）。
@@ -135,6 +139,7 @@ impl AppState {
             engine: RwLock::new(EngineStatus::Stopped),
             started_at: Instant::now(),
             paused: AtomicBool::new(false),
+            pending_action: RwLock::new(None),
             frozen: RwLock::new(None),
             engine_note: RwLock::new(None),
         })
@@ -196,6 +201,16 @@ impl AppState {
     /// 设置热键暂停标记。
     pub fn set_paused(&self, paused: bool) {
         self.paused.store(paused, Ordering::SeqCst);
+    }
+
+    /// 设置「框选完成后自动执行的动作」（热键语义；`None` 清除）。
+    pub fn set_pending_action(&self, action: Option<ActionId>) {
+        *self.pending_action.write() = action;
+    }
+
+    /// 取出并清除待执行动作（只消费一次，避免影响下一次普通框选）。
+    pub fn take_pending_action(&self) -> Option<ActionId> {
+        self.pending_action.write().take()
     }
 
     /// 记录本地引擎未启动的可读原因（设置页展示用）。
@@ -334,6 +349,21 @@ mod tests {
         assert!(paths.config_file.is_file());
         assert!(state.history.is_enabled());
 
+        let _ = std::fs::remove_dir_all(&paths.data_dir);
+    }
+
+    #[test]
+    fn pending_action_is_consumed_once() {
+        let paths = temp_paths();
+        let state = test_state(paths.clone());
+        assert_eq!(state.take_pending_action(), None);
+        state.set_pending_action(Some(ActionId::ImageSearch));
+        assert_eq!(state.take_pending_action(), Some(ActionId::ImageSearch));
+        // 只消费一次：下一次普通框选不会被上一次热键影响。
+        assert_eq!(state.take_pending_action(), None);
+        state.set_pending_action(Some(ActionId::Answer));
+        state.set_pending_action(None);
+        assert_eq!(state.take_pending_action(), None);
         let _ = std::fs::remove_dir_all(&paths.data_dir);
     }
 

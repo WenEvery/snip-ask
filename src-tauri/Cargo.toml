@@ -1,6 +1,6 @@
 [package]
 name = "snip-ask"
-version = "1.0.5"
+version = "1.0.6"
 description = "框选 AI —— 轻量框选解答 / 翻译 / 搜索桌面工具（Tauri 2 后端脚手架）"
 authors = ["SnipAsk Contributors"]
 edition = "2021"

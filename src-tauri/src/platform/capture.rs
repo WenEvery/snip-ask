@@ -279,6 +279,40 @@ pub fn encode_png_data_url(width: u32, height: u32, bgra: &[u8]) -> AppResult<St
     Ok(format!("{PNG_DATA_URL_PREFIX}{base64}"))
 }
 
+/// 按**绝对物理选区**从冻结帧裁出 PNG data URL（图片搜索只上传用户框选区域，不上传整桌面）。
+///
+/// - `frame_origin` = 捕获时虚拟桌面左上角（可为负），`target` = 选区绝对物理矩形；
+/// - 帧无 BGRA（骨架模式）/与选区不相交时返回 `Ok(None)`，调用方应退化为「不上传图片」；
+/// - 像素越界或长度不符返回可操作错误（不静默上传错误图像）。
+pub fn cropped_data_url(
+    frame: &FrozenFrame,
+    frame_origin: &RectPhys,
+    target: &RectPhys,
+) -> AppResult<Option<String>> {
+    let Some(bgra) = frame.bgra.as_deref() else {
+        return Ok(None);
+    };
+    let Some((x, y, width, height)) =
+        region_local_rect(frame.width, frame.height, frame_origin, target)
+    else {
+        return Ok(None);
+    };
+    let stride = frame.width as usize * 4;
+    let expected = stride
+        .checked_mul(frame.height as usize)
+        .ok_or_else(|| frame_data_error("冻结帧尺寸溢出"))?;
+    if bgra.len() < expected {
+        return Err(frame_data_error("冻结帧像素长度不足，无法裁切选区"));
+    }
+    let row_bytes = width as usize * 4;
+    let mut cropped = Vec::with_capacity(row_bytes * height as usize);
+    for row in y..(y + height) {
+        let start = row as usize * stride + x as usize * 4;
+        cropped.extend_from_slice(&bgra[start..start + row_bytes]);
+    }
+    encode_png_data_url(width, height, &cropped).map(Some)
+}
+
 /// 帧数据/编码错误：SA-1001（可重试，不谎称已尝试 WGC）。
 fn frame_data_error(detail: &str) -> AppError {
     AppError::new(ErrorCode::CaptureFailed, Some(detail.to_string()))
@@ -1407,6 +1441,84 @@ mod tests {
         assert_eq!(frame.height, 1440);
         assert!(frame.bgra.is_none());
         assert_eq!(frame.data_url, meta.data_url);
+    }
+
+    #[test]
+    fn cropped_data_url_only_encodes_selection_region() {
+        // 4×3 帧，每个像素用坐标着色；裁 (1,1,2,2) 后 PNG 宽度/高度必须是 2×2。
+        let mut bgra = Vec::new();
+        for y in 0..3u8 {
+            for x in 0..4u8 {
+                bgra.extend_from_slice(&[x, y, 9, 255]);
+            }
+        }
+        let frame = FrozenFrame::from_bgra(4, 3, bgra).expect("编码成功");
+        let origin = RectPhys {
+            x: 0.0,
+            y: 0.0,
+            width: 4.0,
+            height: 3.0,
+        };
+        let target = RectPhys {
+            x: 1.0,
+            y: 1.0,
+            width: 2.0,
+            height: 2.0,
+        };
+        let url = cropped_data_url(&frame, &origin, &target)
+            .expect("裁切成功")
+            .expect("真实帧必须产出 data URL");
+        assert!(url.starts_with(PNG_DATA_URL_PREFIX));
+        let png_bytes = base64::engine::general_purpose::STANDARD
+            .decode(url.trim_start_matches(PNG_DATA_URL_PREFIX))
+            .expect("data URL 必须是合法 base64");
+        assert_eq!(png_dimensions(&png_bytes), (2, 2));
+    }
+
+    #[test]
+    fn cropped_data_url_handles_negative_origin_and_out_of_range() {
+        let mut bgra = Vec::new();
+        for _ in 0..(4 * 3) {
+            bgra.extend_from_slice(&[10, 20, 30, 255]);
+        }
+        let frame = FrozenFrame::from_bgra(4, 3, bgra).expect("编码成功");
+        // 帧原点 (-100,-50)：绝对矩形 (-99,-49,2,2) → 帧局部 (1,1,2,2)。
+        let origin = RectPhys {
+            x: -100.0,
+            y: -50.0,
+            width: 4.0,
+            height: 3.0,
+        };
+        let target = RectPhys {
+            x: -99.0,
+            y: -49.0,
+            width: 2.0,
+            height: 2.0,
+        };
+        let url = cropped_data_url(&frame, &origin, &target)
+            .expect("裁切成功")
+            .expect("相交区域必须产出 data URL");
+        let png_bytes = base64::engine::general_purpose::STANDARD
+            .decode(url.trim_start_matches(PNG_DATA_URL_PREFIX))
+            .expect("合法 base64");
+        assert_eq!(png_dimensions(&png_bytes), (2, 2));
+
+        // 与帧完全不相交 → None（调用方不上传图片）。
+        let outside = RectPhys {
+            x: 50.0,
+            y: 50.0,
+            width: 10.0,
+            height: 10.0,
+        };
+        assert!(cropped_data_url(&frame, &origin, &outside)
+            .expect("裁切成功")
+            .is_none());
+
+        // 骨架帧无 BGRA → None（不伪造图片）。
+        let skeleton = FrozenFrame::skeleton(4, 3);
+        assert!(cropped_data_url(&skeleton, &origin, &target)
+            .expect("裁切成功")
+            .is_none());
     }
 
     #[test]
