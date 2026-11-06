@@ -11,6 +11,60 @@
 - 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）。
   **自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
 
+## [1.1.0] - 2026-11-06（功能完整性 + 英文界面 + 开源发布）
+
+> 小版本：补齐此前“设置项存在但未生效”的功能、让 provider caps/代理真正生效、完成英文界面，
+> 并以单快照形式发布到 GitHub（Apache-2.0）。**配置 Schema 6 → 7**（迁移自动执行）；
+> 命令仍 43 个、事件仍 15 个、`IPC_CONTRACT_VERSION` 仍为 1。
+
+### 新功能 / 修复
+
+- **英文界面（中英双语）**：新增 `src/i18n`（`t()` + 中文 key 词典 + 语言切换 reload），
+  主窗口/设置/引导/历史/框选层/结果窗全部前端文案接入；`app.language = en-US` 即时生效；
+  新增 `scripts/check-i18n.mjs` 门禁（静态 t() key 全部有英文翻译）。
+  后端动态错误/动作禁用说明等少量中文仍保留（见限制）。
+- **provider caps 真正生效**：`vision` / `search` / `thinking` / `translate` 参与动作可用性与
+  引擎选择；AI 搜索需 search、图片搜索需 vision、云端翻译需 translate（Qwen-MT kind 亦视为可翻译）、
+  深度解答优先 thinking；云端翻译降级链只含可翻译供应商。
+- **配置 Schema 6 → 7**：`migrate_v6_to_v7` 给 `kind=openAiCompatible`（含 DeepSeek/缺省 kind）的
+  provider 自动补 `translate` cap，保证升级后云端翻译不被误禁；幂等、不覆盖 Qwen-MT 用户配置。
+- **`advanced.proxy` 接入**：进程级 HTTP 代理注入（LLM 网关 / 搜索工具 / provider_test / 模型与后端下载），
+  回环地址始终 `no_proxy`；支持 `http(s)://[user:pass@]host:port`，非法值保存返回 SA-5001，
+  运行期非法值告警忽略；需重启应用生效。
+- **设置项全部生效**（此前 UI 存在但后端未使用）：
+  - `app.startMinimized`：非首启按配置隐藏到托盘或显示主窗口（首启仍显示引导）；
+  - `actions.defaultAction`：框选后自动执行默认动作（热键 pending 优先，失败回退菜单）；
+  - `ui.resultWindow.width/height/pin/position`：结果窗初始尺寸、置顶、`follow` 跟随选区/`fixed` 居中；
+  - `ui.resultWindow.opacity`：结果窗内容不透明度（窗口保持不透明）；
+  - `ocr.preserveBoxes`：关闭后不再返回文字框（覆盖翻译随之不可用）。
+- **图片搜索只上传框选区域**（v1.0.6 起）：继续保留，另修复快速翻译合成选区导致结果窗跟随定位到
+  左上角的 UX 边角（合成 1px² 选区不参与 follow）。
+- 图片搜索/快速翻译/解答选区等 6 个可用全局热键、复制原文、autoCopy、OCR 合并框拆分等
+  v1.0.4–v1.0.6 修复全部保留。
+
+### 双安装包（重建，最终归档）
+
+- 用 Tauri 2.12.4 基于 v1.1.0 源码重建并归档到 [release/](release/README.md)：
+  - `SnipAsk_1.1.0_x64-setup.exe` **7,816,641 B（7.45 MiB）**，
+    SHA256 `debe34a4cf697eeee2b70461feb9401c6d56e9ee7ba522399a400211e59d8fc8`；
+  - `SnipAsk_1.1.0_x64-full-setup.exe` **22,606,726 B（21.56 MiB）**，
+    SHA256 `f6b807138a2d692cb08a9343c409cb194fca544b4950df53fc2c1ec599445304`；
+  - v1.0.6 安装包从 `release/` 移除；体积门禁 PASS、双版本主程序 SHA256 不同。
+- 安装冒烟 PASS：两版静默安装 `/S` → 启动 → 隐藏托盘 → 静默卸载 `/S`；卸载后数据目录/模型探针/
+  注册项无残留（`dataRemoved=true`、`dataResidue=[]`），用户真实数据恢复；两版 `NotSigned`。
+
+### 验证
+
+- **最终门禁（全绿）**：`cargo fmt --check` PASS；`cargo clippy --all-targets -- -D warnings` PASS；
+  `cargo test --all-targets` **533 passed / 0 failed / 21 ignored**；`pnpm typecheck` 0、
+  `pnpm test` 48/48、`pnpm build:web` 0、`node scripts/check-i18n.mjs` PASS。
+- **真实 App E2E PASS**（`.verify/v1/fix/v110-e2e.json`）：schema 6→7 迁移 + deepseek 补 translate；
+  英文主窗口/结果窗；`Ctrl+Shift+Y` 快速翻译输出中文译文；结果窗宽度 620、内容不透明度 0.8；
+  图片搜索/解答热键进入捕获态。
+- 新增测试：settings 14（startMinimized/defaultAction/resultWindow/preserveBoxes）、
+   caps/迁移/proxy/router 等 40+；i18n 覆盖率脚本。
+- 功能逐项清单见 [docs/功能验证清单.md](docs/功能验证清单.md)。
+
 ## [1.0.6] - 2026-11-06（用户反馈修复）
 
 > 修复版：处理两项用户反馈（图片搜索上传了整张桌面 / 部分全局热键无效）。**无契约变更**

@@ -1,10 +1,11 @@
 /** 引导页错误归一化（与设置页实现同构，保持窗口内自洽，避免跨窗口依赖） */
 
 import type { UiError } from "./types";
+import { t } from "../../../i18n";
 
 const GENERIC: UiError = {
   code: "SA-0000",
-  message: "操作失败，请稍后重试。",
+  message: t("操作失败，请稍后重试。"),
   detail: null,
   retryable: true,
   fallback: [],

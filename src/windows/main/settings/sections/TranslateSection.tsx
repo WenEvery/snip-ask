@@ -15,6 +15,7 @@ import type {
 } from "@/shared/contract/types";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
 import { buildPatch, hasChanges } from "../diff";
 import { formatBytes } from "../format";
@@ -155,7 +156,7 @@ export function TranslateSection(props: SectionProps) {
     setBackendBusy(id);
     try {
       await ipc.invoke<void>(COMMANDS.backendsRemove, { id });
-      setNotice(`已删除加速组件「${id}」`);
+      setNotice(t("已删除加速组件「{id}」", { id }));
       await refreshBackends();
       await refreshProbe(true);
     } catch (err) {
@@ -195,7 +196,7 @@ export function TranslateSection(props: SectionProps) {
 
   const runTranslateTest = async () => {
     if (!testText.trim()) {
-      setNotice("请先输入要试译的文本");
+      setNotice(t("请先输入要试译的文本"));
       return;
     }
     setTesting(true);
@@ -222,70 +223,82 @@ export function TranslateSection(props: SectionProps) {
     };
     const patch = buildPatch(baseline, cleaned, ["translate", "local"]);
     if (Object.keys(patch).length === 0) {
-      setNotice("翻译设置没有变化");
+      setNotice(t("翻译设置没有变化"));
       return;
     }
-    const ok = await onApply(patch, "翻译设置");
-    if (ok) setNotice("翻译设置已保存；切换引擎或计算设备后，本地引擎会自动重启。");
+    const ok = await onApply(patch, t("翻译设置"));
+    if (ok) setNotice(t("翻译设置已保存；切换引擎或计算设备后，本地引擎会自动重启。"));
   };
 
   const providerOptions = draft.providers.map((provider) => ({
     value: provider.id,
-    label: `${provider.name}（${provider.model}）`,
+    label: t("{name}（{model}）", { name: provider.name, model: provider.model }),
     disabled: !provider.enabled,
   }));
 
   return (
     <SectionShell
-      title="翻译"
-      description="可以选择云端翻译（更快、效果更好，需要 API Key），也可以用本地模型离线翻译。"
+      title={t("翻译")}
+      description={t(
+        "可以选择云端翻译（更快、效果更好，需要 API Key），也可以用本地模型离线翻译。",
+      )}
     >
-      <Panel title="翻译方式">
+      <Panel title={t("翻译方式")}>
         <SegmentedControl<TranslateBackend>
           value={translate.backend}
           onChange={(backend) => {
             updateTranslate({ backend });
             setNotice(
-              backend === "local" ? "本地翻译需要先下载模型" : "云端翻译会使用你配置的 AI 服务",
+              backend === "local"
+                ? t("本地翻译需要先下载模型")
+                : t("云端翻译会使用你配置的 AI 服务"),
             );
           }}
           options={[
-            { value: "cloud", label: "云端翻译", description: "用已配置的 AI 服务，效果好" },
-            { value: "local", label: "本地翻译", description: "离线可用，不上传内容" },
+            { value: "cloud", label: t("云端翻译"), description: t("用已配置的 AI 服务，效果好") },
+            { value: "local", label: t("本地翻译"), description: t("离线可用，不上传内容") },
           ]}
         />
       </Panel>
 
       <Panel
-        title="文字识别（框选识别）"
-        description="框选后的文字识别在本机完成，不联网。识别需要的模型随安装包提供，或在首次使用时自动下载。"
+        title={t("文字识别（框选识别）")}
+        description={t(
+          "框选后的文字识别在本机完成，不联网。识别需要的模型随安装包提供，或在首次使用时自动下载。",
+        )}
       >
         <OcrStatusCard />
       </Panel>
 
       {translate.backend === "cloud" ? (
-        <Panel title="云端翻译" description="可以使用专用翻译模型，也可以直接用普通的 AI 模型。">
+        <Panel
+          title={t("云端翻译")}
+          description={t("可以使用专用翻译模型，也可以直接用普通的 AI 模型。")}
+        >
           <SelectField
-            label="供应商"
+            label={t("供应商")}
             value={translate.providerId ?? ""}
-            options={[{ value: "", label: "使用默认供应商" }, ...providerOptions]}
+            options={[{ value: "", label: t("使用默认供应商") }, ...providerOptions]}
             onChange={(providerId) => updateTranslate({ providerId: providerId || null })}
-            hint="只列出已配置的供应商，停用的不可选"
+            hint={t("只列出已配置的供应商，停用的不可选")}
           />
           <TextInput
-            label="模型名"
+            label={t("模型名")}
             value={translate.model}
             placeholder="qwen-mt-lite"
             monospace
-            hint="留空时使用供应商的默认模型"
+            hint={t("留空时使用供应商的默认模型")}
             onChange={(model) => updateTranslate({ model: model.trim() })}
           />
         </Panel>
       ) : (
         <>
-          <Panel title="本地翻译" description="本地引擎只在本机运行；长时间不用会自动释放内存。">
+          <Panel
+            title={t("本地翻译")}
+            description={t("本地引擎只在本机运行；长时间不用会自动释放内存。")}
+          >
             <SelectField
-              label="本地引擎"
+              label={t("本地引擎")}
               value={local.engine}
               options={LOCAL_ENGINES.map((engine) => ({
                 value: engine.value,
@@ -298,31 +311,31 @@ export function TranslateSection(props: SectionProps) {
               }
             />
             <TextInput
-              label="模型"
+              label={t("模型")}
               value={local.model}
               placeholder="hy-mt-1.8b-q4"
               monospace
-              hint="填写本地模型的名称；不同引擎的填法略有不同"
+              hint={t("填写本地模型的名称；不同引擎的填法略有不同")}
               onChange={(model) => updateLocal({ model: model.trim() })}
             />
             <div className="sa-grid-2">
               <NumberField
-                label="本机端口"
+                label={t("本机端口")}
                 value={local.port}
                 min={1024}
                 max={65535}
                 suffix=""
-                hint="一般保持默认即可"
+                hint={t("一般保持默认即可")}
                 onChange={(port) => updateLocal({ port })}
               />
               <NumberField
-                label="闲置多久后释放内存"
+                label={t("闲置多久后释放内存")}
                 value={local.idleUnloadSec}
                 min={0}
                 max={86400}
                 step={30}
-                suffix="秒"
-                hint="设为 0 表示不自动释放"
+                suffix={t("秒")}
+                hint={t("设为 0 表示不自动释放")}
                 onChange={(idleUnloadSec) => updateLocal({ idleUnloadSec })}
               />
             </div>
@@ -330,8 +343,10 @@ export function TranslateSection(props: SectionProps) {
           </Panel>
 
           <Panel
-            title="显卡加速"
-            description="有显卡时会优先用显卡加速，没有也能用 CPU。NVIDIA 用户还可以额外启用 CUDA。"
+            title={t("显卡加速")}
+            description={t(
+              "有显卡时会优先用显卡加速，没有也能用 CPU。NVIDIA 用户还可以额外启用 CUDA。",
+            )}
             actions={
               <Button
                 variant="secondary"
@@ -339,13 +354,13 @@ export function TranslateSection(props: SectionProps) {
                 disabled={probeLoading}
                 onClick={() => void refreshProbe(true)}
               >
-                {probeLoading ? "检测中…" : "重新检测"}
+                {probeLoading ? t("检测中…") : t("重新检测")}
               </Button>
             }
           >
             <div className="sa-grid-3">
               <SelectField
-                label="计算设备"
+                label={t("计算设备")}
                 value={local.device}
                 options={DEVICE_OPTIONS.map((option) => ({
                   value: option.value,
@@ -353,10 +368,10 @@ export function TranslateSection(props: SectionProps) {
                   disabled: false,
                 }))}
                 onChange={(value) => updateLocal({ device: value as LocalDevice })}
-                hint="自动：有显卡用显卡，否则用 CPU"
+                hint={t("自动：有显卡用显卡，否则用 CPU")}
               />
               <SelectField
-                label="显卡加速方式"
+                label={t("显卡加速方式")}
                 value={local.gpuBackend}
                 options={GPU_BACKEND_OPTIONS.map((option) => ({
                   value: option.value,
@@ -365,29 +380,36 @@ export function TranslateSection(props: SectionProps) {
                 }))}
                 onChange={(value) => updateLocal({ gpuBackend: value as GpuBackend })}
                 disabled={local.device === "cpu"}
-                hint="大多数显卡选 Vulkan；CUDA 仅支持 NVIDIA"
+                hint={t("大多数显卡选 Vulkan；CUDA 仅支持 NVIDIA")}
               />
               <NumberField
-                label="交给显卡的比例"
+                label={t("交给显卡的比例")}
                 value={local.gpuLayers}
                 min={0}
                 max={512}
-                hint="数值越大，越多计算交给显卡；显存不够时调小"
+                hint={t("数值越大，越多计算交给显卡；显存不够时调小")}
                 disabled={local.device === "cpu"}
                 onChange={(gpuLayers) => updateLocal({ gpuLayers })}
               />
             </div>
             <InfoRow
-              label="设备状态"
-              value={probeLoading ? "正在检测…" : probe ? describeGpuProbe(probe) : "还没有检测"}
-              hint="自动检测显卡型号和可用显存"
+              label={t("设备状态")}
+              value={
+                probeLoading ? t("正在检测…") : probe ? describeGpuProbe(probe) : t("还没有检测")
+              }
+              hint={t("自动检测显卡型号和可用显存")}
             />
-            {local.device === "cpu" ? <Hint>已选择 CPU：更省电但速度较慢。</Hint> : null}
+            {local.device === "cpu" ? <Hint>{t("已选择 CPU：更省电但速度较慢。")}</Hint> : null}
             {probe?.budget && !probe.budget.fits ? (
               <div className="sa-warn" role="status">
                 <span>
-                  这个模型大约需要 {formatMiB(probe.budget.requiredMb)} 显存，当前空闲{" "}
-                  {formatMiB(probe.budget.availableMb)}，可能不够用（会变慢或改用 CPU）。
+                  {t(
+                    "这个模型大约需要 {required} 显存，当前空闲 {available}，可能不够用（会变慢或改用 CPU）。",
+                    {
+                      required: formatMiB(probe.budget.requiredMb),
+                      available: formatMiB(probe.budget.availableMb),
+                    },
+                  )}
                 </span>
                 <span className="sa-inline">
                   <Button
@@ -395,27 +417,32 @@ export function TranslateSection(props: SectionProps) {
                     size="sm"
                     onClick={() => updateLocal({ device: "cpu", gpuLayers: 0 })}
                   >
-                    改用 CPU
+                    {t("改用 CPU")}
                   </Button>
                 </span>
               </div>
             ) : null}
             {!probeLoading && probe && !probe.useable ? (
               <Hint>
-                没有检测到可用的显卡加速，将使用 CPU。可在上方「显卡加速方式」下载 Vulkan 组件（AMD
-                / Intel / NVIDIA 都适用）。
+                {t(
+                  "没有检测到可用的显卡加速，将使用 CPU。可在上方「显卡加速方式」下载 Vulkan 组件（AMD / Intel / NVIDIA 都适用）。",
+                )}
               </Hint>
             ) : null}
 
             <Field
-              label="加速组件"
-              hint="Vulkan 是通用组件（AMD / Intel / NVIDIA 都可用）；CUDA 只适用于 NVIDIA 显卡；CPU 随安装包提供。下载会自动继续，也能随时取消。"
+              label={t("加速组件")}
+              hint={t(
+                "Vulkan 是通用组件（AMD / Intel / NVIDIA 都可用）；CUDA 只适用于 NVIDIA 显卡；CPU 随安装包提供。下载会自动继续，也能随时取消。",
+              )}
             >
               {backendsLoading && backends.length === 0 ? (
-                <LoadingBlock text="正在读取加速组件…" />
+                <LoadingBlock text={t("正在读取加速组件…")} />
               ) : (
                 <div className="sa-models">
-                  {backends.length === 0 ? <Hint>这里暂时没有可下载的加速组件。</Hint> : null}
+                  {backends.length === 0 ? (
+                    <Hint>{t("这里暂时没有可下载的加速组件。")}</Hint>
+                  ) : null}
                   {backends.map((component) => {
                     const state = backendStates[component.id] ?? component.downloadState;
                     const installed = state === "installed" || component.installed;
@@ -426,7 +453,8 @@ export function TranslateSection(props: SectionProps) {
                       progress && progress.total > 0
                         ? Math.min(100, Math.round((progress.loaded / progress.total) * 100))
                         : 0;
-                    const vendorHint = component.requiresVendor === "nvidia" ? " · 仅 NVIDIA" : "";
+                    const vendorHint =
+                      component.requiresVendor === "nvidia" ? t(" · 仅 NVIDIA") : "";
                     return (
                       <div key={component.id} className="sa-model-row">
                         <div className="sa-model-main">
@@ -449,7 +477,9 @@ export function TranslateSection(props: SectionProps) {
                           </div>
                           <p className="sa-model-meta">
                             {formatBytes(component.sizeBytes)}
-                            {component.version ? ` · 版本 ${component.version}` : ""}
+                            {component.version
+                              ? t(" · 版本 {version}", { version: component.version })
+                              : ""}
                             {vendorHint}
                           </p>
                           {active || (installed && component.installedBytes > 0) ? (
@@ -462,23 +492,27 @@ export function TranslateSection(props: SectionProps) {
                               </div>
                               <span className="sa-progress-text">
                                 {installed
-                                  ? `已安装 ${formatBytes(component.installedBytes || component.sizeBytes)}`
+                                  ? t("已安装 {size}", {
+                                      size: formatBytes(
+                                        component.installedBytes || component.sizeBytes,
+                                      ),
+                                    })
                                   : progress
                                     ? `${formatBytes(progress.loaded)} / ${formatBytes(progress.total)} · ${percent}%`
-                                    : "正在准备下载…"}
+                                    : t("正在准备下载…")}
                               </span>
                             </div>
                           ) : null}
                           {state === "failed" ? (
                             <p className="sa-field-hint">
-                              下载失败，可以重试；如果网络不稳定，稍后再试也可以。
+                              {t("下载失败，可以重试；如果网络不稳定，稍后再试也可以。")}
                             </p>
                           ) : null}
                         </div>
                         <div className="sa-model-actions">
                           {installed ? (
                             component.id === "cpu" ? (
-                              <StatusTag tone="ok">随包</StatusTag>
+                              <StatusTag tone="ok">{t("随包")}</StatusTag>
                             ) : (
                               <Button
                                 variant="danger"
@@ -486,7 +520,7 @@ export function TranslateSection(props: SectionProps) {
                                 disabled={backendBusy === component.id}
                                 onClick={() => void removeBackend(component.id)}
                               >
-                                删除
+                                {t("删除")}
                               </Button>
                             )
                           ) : active ? (
@@ -496,7 +530,7 @@ export function TranslateSection(props: SectionProps) {
                               disabled={backendBusy === component.id}
                               onClick={() => void cancelBackendDownload(component.id)}
                             >
-                              取消
+                              {t("取消")}
                             </Button>
                           ) : (
                             <Button
@@ -506,10 +540,10 @@ export function TranslateSection(props: SectionProps) {
                               onClick={() => void startBackendDownload(component.id)}
                             >
                               {backendBusy === component.id
-                                ? "启动中…"
+                                ? t("启动中…")
                                 : state === "failed"
-                                  ? "重试下载"
-                                  : "下载"}
+                                  ? t("重试下载")
+                                  : t("下载")}
                             </Button>
                           )}
                         </div>
@@ -523,12 +557,12 @@ export function TranslateSection(props: SectionProps) {
         </>
       )}
 
-      <Panel title="目标语言与术语表">
+      <Panel title={t("目标语言与术语表")}>
         <div className="sa-grid-2">
           <SelectField
-            label="默认目标语言"
+            label={t("默认目标语言")}
             value={customLang ? CUSTOM_LANG : translate.targetLang}
-            options={[...TARGET_LANGS, { value: CUSTOM_LANG, label: "自定义语言代码…" }]}
+            options={[...TARGET_LANGS, { value: CUSTOM_LANG, label: t("自定义语言代码…") }]}
             onChange={(value) => {
               if (value === CUSTOM_LANG) {
                 setCustomLang(true);
@@ -540,28 +574,28 @@ export function TranslateSection(props: SectionProps) {
           />
           {customLang ? (
             <TextInput
-              label="自定义目标语言"
+              label={t("自定义目标语言")}
               value={translate.targetLang}
-              placeholder="例如 pt / ar"
+              placeholder={t("例如 pt / ar")}
               monospace
-              hint="填写语言代码，例如 en、ja、pt"
+              hint={t("填写语言代码，例如 en、ja、pt")}
               onChange={(targetLang) => updateTranslate({ targetLang })}
             />
           ) : (
-            <InfoRow label="当前目标语言" value={translate.targetLang} mono />
+            <InfoRow label={t("当前目标语言")} value={translate.targetLang} mono />
           )}
         </div>
-        <Field label="术语表" hint="翻译时强制使用的对照词；仅对云端与本地翻译同时生效。">
+        <Field label={t("术语表")} hint={t("翻译时强制使用的对照词；仅对云端与本地翻译同时生效。")}>
           <div className="sa-glossary">
             {translate.glossary.length === 0 ? (
-              <p className="sa-hint">暂无术语，点击下方按钮添加。</p>
+              <p className="sa-hint">{t("暂无术语，点击下方按钮添加。")}</p>
             ) : (
               <table className="sa-table">
                 <thead>
                   <tr>
-                    <th>原文</th>
-                    <th>译文</th>
-                    <th aria-label="操作" />
+                    <th>{t("原文")}</th>
+                    <th>{t("译文")}</th>
+                    <th aria-label={t("操作")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -570,20 +604,20 @@ export function TranslateSection(props: SectionProps) {
                       <td>
                         <TextInput
                           value={entry.from}
-                          placeholder="原文术语"
+                          placeholder={t("原文术语")}
                           onChange={(from) => updateGlossary(index, { from })}
                         />
                       </td>
                       <td>
                         <TextInput
                           value={entry.to}
-                          placeholder="译文术语"
+                          placeholder={t("译文术语")}
                           onChange={(to) => updateGlossary(index, { to })}
                         />
                       </td>
                       <td>
                         <Button variant="ghost" size="sm" onClick={() => removeGlossary(index)}>
-                          删除
+                          {t("删除")}
                         </Button>
                       </td>
                     </tr>
@@ -592,17 +626,17 @@ export function TranslateSection(props: SectionProps) {
               </table>
             )}
             <Button variant="secondary" size="sm" onClick={addGlossary}>
-              + 添加术语
+              {t("+ 添加术语")}
             </Button>
           </div>
         </Field>
       </Panel>
 
-      <Panel title="试译" description="用当前设置翻译一段示例文字，看看效果和速度。">
+      <Panel title={t("试译")} description={t("用当前设置翻译一段示例文字，看看效果和速度。")}>
         <TextInput
-          label="示例文本"
+          label={t("示例文本")}
           value={testText}
-          placeholder="输入要试译的文本"
+          placeholder={t("输入要试译的文本")}
           onChange={setTestText}
         />
         <div className="sa-inline">
@@ -612,15 +646,17 @@ export function TranslateSection(props: SectionProps) {
             disabled={testing}
             onClick={() => void runTranslateTest()}
           >
-            {testing ? "翻译中…" : "试译"}
+            {testing ? t("翻译中…") : t("试译")}
           </Button>
-          <span className="sa-field-hint">目标语言：{translate.targetLang}</span>
+          <span className="sa-field-hint">
+            {t("目标语言：{lang}", { lang: translate.targetLang })}
+          </span>
         </div>
         {testResult ? <pre className="sa-translate-result">{testResult}</pre> : null}
       </Panel>
 
       {notice ? <Hint>{notice}</Hint> : null}
-      <SaveBar label="翻译设置" dirty={dirty} saving={saving} onSave={() => void save()} />
+      <SaveBar label={t("翻译设置")} dirty={dirty} saving={saving} onSave={() => void save()} />
     </SectionShell>
   );
 }

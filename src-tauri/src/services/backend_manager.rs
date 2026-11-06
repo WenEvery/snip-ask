@@ -640,16 +640,11 @@ pub async fn download_and_install(
 
 /// 构造真实下载用 HTTP 客户端。
 ///
-/// 首个下载地址为回环（测试 mock server / 本地镜像）时绕过系统代理，
-/// 避免本机系统代理不绕过 127.0.0.1 导致下载被代理拦截（见 `platform::http`）。
+/// v1.1.0：接入 `advanced.proxy`（启动时注入 `platform::http` 的进程级代理）。
+/// 首个下载地址为回环（测试 mock server / 本地镜像）时 `no_proxy()`，避免本机系统代理
+/// 不绕过 127.0.0.1 导致下载被代理拦截（见 `platform::http`）。
 fn build_client(first_url: Option<&str>) -> Result<reqwest::Client, BackendInstallError> {
-    let builder = match first_url {
-        Some(url) if crate::platform::http::is_loopback_url(url) => {
-            reqwest::Client::builder().no_proxy()
-        }
-        _ => reqwest::Client::builder(),
-    };
-    builder
+    crate::platform::http::client_builder_for(first_url.unwrap_or_default())
         .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(CONNECT_TIMEOUT)
         // 单次请求总时长上限（大组件最多 680 MB）。

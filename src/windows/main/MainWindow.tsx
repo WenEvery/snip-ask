@@ -23,6 +23,7 @@ import type {
 import { useIpcEvent } from "../../shared/hooks/useIpcEvent";
 import { ipc, isBrowserPreview, toAppError } from "../../shared/ipc";
 import { applyAccent, applyTheme } from "../../shared/theme/theme";
+import { t } from "../../i18n";
 import HistoryPage from "./history/HistoryPage";
 import OnboardingWizard from "./onboarding/OnboardingWizard";
 import type { Capabilities } from "./onboarding/capabilities";
@@ -164,23 +165,23 @@ export default function MainWindow() {
           <span className="main-titlebar__logo" aria-hidden="true">
             框
           </span>
-          <span className="main-titlebar__title">框选 AI</span>
-          {isBrowserPreview() ? <span className="main-titlebar__badge">预览</span> : null}
+          <span className="main-titlebar__title">{t("框选 AI")}</span>
+          {isBrowserPreview() ? <span className="main-titlebar__badge">{t("预览")}</span> : null}
         </div>
         <div className="main-titlebar__actions">
-          <IconButton label="最小化到任务栏" title="最小化" onClick={minimize}>
+          <IconButton label={t("最小化到任务栏")} title={t("最小化")} onClick={minimize}>
             <span aria-hidden="true">—</span>
           </IconButton>
           <IconButton
-            label={maximized ? "还原窗口" : "最大化"}
-            title={maximized ? "还原" : "最大化"}
+            label={maximized ? t("还原窗口") : t("最大化")}
+            title={maximized ? t("还原") : t("最大化")}
             onClick={toggleMaximize}
           >
             <span aria-hidden="true">{maximized ? "❐" : "□"}</span>
           </IconButton>
           <IconButton
-            label="关闭窗口（继续在托盘运行）"
-            title="关闭窗口（继续在托盘运行）"
+            label={t("关闭窗口（继续在托盘运行）")}
+            title={t("关闭窗口（继续在托盘运行）")}
             onClick={hideWindow}
           >
             <span aria-hidden="true">×</span>
@@ -189,14 +190,14 @@ export default function MainWindow() {
       </header>
 
       <div className="main-body">
-        <nav className="main-nav" aria-label="主导航">
+        <nav className="main-nav" aria-label={t("主导航")}>
           <button
             type="button"
             className={`main-nav__item${route === "settings" ? " main-nav__item--active" : ""}`}
             aria-current={route === "settings" ? "page" : undefined}
             onClick={() => setRoute("settings")}
           >
-            设置
+            {t("设置")}
           </button>
           <button
             type="button"
@@ -204,7 +205,7 @@ export default function MainWindow() {
             aria-current={route === "history" ? "page" : undefined}
             onClick={() => setRoute("history")}
           >
-            历史
+            {t("历史")}
           </button>
           {showOnboardingNav ? (
             <button
@@ -213,21 +214,21 @@ export default function MainWindow() {
               aria-current={route === "onboarding" ? "page" : undefined}
               onClick={() => setRoute("onboarding")}
             >
-              使用引导
+              {t("使用引导")}
             </button>
           ) : null}
-          <p className="main-nav__note">历史与配置都保存在本机，不会上传。</p>
+          <p className="main-nav__note">{t("历史与配置都保存在本机，不会上传。")}</p>
         </nav>
 
         <main className="main-content sa-scroll">
           {loading ? (
             <div className="main-state">
-              <Spinner size="lg" label="正在读取配置…" />
+              <Spinner size="lg" label={t("正在读取配置…")} />
             </div>
           ) : error ? (
             <div className="main-state">
-              <p className="main-state__error">初始化失败：{error}</p>
-              <Button onClick={() => setReloadToken((token) => token + 1)}>重试</Button>
+              <p className="main-state__error">{t("初始化失败：{message}", { message: error })}</p>
+              <Button onClick={() => setReloadToken((token) => token + 1)}>{t("重试")}</Button>
             </div>
           ) : (
             <>

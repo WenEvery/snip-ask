@@ -10,7 +10,9 @@
 //! | 翻译 | 云端 | 本地模型 | 另一云端供应商 | 提示失败 |
 //! | 解答 | 云端多模态 | 纯文本 | 本地模型 | 提示失败 |
 
-use crate::contract::config::{Config, GlossaryEntry, SearchMode, TranslateBackend};
+use crate::contract::config::{
+    Cap, Config, GlossaryEntry, Provider, ProviderKind, SearchMode, TranslateBackend,
+};
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
 use crate::contract::types::{ActionId, EngineId, Mode};
 use crate::domain::task::TaskKind;
@@ -32,8 +34,63 @@ pub struct RoutedAction {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ActionRouter;
 
+/// 供应商是否声明了某项能力（`config.providers[].caps`，v1.1.0 起参与引擎选择）。
+pub fn provider_has_cap(provider: &Provider, cap: Cap) -> bool {
+    provider.caps.contains(&cap)
+}
+
+/// 供应商能否作为云端翻译后端：`translate` cap，或 `kind = qwenMt`（Qwen-MT 专用翻译端点）。
+pub fn can_translate(provider: &Provider) -> bool {
+    provider.kind == ProviderKind::QwenMt || provider.caps.contains(&Cap::Translate)
+}
+
+/// 第一个「已启用且具备该能力」的供应商。
+fn provider_with_cap(config: &Config, cap: Cap) -> Option<&Provider> {
+    config
+        .providers
+        .iter()
+        .find(|provider| provider.enabled && provider.caps.contains(&cap))
+}
+
+/// 第一个已启用的供应商（原有的「默认供应商」语义）。
+fn first_enabled(config: &Config) -> Option<&Provider> {
+    config.providers.iter().find(|provider| provider.enabled)
+}
+
+/// 云端翻译主引擎（v1.1.0 起读取 provider caps）。
+///
+/// 顺序：`translate.providerId`（必须已启用且具备翻译能力）→
+/// 第一个具备翻译能力的启用供应商 → 原配置 id / 默认供应商
+/// （后者仅用于保留旧行为，运行期会因无可用后端给出可操作错误）。
+fn cloud_translate_engine(config: &Config, cloud_engine: &str) -> String {
+    if let Some(provider) = config.translate.provider_id.as_deref().and_then(|id| {
+        config
+            .providers
+            .iter()
+            .find(|provider| provider.id == id && provider.enabled && can_translate(provider))
+    }) {
+        return provider.id.clone();
+    }
+    if let Some(provider) = config
+        .providers
+        .iter()
+        .find(|provider| provider.enabled && can_translate(provider))
+    {
+        return provider.id.clone();
+    }
+    config
+        .translate
+        .provider_id
+        .clone()
+        .unwrap_or_else(|| cloud_engine.to_string())
+}
+
 impl ActionRouter {
     /// 解析动作执行方案。
+    ///
+    /// v1.1.0：引擎选择开始读取 `config.providers[].caps` ——
+    /// AI 搜索优先 `search`、图片搜索优先 `vision`、解答（深度模式）优先 `thinking`、
+    /// 云端翻译只使用 `translate` / `kind = qwenMt` 的供应商；找不到时回退默认供应商。
     pub fn resolve(
         &self,
         config: &Config,
@@ -41,20 +98,20 @@ impl ActionRouter {
         mode: Mode,
         has_text: bool,
     ) -> AppResult<RoutedAction> {
-        let primary_provider = config
-            .providers
-            .iter()
-            .find(|provider| provider.enabled)
-            .map(|provider| provider.id.clone());
-        let secondary_provider = config
-            .providers
-            .iter()
-            .filter(|provider| provider.enabled)
-            .nth(1)
-            .map(|provider| provider.id.clone());
+        let primary_provider = first_enabled(config).map(|provider| provider.id.clone());
         let cloud_engine = primary_provider
             .clone()
             .unwrap_or_else(|| "skeleton".to_string());
+        // 能力路由：按 caps 选主引擎，缺失时回退默认供应商（保持旧行为）。
+        let search_engine = provider_with_cap(config, Cap::Search)
+            .map(|provider| provider.id.clone())
+            .unwrap_or_else(|| cloud_engine.clone());
+        let vision_engine = provider_with_cap(config, Cap::Vision)
+            .map(|provider| provider.id.clone())
+            .unwrap_or_else(|| cloud_engine.clone());
+        let thinking_engine = provider_with_cap(config, Cap::Thinking)
+            .map(|provider| provider.id.clone())
+            .unwrap_or_else(|| cloud_engine.clone());
 
         match action {
             ActionId::Search => {
@@ -66,9 +123,9 @@ impl ActionRouter {
                         prompt_key: "text_search".to_string(),
                     })
                 } else {
-                    // AI 搜索：主引擎为供应商，失败降级到浏览器搜索（最终复制文本）。
+                    // AI 搜索：主引擎为具备 `search` 能力的供应商，失败降级到浏览器搜索（最终复制文本）。
                     Ok(RoutedAction {
-                        engine: cloud_engine,
+                        engine: search_engine,
                         fallback: vec!["browser".to_string(), "copy".to_string()],
                         kind: TaskKind::Search,
                         prompt_key: "text_search".to_string(),
@@ -76,19 +133,25 @@ impl ActionRouter {
                 }
             }
             ActionId::ImageSearch => Ok(RoutedAction {
-                engine: cloud_engine,
+                engine: vision_engine,
                 fallback: vec!["browser".to_string(), "copy".to_string()],
                 kind: TaskKind::ImageSearch,
                 prompt_key: "image_search".to_string(),
             }),
             ActionId::Translate => match config.translate.backend {
                 TranslateBackend::Cloud => {
-                    let engine = config.translate.provider_id.clone().unwrap_or(cloud_engine);
+                    let engine = cloud_translate_engine(config, &cloud_engine);
                     let mut fallback = vec!["local".to_string()];
-                    if let Some(secondary) = secondary_provider {
-                        if secondary != engine {
-                            fallback.push(secondary);
-                        }
+                    let secondary = config
+                        .providers
+                        .iter()
+                        .filter(|provider| {
+                            provider.enabled && can_translate(provider) && provider.id != engine
+                        })
+                        .map(|provider| provider.id.clone())
+                        .next();
+                    if let Some(secondary) = secondary {
+                        fallback.push(secondary);
                     }
                     Ok(RoutedAction {
                         engine,
@@ -111,7 +174,12 @@ impl ActionRouter {
                 }
             },
             ActionId::Answer => Ok(RoutedAction {
-                engine: cloud_engine,
+                // 深度模式优先 `thinking` 能力；快速模式沿用默认供应商（旧行为）。
+                engine: if mode == Mode::Deep {
+                    thinking_engine
+                } else {
+                    cloud_engine
+                },
                 fallback: vec!["local".to_string()],
                 kind: TaskKind::Answer,
                 prompt_key: "answer".to_string(),
@@ -209,7 +277,7 @@ pub fn fallback_labels(fallback: &[EngineId]) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contract::config::{SearchPrefs, TranslatePrefs};
+    use crate::contract::config::{Cap, SearchPrefs, TranslatePrefs};
 
     fn router() -> ActionRouter {
         ActionRouter
@@ -285,6 +353,116 @@ mod tests {
             image.fallback,
             vec!["browser".to_string(), "copy".to_string()]
         );
+    }
+
+    #[test]
+    fn can_translate_accepts_translate_cap_or_qwen_mt() {
+        let mut provider = Config::default().providers[0].clone();
+        provider.caps = vec![Cap::Translate];
+        assert!(can_translate(&provider));
+        provider.caps = vec![Cap::Vision];
+        assert!(!can_translate(&provider));
+        // Qwen-MT 专用翻译端点不需要显式 translate cap（kind 语义兜底）。
+        provider.kind = ProviderKind::QwenMt;
+        assert!(can_translate(&provider));
+        // 能力判断只看 caps（kind 不隐式提供其它能力）。
+        assert!(provider_has_cap(&provider, Cap::Vision));
+        assert!(!provider_has_cap(&provider, Cap::Search));
+    }
+
+    #[test]
+    fn ai_search_routes_to_provider_with_search_cap() {
+        let mut config = Config::default();
+        config.search = SearchPrefs {
+            mode: SearchMode::Ai,
+            ..SearchPrefs::default()
+        };
+        // 默认供应商不再具备 search 能力；第二个启用的供应商具备。
+        config.providers[0].caps = vec![Cap::Vision];
+        config.providers[2].enabled = true;
+        config.providers[2].caps = vec![Cap::Search];
+        let routed = router()
+            .resolve(&config, ActionId::Search, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.engine, "generic-openai");
+        // 全部不具备 → 回退默认供应商（运行期给出可操作错误并降级浏览器搜索）。
+        config.providers[2].caps = vec![Cap::Vision];
+        let routed = router()
+            .resolve(&config, ActionId::Search, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.engine, "deepseek");
+    }
+
+    #[test]
+    fn image_search_routes_to_provider_with_vision_cap() {
+        let mut config = Config::default();
+        config.providers[0].caps = vec![Cap::Search];
+        config.providers[2].enabled = true;
+        config.providers[2].caps = vec![Cap::Vision];
+        let routed = router()
+            .resolve(&config, ActionId::ImageSearch, Mode::Quick, false)
+            .unwrap();
+        assert_eq!(routed.engine, "generic-openai");
+    }
+
+    #[test]
+    fn cloud_translate_only_uses_providers_with_translate_cap() {
+        let mut config = Config::default();
+        // deepseek 不再声明 translate；translate.providerId 指向它也不应被选用。
+        config.providers[0].caps = vec![Cap::Vision];
+        config.translate.provider_id = Some("deepseek".to_string());
+        // dashscope（kind = qwenMt）启用：即使 caps 为空也应视为可翻译。
+        config.providers[1].enabled = true;
+        config.providers[1].caps = vec![];
+        let routed = router()
+            .resolve(&config, ActionId::Translate, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.engine, "dashscope");
+        // 无翻译能力的 deepseek 不再出现在翻译降级链中。
+        assert_eq!(routed.fallback, vec!["local".to_string()]);
+
+        // 无任何可用翻译供应商 → 保留原配置 id（运行期给出可操作错误）。
+        config.providers[1].enabled = false;
+        let routed = router()
+            .resolve(&config, ActionId::Translate, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.engine, "deepseek");
+        assert_eq!(routed.fallback, vec!["local".to_string()]);
+    }
+
+    #[test]
+    fn cloud_translate_fallback_includes_secondary_translate_provider() {
+        let mut config = Config::default();
+        config.translate.provider_id = None;
+        // 主：deepseek（默认具备 translate）；次：generic-openai（已启用且具备 translate）。
+        config.providers[2].enabled = true;
+        config.providers[2].caps = vec![Cap::Translate];
+        let routed = router()
+            .resolve(&config, ActionId::Translate, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(routed.engine, "deepseek");
+        assert_eq!(
+            routed.fallback,
+            vec!["local".to_string(), "generic-openai".to_string()]
+        );
+    }
+
+    #[test]
+    fn deep_answer_prefers_provider_with_thinking_cap() {
+        let mut config = Config::default();
+        config.providers[0].caps = vec![Cap::Vision];
+        config.providers[2].enabled = true;
+        config.providers[2].caps = vec![Cap::Thinking];
+        // 快速模式沿用默认供应商（旧行为）。
+        let quick = router()
+            .resolve(&config, ActionId::Answer, Mode::Quick, true)
+            .unwrap();
+        assert_eq!(quick.engine, "deepseek");
+        // 深度模式优先具备 thinking 能力的供应商。
+        let deep = router()
+            .resolve(&config, ActionId::Answer, Mode::Deep, true)
+            .unwrap();
+        assert_eq!(deep.engine, "generic-openai");
     }
 
     #[test]

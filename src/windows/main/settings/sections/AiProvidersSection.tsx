@@ -11,6 +11,7 @@ import type {
 } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { buildPatch, hasChanges } from "../diff";
 import { CAP_LABELS, PROVIDER_PRESETS } from "../presets";
 import {
@@ -27,8 +28,8 @@ import { ProviderEditor } from "../components/ProviderEditor";
 import type { SectionProps } from "../types";
 
 const PROVIDER_KIND_LABELS: Record<ProviderKind, string> = {
-  openAiCompatible: "OpenAI 兼容",
-  qwenMt: "Qwen-MT 翻译",
+  openAiCompatible: t("OpenAI 兼容"),
+  qwenMt: t("Qwen-MT 翻译"),
 };
 
 function uniqueProviderId(base: string, providers: ProviderView[]): string {
@@ -83,12 +84,16 @@ export function AiProvidersSection(props: SectionProps) {
     };
     onEdit((current) => ({ ...current, providers: [...current.providers, view] }));
     setExpandedId(id);
-    setNotice(`已添加「${preset.name}」，填好地址、模型和密钥后点「应用 AI 服务」`);
+    setNotice(
+      t("已添加「{name}」，填好地址、模型和密钥后点「应用 AI 服务」", {
+        name: t(preset.name),
+      }),
+    );
   };
 
   const removeProvider = (id: string) => {
     if (providers.length <= 1) {
-      setNotice("至少需要保留一个 AI 供应商");
+      setNotice(t("至少需要保留一个 AI 供应商"));
       return;
     }
     const name = providers.find((provider) => provider.id === id)?.name ?? id;
@@ -97,7 +102,7 @@ export function AiProvidersSection(props: SectionProps) {
       providers: current.providers.filter((provider) => provider.id !== id),
     }));
     setExpandedId((current) => (current === id ? null : current));
-    setNotice(`已删除「${name}」，点「应用 AI 服务」后生效。`);
+    setNotice(t("已删除「{name}」，点「应用 AI 服务」后生效。", { name }));
   };
 
   const testProvider = async (provider: ProviderView) => {
@@ -118,8 +123,9 @@ export function AiProvidersSection(props: SectionProps) {
       const result = await ipc.invoke<TestResult>(COMMANDS.providerTest, { draft: draftProvider });
       setTestResults((current) => ({ ...current, [provider.id]: result }));
       if (result.ok) {
-        const latency = result.latencyMs === null ? "" : `，延迟 ${result.latencyMs} ms`;
-        setNotice(`「${provider.name}」连接正常${latency}`);
+        const latency =
+          result.latencyMs === null ? "" : t("，延迟 {ms} ms", { ms: result.latencyMs });
+        setNotice(t("「{name}」连接正常{latency}", { name: provider.name, latency }));
       }
     } catch (err) {
       onError(err);
@@ -131,18 +137,22 @@ export function AiProvidersSection(props: SectionProps) {
   const save = async () => {
     const patch = buildPatch(baseline, draft, ["providers"]);
     if (Object.keys(patch).length === 0) {
-      setNotice("供应商配置没有变化");
+      setNotice(t("供应商配置没有变化"));
       return;
     }
-    const ok = await onApply(patch, "AI 服务");
+    const ok = await onApply(patch, t("AI 服务"));
     if (!ok) return;
     const pending = draft.providers.filter((provider) => (apiKeys[provider.id] ?? "").trim());
     for (const provider of pending) await testProvider(provider);
     if (pending.length > 0) {
       setApiKeys({});
-      setNotice(`已提交 ${pending.length} 个新密钥用于连接测试（保存在 Windows 凭据管理器）`);
+      setNotice(
+        t("已提交 {count} 个新密钥用于连接测试（保存在 Windows 凭据管理器）", {
+          count: pending.length,
+        }),
+      );
     } else {
-      setNotice("供应商配置已保存");
+      setNotice(t("供应商配置已保存"));
     }
   };
 
@@ -151,30 +161,30 @@ export function AiProvidersSection(props: SectionProps) {
 
   return (
     <SectionShell
-      title="AI 服务"
-      description="添加你使用的 AI 服务。API Key 保存在 Windows 凭据管理器，不会写进配置文件。"
+      title={t("AI 服务")}
+      description={t("添加你使用的 AI 服务。API Key 保存在 Windows 凭据管理器，不会写进配置文件。")}
     >
       <Panel
-        title="供应商列表"
-        description="至少保留一个供应商；被停用的供应商不会用于任何动作。"
+        title={t("供应商列表")}
+        description={t("至少保留一个供应商；被停用的供应商不会用于任何动作。")}
         actions={
           <div className="sa-inline">
             <SelectField
               value={presetId}
               options={PROVIDER_PRESETS.map((preset) => ({
                 value: preset.id,
-                label: preset.name,
+                label: t(preset.name),
               }))}
               onChange={setPresetId}
             />
             <Button variant="secondary" size="sm" onClick={addProvider}>
-              新增供应商
+              {t("新增供应商")}
             </Button>
           </div>
         }
       >
         {providers.length === 0 ? (
-          <EmptyHint>还没有 AI 供应商，请从上方预设新增一个。</EmptyHint>
+          <EmptyHint>{t("还没有 AI 供应商，请从上方预设新增一个。")}</EmptyHint>
         ) : null}
         {providers.map((provider) => {
           const expanded = expandedId === provider.id;
@@ -185,13 +195,15 @@ export function AiProvidersSection(props: SectionProps) {
                   <span className="sa-provider-name">{provider.name}</span>
                   <code className="sa-provider-id">{provider.id}</code>
                   <StatusTag tone={provider.hasKey ? "ok" : "warn"}>
-                    {provider.hasKey ? `密钥 ${provider.keyMask ?? "已配置"}` : "未配置密钥"}
+                    {provider.hasKey
+                      ? t("密钥 {mask}", { mask: provider.keyMask ?? t("已配置") })
+                      : t("未配置密钥")}
                   </StatusTag>
-                  {provider.enabled ? null : <StatusTag tone="neutral">已停用</StatusTag>}
+                  {provider.enabled ? null : <StatusTag tone="neutral">{t("已停用")}</StatusTag>}
                 </div>
                 <div className="sa-provider-actions">
                   <SwitchRow
-                    label="启用"
+                    label={t("启用")}
                     checked={provider.enabled}
                     onChange={(enabled) => updateProvider(provider.id, { enabled })}
                   />
@@ -200,7 +212,7 @@ export function AiProvidersSection(props: SectionProps) {
                     size="sm"
                     onClick={() => setExpandedId(expanded ? null : provider.id)}
                   >
-                    {expanded ? "收起" : "展开编辑"}
+                    {expanded ? t("收起") : t("展开编辑")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -208,7 +220,7 @@ export function AiProvidersSection(props: SectionProps) {
                     disabled={testingId === provider.id}
                     onClick={() => void testProvider(provider)}
                   >
-                    {testingId === provider.id ? "测试中…" : "测试连接"}
+                    {testingId === provider.id ? t("测试中…") : t("测试连接")}
                   </Button>
                   <Button
                     variant="danger"
@@ -216,23 +228,23 @@ export function AiProvidersSection(props: SectionProps) {
                     disabled={providers.length <= 1}
                     onClick={() => removeProvider(provider.id)}
                   >
-                    删除
+                    {t("删除")}
                   </Button>
                 </div>
               </div>
               <p className="sa-provider-meta">
                 <span className="sa-mono">{provider.baseUrl}</span>
                 <span>·</span>
-                <span className="sa-mono">{provider.model || "未填写模型"}</span>
+                <span className="sa-mono">{provider.model || t("未填写模型")}</span>
                 <span>·</span>
                 <StatusTag tone={provider.kind === "qwenMt" ? "warn" : "neutral"}>
                   {PROVIDER_KIND_LABELS[provider.kind]}
                 </StatusTag>
                 <span>
-                  能力：
+                  {t("能力：")}
                   {provider.caps.length
                     ? provider.caps.map((cap) => CAP_LABELS[cap]).join(" / ")
-                    : "无"}
+                    : t("无")}
                 </span>
               </p>
               {testResults[provider.id] && !expanded ? (
@@ -241,7 +253,9 @@ export function AiProvidersSection(props: SectionProps) {
                     testResults[provider.id].ok ? "sa-testline is-ok" : "sa-testline is-bad"
                   }
                 >
-                  上次测试：{testResults[provider.id].ok ? "连接成功" : "连接失败"}
+                  {t("上次测试：{result}", {
+                    result: testResults[provider.id].ok ? t("连接成功") : t("连接失败"),
+                  })}
                 </p>
               ) : null}
               {expanded ? (
@@ -262,16 +276,18 @@ export function AiProvidersSection(props: SectionProps) {
         })}
       </Panel>
 
-      <Panel title="默认供应商">
+      <Panel title={t("默认供应商")}>
         <InfoRow
-          label="当前默认"
-          value={defaultProvider ? `${defaultProvider.name} / ${defaultProvider.model}` : "未配置"}
-          hint="所有动作共用默认供应商：取第一个已启用且填好模型的供应商"
+          label={t("当前默认")}
+          value={
+            defaultProvider ? `${defaultProvider.name} / ${defaultProvider.model}` : t("未配置")
+          }
+          hint={t("所有动作共用默认供应商：取第一个已启用且填好模型的供应商")}
         />
       </Panel>
 
       {notice ? <p className="sa-hint">{notice}</p> : null}
-      <SaveBar label="AI 服务" dirty={dirty} saving={saving} onSave={() => void save()} />
+      <SaveBar label={t("AI 服务")} dirty={dirty} saving={saving} onSave={() => void save()} />
     </SectionShell>
   );
 }

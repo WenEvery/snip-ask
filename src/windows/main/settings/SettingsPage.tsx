@@ -10,6 +10,7 @@ import { Button } from "@/components/ui";
 import type { ConfigView } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { hasChanges } from "./diff";
 import { ConfirmAction, ErrorNotice, LoadingBlock } from "./parts";
 import { useConfigDraft } from "./useConfigDraft";
@@ -26,15 +27,15 @@ import { AboutSection } from "./sections/AboutSection";
 import "./settings.css";
 
 const NAV: { id: SectionId; label: string; hint: string }[] = [
-  { id: "general", label: "核心", hint: "语言 / 启动 / 历史" },
-  { id: "appearance", label: "外观", hint: "主题 / 字号 / 结果窗" },
-  { id: "ai", label: "AI 服务", hint: "供应商与连接测试" },
-  { id: "search", label: "搜索", hint: "AI / 浏览器与引擎" },
-  { id: "translate", label: "翻译", hint: "云端 / 本地 / 术语表" },
-  { id: "privacy", label: "隐私", hint: "上传与本地模式" },
-  { id: "actions", label: "动作与热键", hint: "菜单 / 模式 / 热键" },
-  { id: "advanced", label: "高级", hint: "预算 / 代理 / 运行信息" },
-  { id: "about", label: "自定义与关于", hint: "版本 / 目录 / 文档" },
+  { id: "general", label: t("核心"), hint: t("语言 / 启动 / 历史") },
+  { id: "appearance", label: t("外观"), hint: t("主题 / 字号 / 结果窗") },
+  { id: "ai", label: t("AI 服务"), hint: t("供应商与连接测试") },
+  { id: "search", label: t("搜索"), hint: t("AI / 浏览器与引擎") },
+  { id: "translate", label: t("翻译"), hint: t("云端 / 本地 / 术语表") },
+  { id: "privacy", label: t("隐私"), hint: t("上传与本地模式") },
+  { id: "actions", label: t("动作与热键"), hint: t("菜单 / 模式 / 热键") },
+  { id: "advanced", label: t("高级"), hint: t("预算 / 代理 / 运行信息") },
+  { id: "about", label: t("自定义与关于"), hint: t("版本 / 目录 / 文档") },
 ];
 
 const SECTION_ALIASES: Record<string, SectionId> = {
@@ -70,10 +71,10 @@ function resolveSection(initial?: string): SectionId {
 }
 
 const STATUS_TEXT: Record<string, string> = {
-  idle: "已保存",
-  draft: "有未保存的修改",
-  ok: "已应用",
-  error: "保存失败",
+  idle: t("已保存"),
+  draft: t("有未保存的修改"),
+  ok: t("已应用"),
+  error: t("保存失败"),
 };
 
 export interface SettingsPageProps {
@@ -124,13 +125,13 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
     return (
       <div className="settings-root">
         {loading ? (
-          <LoadingBlock text="正在读取配置…" />
+          <LoadingBlock text={t("正在读取配置…")} />
         ) : (
           <div className="settings-fallback">
             <ErrorNotice error={loadError} />
-            <p className="sa-hint">无法读取配置，请确认应用已正常启动。</p>
+            <p className="sa-hint">{t("无法读取配置，请确认应用已正常启动。")}</p>
             <Button variant="primary" size="sm" onClick={() => void reload()}>
-              重新加载
+              {t("重新加载")}
             </Button>
           </div>
         )}
@@ -152,20 +153,20 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
     <div className="settings-root">
       <header className="settings-header">
         <div className="settings-title">
-          <h1 className="settings-title-text">设置</h1>
-          <p className="settings-subtitle">框选 AI · Snip Ask</p>
+          <h1 className="settings-title-text">{t("设置")}</h1>
+          <p className="settings-subtitle">{t("框选 AI · Snip Ask")}</p>
         </div>
         <div className="settings-header-side">
           <span className={`settings-status is-${tone}`} title={statusText ?? undefined}>
             {statusLabel}
           </span>
           <ConfirmAction
-            description="将把全部配置恢复为默认值，确定继续？"
-            confirmLabel="确认恢复"
+            description={t("将把全部配置恢复为默认值，确定继续？")}
+            confirmLabel={t("确认恢复")}
             disabled={resetting}
             onConfirm={() => void resetAll()}
           >
-            恢复默认
+            {t("恢复默认")}
           </ConfirmAction>
         </div>
       </header>
@@ -173,7 +174,7 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
       {error ? <ErrorNotice error={error} onDismiss={clearError} /> : null}
 
       <div className="settings-main">
-        <nav className="settings-nav" aria-label="设置分组">
+        <nav className="settings-nav" aria-label={t("设置分组")}>
           {NAV.map((item) => (
             <button
               key={item.id}
@@ -185,7 +186,7 @@ export default function SettingsPage({ initialSection }: SettingsPageProps) {
               <span className="settings-nav-hint">{item.hint}</span>
             </button>
           ))}
-          <p className="settings-nav-note">改完每一项后，点该分组底部的保存按钮才会生效。</p>
+          <p className="settings-nav-note">{t("改完每一项后，点该分组底部的保存按钮才会生效。")}</p>
         </nav>
 
         <div className="settings-content">

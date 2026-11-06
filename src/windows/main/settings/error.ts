@@ -3,11 +3,12 @@
  * 这里统一收敛为页面内可展示的 `UiError`，避免各分组重复判断。
  */
 
+import { t } from "@/i18n";
 import type { UiError } from "./types";
 
 const GENERIC: UiError = {
   code: "SA-0000",
-  message: "操作失败，请稍后重试。",
+  message: t("操作失败，请稍后重试。"),
   detail: null,
   retryable: true,
   fallback: [],

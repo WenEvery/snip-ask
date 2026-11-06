@@ -5,6 +5,7 @@
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Button } from "../components/ui";
+import { t } from "../i18n";
 import "./app.css";
 
 /** 前端渲染异常统一错误码（契约 §8 之外的 UI 侧兜底码） */
@@ -43,15 +44,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <div className="sa-fatal">
         <div className="sa-fatal__card sa-anim-slide">
-          <h1 className="sa-fatal__title">界面渲染异常</h1>
-          <p className="sa-fatal__code">错误码：{FRONTEND_ERROR_CODE}</p>
+          <h1 className="sa-fatal__title">{t("界面渲染异常")}</h1>
+          <p className="sa-fatal__code">
+            {t("错误码：")}
+            {FRONTEND_ERROR_CODE}
+          </p>
           <p className="sa-fatal__desc">
-            请点击重试；若问题持续，请重启应用并在日志中检索该错误码。
+            {t("请点击重试；若问题持续，请重启应用并在日志中检索该错误码。")}
           </p>
           <pre className="sa-fatal__detail">{error.message}</pre>
           <div className="sa-fatal__actions">
             <Button variant="primary" onClick={this.handleRetry}>
-              重试
+              {t("重试")}
             </Button>
           </div>
         </div>

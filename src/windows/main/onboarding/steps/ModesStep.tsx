@@ -3,6 +3,7 @@
 import type { Mode } from "@/shared/contract/types";
 import type { StepProps } from "../types";
 import { DEFAULT_MODES, MODE_ROWS } from "../presets";
+import { t } from "../../../../i18n";
 
 export function ModesStep(props: StepProps) {
   const { draft, onEdit } = props;
@@ -20,17 +21,19 @@ export function ModesStep(props: StepProps) {
 
   return (
     <div className="ob-step">
-      <h2 className="ob-step-title">为每个动作选择默认模式</h2>
+      <h2 className="ob-step-title">{t("为每个动作选择默认模式")}</h2>
       <p className="ob-hint">
-        动作菜单里还能临时切换这一次的模式。深度模式会多查几次、多读几篇网页再回答，更慢、费用也更高，建议只对需要质量的动作开启。
+        {t(
+          "动作菜单里还能临时切换这一次的模式。深度模式会多查几次、多读几篇网页再回答，更慢、费用也更高，建议只对需要质量的动作开启。",
+        )}
       </p>
 
       <div className="ob-inline">
         <button type="button" className="ob-btn ob-btn-secondary" onClick={() => setAll("quick")}>
-          全部快速
+          {t("全部快速")}
         </button>
         <button type="button" className="ob-btn ob-btn-secondary" onClick={() => setAll("deep")}>
-          全部深度
+          {t("全部深度")}
         </button>
       </div>
 
@@ -49,7 +52,7 @@ export function ModesStep(props: StepProps) {
                   className={`ob-mode-btn${current === "quick" ? " is-active" : ""}`}
                   onClick={() => setMode(row.key, "quick")}
                 >
-                  <span className="ob-mode-name">快速</span>
+                  <span className="ob-mode-name">{t("快速")}</span>
                   <span className="ob-mode-meta">{row.quick}</span>
                 </button>
                 <button
@@ -57,7 +60,7 @@ export function ModesStep(props: StepProps) {
                   className={`ob-mode-btn${current === "deep" ? " is-active" : ""}`}
                   onClick={() => setMode(row.key, "deep")}
                 >
-                  <span className="ob-mode-name">深度</span>
+                  <span className="ob-mode-name">{t("深度")}</span>
                   <span className="ob-mode-meta">{row.deep}</span>
                 </button>
               </div>
@@ -67,8 +70,9 @@ export function ModesStep(props: StepProps) {
       </div>
 
       <p className="ob-hint">
-        深度模式每次最多搜索几次、读几篇网页、输出多长，可以在「设置 → 高级」中调整，默认是 3 次、2
-        篇、约 1500 字。
+        {t(
+          "深度模式每次最多搜索几次、读几篇网页、输出多长，可以在「设置 → 高级」中调整，默认是 3 次、2 篇、约 1500 字。",
+        )}
       </p>
     </div>
   );

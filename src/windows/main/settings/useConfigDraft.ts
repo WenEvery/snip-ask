@@ -13,6 +13,7 @@ import type { ConfigChangedPayload, ConfigView } from "@/shared/contract/types";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
+import { t } from "@/i18n";
 import { toUiError } from "./error";
 import type { ConfigPatch, UiError } from "./types";
 
@@ -90,12 +91,12 @@ export function useConfigDraft(): ConfigDraftApi {
         replace(view);
         setError(null);
         setStatus("ok");
-        setStatusText(`「${label}」已应用`);
+        setStatusText(t("「{label}」已应用", { label }));
         return true;
       } catch (err) {
         setError(toUiError(err));
         setStatus("error");
-        setStatusText(`「${label}」保存失败`);
+        setStatusText(t("「{label}」保存失败", { label }));
         return false;
       } finally {
         setSaving(false);

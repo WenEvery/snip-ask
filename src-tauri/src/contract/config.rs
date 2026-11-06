@@ -1,10 +1,10 @@
 //! 持久化配置模型（契约 §4）。
 //!
 //! 覆盖内容：
-//! - §4.1 默认配置（Schema v6）与全部子结构；
+//! - §4.1 默认配置（Schema v7）与全部子结构；
 //! - §4.2 枚举字面量与 [`ConfigView`]（providers 换成带密钥状态视图）；
 //! - §4.3 约束校验 [`validate`]；
-//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4 → 5 → 6，未知字段保留）；
+//! - 版本迁移 [`migrate`]（1 → 2 → 3 → 4 → 5 → 6 → 7，未知字段保留）；
 //! - 深合并 [`merge_patch`]；
 //! - 快捷键规范化（`Ctrl+Q` 形式）。
 //!
@@ -19,7 +19,7 @@ use super::errors::{AppError, AppResult};
 use super::types::{ActionId, Mode};
 
 /// 当前配置 Schema 版本。
-pub const CONFIG_SCHEMA_VERSION: u32 = 6;
+pub const CONFIG_SCHEMA_VERSION: u32 = 7;
 
 // ---------------------------------------------------------------------------
 // 枚举（契约 §4.2）
@@ -857,7 +857,9 @@ impl Default for Config {
                     base_url: "https://api.deepseek.com".to_string(),
                     model: "deepseek-flash".to_string(),
                     kind: ProviderKind::OpenAiCompatible,
-                    caps: vec![Cap::Vision, Cap::Search, Cap::Thinking],
+                    // v1.1.0（Schema v7）：OpenAI 兼容 chat 可翻译，默认补 `translate` cap，
+                    // 避免升级后（旧配置 caps 不含 translate）云端翻译被能力门禁误禁。
+                    caps: vec![Cap::Vision, Cap::Search, Cap::Thinking, Cap::Translate],
                     temperature: 0.2,
                     max_tokens: 1024,
                     enabled: true,
@@ -1088,6 +1090,32 @@ fn validate_hotkey_field(field: &str, spec: &str) -> AppResult<()> {
     }
 }
 
+/// 校验 `advanced.proxy` 代理地址（`http://host:port` / `http://user:pass@host:port`）。
+///
+/// 空串视为「未配置」（合法）；仅支持 HTTP(S) 代理（reqwest 未启用 SOCKS 特性）。
+/// 返回可操作中文原因而非 panic；`platform::http` 复用同一规则构造客户端。
+pub fn validate_proxy_url(proxy: &str) -> Result<(), String> {
+    let trimmed = proxy.trim();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+    let parsed = url::Url::parse(trimmed).map_err(|err| {
+        format!("不是合法 URL（{err}）；示例：http://127.0.0.1:7890 或 http://user:pass@host:8080")
+    })?;
+    match parsed.scheme() {
+        "http" | "https" => {}
+        other => {
+            return Err(format!(
+                "仅支持 http:// 或 https:// 代理，当前为 {other}；示例：http://127.0.0.1:7890"
+            ))
+        }
+    }
+    match parsed.host_str() {
+        Some(host) if !host.is_empty() => Ok(()),
+        _ => Err("缺少代理主机名；示例：http://127.0.0.1:7890".to_string()),
+    }
+}
+
 /// 按契约 §4.3 校验整份配置；非法返回 `SA-5001`（detail 带字段名）。
 pub fn validate(config: &Config) -> AppResult<()> {
     if config.schema_version != CONFIG_SCHEMA_VERSION {
@@ -1095,6 +1123,12 @@ pub fn validate(config: &Config) -> AppResult<()> {
             "schemaVersion",
             format!("必须为 {CONFIG_SCHEMA_VERSION}"),
         ));
+    }
+
+    // advanced.proxy：用户可填 HTTP(S) 代理（支持 user:pass@）；非法值给可操作错误。
+    if let Some(proxy) = config.advanced.proxy.as_deref() {
+        validate_proxy_url(proxy)
+            .map_err(|reason| AppError::invalid_config("advanced.proxy", reason))?;
     }
 
     let mut seen_ids: HashSet<&str> = HashSet::new();
@@ -1423,7 +1457,43 @@ fn migrate_v4_to_v5(value: &mut serde_json::Value) {
     }
 }
 
-/// 读取任意版本配置 JSON，按 `1 → 2 → 3 → 4 → 5` 链迁移并校验（未知字段保留）。
+/// v6 → v7：`providers[].caps` 自 v1.1.0 起真正参与动作可用性 / 引擎选择。
+///
+/// 为不误禁既有用户的云端翻译，给 `kind = openAiCompatible`（缺 `kind` 时默认也是它，
+/// 含默认 `deepseek`）的供应商补 `translate` cap —— OpenAI 兼容 chat 本身可以翻译。
+/// `kind = qwenMt` 保持原 caps（其专用翻译能力已由 `kind` 语义兜底，不覆盖用户选择）。
+fn migrate_v6_to_v7(value: &mut serde_json::Value) {
+    let Some(providers) = value
+        .get_mut("providers")
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return;
+    };
+    for provider in providers {
+        let Some(object) = provider.as_object_mut() else {
+            continue;
+        };
+        let kind = object
+            .get("kind")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("openAiCompatible");
+        if kind != "openAiCompatible" {
+            continue;
+        }
+        let caps = object
+            .entry("caps")
+            .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+        let Some(caps) = caps.as_array_mut() else {
+            // caps 类型非法：不在此处掩盖，交给反序列化给出可操作错误。
+            continue;
+        };
+        if !caps.iter().any(|cap| cap.as_str() == Some("translate")) {
+            caps.push(serde_json::Value::String("translate".to_string()));
+        }
+    }
+}
+
+/// 读取任意版本配置 JSON，按 `1 → 2 → 3 → 4 → 5 → 6 → 7` 链迁移并校验（未知字段保留）。
 pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     let version = value
         .get("schemaVersion")
@@ -1458,7 +1528,12 @@ pub fn migrate(mut value: serde_json::Value) -> AppResult<Config> {
     }
     if current < 6 {
         migrate_v5_to_v6(&mut value);
+        current = 6;
         tracing::debug!(from = 5, to = 6, "配置迁移完成");
+    }
+    if current < 7 {
+        migrate_v6_to_v7(&mut value);
+        tracing::debug!(from = 6, to = 7, "配置迁移完成");
     }
     if let Some(object) = value.as_object_mut() {
         object.insert(
@@ -1480,7 +1555,7 @@ mod tests {
     #[test]
     fn default_matches_contract_json() {
         let expected = serde_json::json!({
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "app": { "language": "zh-CN", "autostart": false, "singleInstance": true, "startMinimized": true },
             "ui": {
                 "theme": "system",
@@ -1505,7 +1580,7 @@ mod tests {
                 {
                     "id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com",
                     "model": "deepseek-flash", "kind": "openAiCompatible",
-                    "caps": ["vision", "search", "thinking"],
+                    "caps": ["vision", "search", "thinking", "translate"],
                     "temperature": 0.2, "maxTokens": 1024, "enabled": true
                 },
                 {
@@ -1662,7 +1737,7 @@ mod tests {
             "unknownGroup": { "hello": "world" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 6);
+        assert_eq!(config.schema_version, 7);
         assert_eq!(config.app.language, Language::EnUs);
         assert_eq!(config.ui.result_window.width, 460.0);
         assert!(config.ui.result_window.pin);
@@ -1684,7 +1759,84 @@ mod tests {
             "v5 迁移必须移除 updateChannel"
         );
         assert_eq!(config.providers[0].kind, ProviderKind::OpenAiCompatible);
+        // v7：openAiCompatible 供应商自动补 translate cap（旧配置云端翻译不被能力门禁误禁）。
+        assert_eq!(
+            config.providers[0].caps,
+            vec![Cap::Translate],
+            "v1 配置（无 caps）迁移后应补 translate"
+        );
         assert!(config.extra.contains_key("unknownGroup"));
+    }
+
+    #[test]
+    fn migrate_from_v6_adds_translate_cap_to_openai_compatible_only() {
+        let raw = serde_json::json!({
+            "schemaVersion": 6,
+            "providers": [
+                {
+                    "id": "deepseek", "name": "DeepSeek", "baseUrl": "https://api.deepseek.com",
+                    "model": "deepseek-flash", "kind": "openAiCompatible",
+                    "caps": ["vision", "search", "thinking"],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": true
+                },
+                {
+                    "id": "dashscope", "name": "DashScope", "baseUrl": "https://dashscope.aliyuncs.com",
+                    "model": "qwen-mt-lite", "kind": "qwenMt", "caps": [],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": true
+                },
+                {
+                    "id": "no-kind", "name": "旧配置（缺 kind）", "baseUrl": "https://api.example.com",
+                    "model": "m", "caps": [], "temperature": 0.2, "maxTokens": 1024, "enabled": true
+                },
+                {
+                    "id": "already", "name": "已有 translate", "baseUrl": "https://api.example.org",
+                    "model": "m", "kind": "openAiCompatible", "caps": ["translate"],
+                    "temperature": 0.2, "maxTokens": 1024, "enabled": true
+                }
+            ]
+        });
+        let config = migrate(raw).unwrap();
+        assert_eq!(config.schema_version, 7);
+        // OpenAI 兼容（含缺 kind 的旧配置）：缺 translate 时补到末尾，已有则不重复。
+        assert_eq!(
+            config.providers[0].caps,
+            vec![Cap::Vision, Cap::Search, Cap::Thinking, Cap::Translate]
+        );
+        assert_eq!(config.providers[2].caps, vec![Cap::Translate]);
+        assert_eq!(config.providers[3].caps, vec![Cap::Translate]);
+        // Qwen-MT：保持用户/旧配置原样（其翻译能力由 kind 语义兜底）。
+        assert!(config.providers[1].caps.is_empty());
+        // 二次迁移幂等（不会重复追加 translate）。
+        let again = migrate(serde_json::to_value(&config).unwrap()).unwrap();
+        assert_eq!(again.providers[0].caps, config.providers[0].caps);
+    }
+
+    #[test]
+    fn validate_accepts_and_rejects_proxy_values() {
+        let mut config = Config::default();
+        for proxy in [
+            "http://127.0.0.1:7890",
+            "http://proxy.local:8080",
+            "https://proxy.local",
+            "http://user:pass@proxy.local:8080",
+            "",
+        ] {
+            config.advanced.proxy = Some(proxy.to_string());
+            validate(&config).unwrap_or_else(|err| panic!("代理 {proxy} 应合法：{err}"));
+        }
+        for proxy in ["proxy.local:7890", "socks5://127.0.0.1:1080", "http://"] {
+            config.advanced.proxy = Some(proxy.to_string());
+            let err = validate(&config).unwrap_err();
+            assert_eq!(err.code, "SA-5001", "代理 {proxy} 应被拒绝");
+            assert!(
+                err.detail
+                    .as_deref()
+                    .is_some_and(|detail| detail.contains("代理") || detail.contains("URL")),
+                "错误 detail 应可操作：{err:?}"
+            );
+        }
+        config.advanced.proxy = None;
+        validate(&config).unwrap();
     }
 
     #[test]
@@ -1695,7 +1847,7 @@ mod tests {
             "translate": { "backend": "local", "model": "qwen-mt-lite", "targetLang": "en" }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 6);
+        assert_eq!(config.schema_version, 7);
         // 用户已有值保持不变
         assert_eq!(config.local.model, "qwen2.5-0.5b-instruct-q4");
         assert_eq!(config.local.port, 39285);
@@ -1784,7 +1936,7 @@ mod tests {
             "advanced": { "proxy": null, "updateChannel": "preview", "telemetry": true, "skeletonMode": true }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 6);
+        assert_eq!(config.schema_version, 7);
         assert!(!config.advanced.skeleton_mode);
         assert!(!config.advanced.extra.contains_key("updateChannel"));
         assert!(
@@ -1802,7 +1954,7 @@ mod tests {
             "advanced": { "proxy": null, "telemetry": true, "skeletonMode": false }
         });
         let config = migrate(raw).unwrap();
-        assert_eq!(config.schema_version, 6);
+        assert_eq!(config.schema_version, 7);
         assert!(!config.advanced.extra.contains_key("telemetry"));
         let value = serde_json::to_value(&config).unwrap();
         assert!(value["advanced"].get("telemetry").is_none());

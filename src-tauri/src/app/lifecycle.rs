@@ -65,6 +65,8 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
     let state = AppState::initialize(paths)?;
     let first_run = !state.onboarding.lock().completed;
     let skeleton_mode = state.is_skeleton();
+    // v1.1.0：`app.startMinimized` 决定非首启启动时是否显示主窗口（此前恒为隐藏）。
+    let start_minimized = state.snapshot_config().app.start_minimized;
     if !app.manage(state) {
         tracing::warn!("AppState 已被托管，跳过重复初始化");
     }
@@ -151,15 +153,27 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
         });
     }
 
-    // 8) 首启引导：未完成时显示主窗口
-    if first_run {
+    // 8) 启动显示策略（v1.1.0：`app.startMinimized` 真正生效）：
+    //    - 首启引导未完成 → 显示主窗口（引导必须在主窗口内完成）；
+    //    - 非首启：`startMinimized = false` → 显示主窗口；`true` → 保持托盘常驻（不显示）。
+    if should_show_main_on_start(first_run, start_minimized) {
         if let Err(err) = windows::show_main(app) {
-            tracing::warn!(code = %err.code, "显示首启引导窗口失败");
+            tracing::warn!(code = %err.code, "显示主窗口失败");
         }
+    } else {
+        tracing::info!("已按 app.startMinimized = true 隐藏主窗口（托盘常驻）");
     }
 
     tracing::info!("框选 AI 初始化完成（skeletonMode = {skeleton_mode}）");
     Ok(())
+}
+
+/// 启动时是否显示主窗口（纯逻辑，便于单测）。
+///
+/// 首启引导优先（未完成时必定显示）；否则由 `app.startMinimized` 决定：
+/// `true` 保持托盘常驻隐藏，`false` 显示主窗口。
+fn should_show_main_on_start(first_run: bool, start_minimized: bool) -> bool {
+    first_run || !start_minimized
 }
 
 /// 应用退出前清理：取消任务、关闭会话、保存配置、裁剪历史。
@@ -240,5 +254,15 @@ mod tests {
         let error = AppError::from_code(crate::contract::errors::ErrorCode::CaptureFailed);
         let boxed: Box<dyn std::error::Error> = setup_error(error);
         assert!(boxed.to_string().contains("SA-1001"));
+    }
+
+    #[test]
+    fn start_minimized_only_hides_main_window_after_onboarding() {
+        // 首启引导未完成：无论 startMinimized 如何都显示主窗口。
+        assert!(should_show_main_on_start(true, true));
+        assert!(should_show_main_on_start(true, false));
+        // 非首启：startMinimized = true → 托盘常驻隐藏；false → 显示主窗口。
+        assert!(!should_show_main_on_start(false, true));
+        assert!(should_show_main_on_start(false, false));
     }
 }

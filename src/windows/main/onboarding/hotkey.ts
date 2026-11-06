@@ -1,5 +1,7 @@
 /** 引导页热键组合键捕获（规则同设置页，见契约 §4.3） */
 
+import { t } from "../../../i18n";
+
 const MODIFIER_KEYS = new Set(["Control", "Shift", "Alt", "Meta", "CapsLock"]);
 
 interface KeyLike {
@@ -24,7 +26,7 @@ export function captureHotkey(event: KeyLike): string | null {
 }
 
 export function hotkeyLabel(spec: string): string {
-  return spec.trim() ? spec.trim() : "未绑定";
+  return spec.trim() ? spec.trim() : t("未绑定");
 }
 
 /** 与设置页共用同一套 conflictWith → 可操作提示映射（`system` = OS 占用） */

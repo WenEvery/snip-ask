@@ -8,6 +8,8 @@
  * - 其余取值按供应商 id 原样显示（如 `"deepseek"`、`"dashscope"`）。
  */
 
+import { t } from "../../i18n";
+
 export interface EngineLabelInfo {
   /** 展示用短标签。 */
   label: string;
@@ -19,11 +21,11 @@ export function engineLabelInfo(engine: string | null | undefined): EngineLabelI
   if (!engine) return null;
   switch (engine) {
     case "skeleton":
-      return { label: "演示", demo: true };
+      return { label: t("演示"), demo: true };
     case "local":
-      return { label: "本地模型", demo: false };
+      return { label: t("本地模型"), demo: false };
     case "cloud":
-      return { label: "云端", demo: false };
+      return { label: t("云端"), demo: false };
     default:
       return { label: engine, demo: false };
   }
@@ -37,8 +39,8 @@ export function engineLabel(engine: string | null | undefined): string | null {
 /** 鼠标悬停时的说明（方便反馈问题时提供具体来源）。 */
 export function engineTitle(engine: string | null | undefined): string | undefined {
   if (!engine) return undefined;
-  if (engine === "skeleton") return "预览模式下的示例回答";
-  if (engine === "local") return "由本机模型生成";
-  if (engine === "cloud") return "由云端服务生成";
-  return `由 ${engine} 生成`;
+  if (engine === "skeleton") return t("预览模式下的示例回答");
+  if (engine === "local") return t("由本机模型生成");
+  if (engine === "cloud") return t("由云端服务生成");
+  return t("由 {engine} 生成", { engine });
 }

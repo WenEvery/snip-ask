@@ -1,5 +1,7 @@
 /** 设置页用到的格式化工具（纯函数，无副作用） */
 
+import { t } from "@/i18n";
+
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -24,7 +26,7 @@ export function formatDuration(totalSeconds: number): string {
   const seconds = Math.floor(totalSeconds % 60);
   const minutes = Math.floor((totalSeconds / 60) % 60);
   const hours = Math.floor(totalSeconds / 3600);
-  if (hours > 0) return `${hours} 小时 ${minutes} 分`;
-  if (minutes > 0) return `${minutes} 分 ${seconds} 秒`;
-  return `${seconds} 秒`;
+  if (hours > 0) return t("{hours} 小时 {minutes} 分", { hours, minutes });
+  if (minutes > 0) return t("{minutes} 分 {seconds} 秒", { minutes, seconds });
+  return t("{seconds} 秒", { seconds });
 }

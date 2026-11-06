@@ -3,6 +3,7 @@
 import type { SourceRef } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { hostOf } from "./helpers";
 
 export interface SourceListProps {
@@ -23,7 +24,9 @@ export function SourceList(props: SourceListProps) {
 
   return (
     <section className="result-sources">
-      <h2 className="result-sources-title">检索来源（{props.sources.length}）</h2>
+      <h2 className="result-sources-title">
+        {t("检索来源（{count}）", { count: props.sources.length })}
+      </h2>
       <ul className="result-source-list">
         {props.sources.map((source, index) => (
           <li key={`${source.url}-${index}`}>

@@ -18,6 +18,7 @@ import type {
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc, toAppError } from "@/shared/ipc";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
+import { t } from "@/i18n";
 import { formatBytes, formatSpeed } from "../settings/format";
 import {
   allBundled,
@@ -107,7 +108,7 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
 
   const rows = mergeOcrRows(status, models);
   const pending = pendingOcrRows(rows);
-  const summary = summarizeOcr(status, stats?.edition);
+  const summary = summarizeOcr(status, stats?.edition, t);
   const edition = stats?.edition ?? null;
 
   const runAction = async (id: string, action: () => Promise<unknown>) => {
@@ -127,19 +128,23 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
     runAction(row.id, async () => {
       await ipc.invoke<string>(COMMANDS.modelsDownload, { id: row.id });
       setStates((current) => ({ ...current, [row.id]: "queued" }));
-      setNotice(`已开始下载「${ocrAssetLabel(row.id, row.name)}」。`);
+      setNotice(t("已开始下载「{name}」。", { name: ocrAssetLabel(row.id, row.name, t) }));
     });
 
   const cancelDownload = (row: OcrAssetRow) =>
     runAction(row.id, async () => {
       await ipc.invoke<void>(COMMANDS.modelsCancel, { id: row.id });
-      setNotice(`已取消下载「${ocrAssetLabel(row.id, row.name)}」。`);
+      setNotice(t("已取消下载「{name}」。", { name: ocrAssetLabel(row.id, row.name, t) }));
     });
 
   const removeAsset = (row: OcrAssetRow) =>
     runAction(row.id, async () => {
       await ipc.invoke<void>(COMMANDS.modelsRemove, { id: row.id });
-      setNotice(`已删除「${ocrAssetLabel(row.id, row.name)}」，下次识别前需要重新下载。`);
+      setNotice(
+        t("已删除「{name}」，下次识别前需要重新下载。", {
+          name: ocrAssetLabel(row.id, row.name, t),
+        }),
+      );
       await refresh();
     });
 
@@ -161,23 +166,23 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
   const openModelsDir = () =>
     runAction("open-models", async () => {
       await ipc.invoke<void>(COMMANDS.openPath, { kind: "models" });
-      setNotice("已打开模型文件夹。");
+      setNotice(t("已打开模型文件夹。"));
     });
 
   return (
     <div className="sa-ocr-card">
       <div className="sa-ocr-head">
         <div className="sa-ocr-head-main">
-          <span className="sa-ocr-title">文字识别</span>
+          <span className="sa-ocr-title">{t("文字识别")}</span>
           <Badge tone={TONE_TO_BADGE[summary.tone]} title={summary.detail}>
             {summary.label}
           </Badge>
-          {edition ? <Badge tone="neutral">{editionBadge(edition)}</Badge> : null}
-          {allBundled(rows) ? <Badge tone="success">模型已内置</Badge> : null}
+          {edition ? <Badge tone="neutral">{editionBadge(edition, t)}</Badge> : null}
+          {allBundled(rows) ? <Badge tone="success">{t("模型已内置")}</Badge> : null}
         </div>
         <div className="sa-ocr-head-actions">
           <Button variant="ghost" size="sm" disabled={loading} onClick={() => void refresh()}>
-            {loading ? "检查中…" : "重新检查"}
+            {loading ? t("检查中…") : t("重新检查")}
           </Button>
         </div>
       </div>
@@ -185,20 +190,20 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
       {loading && !status ? (
         <div className="sa-ocr-loading">
           <Spinner />
-          <span>正在检查文字识别是否可用…</span>
+          <span>{t("正在检查文字识别是否可用…")}</span>
         </div>
       ) : loadError ? (
         <p className="sa-ocr-error" role="alert">
-          检查失败：{loadError}
+          {t("检查失败：{message}", { message: loadError })}
         </p>
       ) : (
         <>
           <p className="sa-ocr-summary">{summary.detail}</p>
           {!compact ? (
             <div className="sa-ocr-runtime">
-              <span className="sa-ocr-runtime-label">识别引擎</span>
+              <span className="sa-ocr-runtime-label">{t("识别引擎")}</span>
               <span className="sa-ocr-runtime-value">
-                {status?.runtimeReady ? "已就绪" : "未找到，暂时无法识别文字"}
+                {status?.runtimeReady ? t("已就绪") : t("未找到，暂时无法识别文字")}
               </span>
               {status?.runtimePath ? (
                 <code className="sa-ocr-path" title={status.runtimePath}>
@@ -227,17 +232,17 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                 <div key={row.id} className="sa-ocr-row">
                   <div className="sa-ocr-row-main">
                     <div className="sa-ocr-row-title">
-                      <span>{ocrAssetLabel(row.id, row.name)}</span>
+                      <span>{ocrAssetLabel(row.id, row.name, t)}</span>
                       {row.bundled ? (
-                        <Badge tone="success" title="随安装包提供，无需下载">
-                          随安装包内置
+                        <Badge tone="success" title={t("随安装包提供，无需下载")}>
+                          {t("随安装包内置")}
                         </Badge>
                       ) : installed ? (
-                        <Badge tone="success">已下载</Badge>
+                        <Badge tone="success">{t("已下载")}</Badge>
                       ) : active ? (
-                        <Badge tone="warning">{state ? STATE_LABELS[state] : "下载中"}</Badge>
+                        <Badge tone="warning">{state ? t(STATE_LABELS[state]) : t("下载中")}</Badge>
                       ) : (
-                        <Badge tone="warning">未下载</Badge>
+                        <Badge tone="warning">{t("未下载")}</Badge>
                       )}
                     </div>
                     <p className="sa-ocr-row-meta">{formatBytes(row.sizeBytes)}</p>
@@ -249,7 +254,7 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                         <span className="sa-ocr-progress-text">
                           {item
                             ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
-                            : "正在准备下载…"}
+                            : t("正在准备下载…")}
                         </span>
                       </div>
                     ) : null}
@@ -263,7 +268,7 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                           disabled={busyId === row.id}
                           onClick={() => void removeAsset(row)}
                         >
-                          删除
+                          {t("删除")}
                         </Button>
                       ) : active ? (
                         <Button
@@ -272,7 +277,7 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                           disabled={busyId === row.id}
                           onClick={() => void cancelDownload(row)}
                         >
-                          取消
+                          {t("取消")}
                         </Button>
                       ) : installed ? null : row.model ? (
                         <Button
@@ -282,13 +287,13 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                           onClick={() => void startDownload(row)}
                         >
                           {busyId === row.id
-                            ? "正在开始…"
+                            ? t("正在开始…")
                             : state === "failed"
-                              ? "重试下载"
-                              : "下载"}
+                              ? t("重试下载")
+                              : t("下载")}
                         </Button>
                       ) : (
-                        <span className="sa-ocr-row-hint">缺少下载信息</span>
+                        <span className="sa-ocr-row-hint">{t("缺少下载信息")}</span>
                       )}
                     </div>
                   ) : null}
@@ -299,14 +304,16 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
 
           {status && !status.runtimeReady ? (
             <p className="sa-ocr-warn">
-              识别引擎文件缺失，暂时无法识别文字。重新安装应用通常可以修复。
+              {t("识别引擎文件缺失，暂时无法识别文字。重新安装应用通常可以修复。")}
             </p>
           ) : null}
 
           {note ? <p className="sa-ocr-note">{note}</p> : null}
           {!compact && edition === "slim" && pending.length > 0 ? (
             <p className="sa-ocr-note">
-              这个安装包不含文字识别模型：首次使用时会自动下载（约 16 MB），也可以稍后再下载。
+              {t(
+                "这个安装包不含文字识别模型：首次使用时会自动下载（约 16 MB），也可以稍后再下载。",
+              )}
             </p>
           ) : null}
 
@@ -318,7 +325,7 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                 disabled={busyId !== null}
                 onClick={() => void downloadAll()}
               >
-                下载全部模型
+                {t("下载全部模型")}
               </Button>
             </div>
           ) : null}
@@ -331,10 +338,10 @@ export function OcrStatusCard({ compact = false, note }: OcrStatusCardProps) {
                 disabled={busyId !== null}
                 onClick={() => void openModelsDir()}
               >
-                打开模型文件夹
+                {t("打开模型文件夹")}
               </Button>
               <span className="sa-ocr-row-hint">
-                也可以把下载好的模型文件放进这个文件夹，再点「重新检查」。
+                {t("也可以把下载好的模型文件放进这个文件夹，再点「重新检查」。")}
               </span>
             </div>
           ) : null}

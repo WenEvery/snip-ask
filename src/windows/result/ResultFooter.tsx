@@ -4,6 +4,8 @@
  * 流式/发送期间输入与发送按钮禁用（研究 §3.10-7：并发提交必须在 UI 侧挡住）。
  */
 
+import { t } from "@/i18n";
+
 export interface ResultFooterProps {
   /** 是否有轮次正在流式生成。 */
   streaming: boolean;
@@ -21,14 +23,14 @@ export interface ResultFooterProps {
 
 export function ResultFooter(props: ResultFooterProps) {
   const placeholder = props.streaming
-    ? "正在生成回答…（结束后可继续追问）"
-    : "继续追问…（Enter 发送，Shift+Enter 换行）";
+    ? t("正在生成回答…（结束后可继续追问）")
+    : t("继续追问…（Enter 发送，Shift+Enter 换行）");
   return (
     <footer className="result-footer">
       <div className="result-footer-actions">
         {props.streaming ? (
           <button type="button" className="result-btn" onClick={props.onCancel}>
-            取消生成
+            {t("取消生成")}
           </button>
         ) : (
           <>
@@ -38,16 +40,16 @@ export function ResultFooter(props: ResultFooterProps) {
               disabled={props.disabled}
               onClick={props.onRerun}
             >
-              重答
+              {t("重答")}
             </button>
             <button
               type="button"
               className="result-btn"
               disabled={props.disabled}
-              title="结束这次对话，回到等待框选的状态"
+              title={t("结束这次对话，回到等待框选的状态")}
               onClick={props.onClearThread}
             >
-              结束对话
+              {t("结束对话")}
             </button>
           </>
         )}
@@ -73,7 +75,7 @@ export function ResultFooter(props: ResultFooterProps) {
           disabled={props.disabled || !props.followup.trim()}
           onClick={props.onSubmit}
         >
-          {props.sending ? "发送中…" : "发送"}
+          {props.sending ? t("发送中…") : t("发送")}
         </button>
       </div>
     </footer>

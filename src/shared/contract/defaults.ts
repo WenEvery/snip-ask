@@ -34,7 +34,7 @@ export const defaultHotkeys: Hotkeys = {
 
 /** 契约 §4.1：首次运行写入磁盘的配置 */
 export const defaultConfig: Config = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   app: {
     language: "zh-CN",
     autostart: false,
@@ -70,7 +70,8 @@ export const defaultConfig: Config = {
       baseUrl: "https://api.deepseek.com",
       model: "deepseek-flash",
       kind: "openAiCompatible",
-      caps: ["vision", "search", "thinking"],
+      // v1.1.0（Schema v7）：openAiCompatible 默认具备翻译能力（与后端迁移一致）。
+      caps: ["vision", "search", "thinking", "translate"],
       temperature: 0.2,
       maxTokens: 1024,
       enabled: true,

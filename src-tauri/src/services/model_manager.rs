@@ -16,7 +16,8 @@
 //! 已知集成剩余项（见 `docs/spikes/S-08-*.md`）：
 //! - `ModelManager::load` 目前拿不到配置，真实/骨架开关需由命令层 / `AppState::initialize`
 //!   调用 [`ModelManager::set_skeleton_mode`] 注入；
-//! - 下载客户端的 `advanced.proxy` 代理配置尚未接入（`TODO(real)`）。
+//! - 下载客户端已接入 `advanced.proxy`（v1.1.0：启动时注入 `platform::http` 全局代理，
+//!   回环镜像仍 `no_proxy()`）。
 
 use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
@@ -316,7 +317,7 @@ impl ModelManager {
             "开始真实下载（HTTP Range 断点续传）"
         );
 
-        let client = match build_http_client() {
+        let client = match build_http_client(entry.urls.first().map(String::as_str)) {
             Ok(client) => client,
             Err(err) => {
                 tracing::warn!(model = %id, error = %err, "创建 HTTP 客户端失败");
@@ -1144,9 +1145,13 @@ async fn sleep_cancellable(total: Duration, cancel: &AtomicBool) -> bool {
     }
 }
 
-/// 构造真实下载用 HTTP 客户端（TODO(real): 接入 `advanced.proxy`）。
-fn build_http_client() -> Result<reqwest::Client, DownloadError> {
-    reqwest::Client::builder()
+/// 构造真实下载用 HTTP 客户端。
+///
+/// v1.1.0：接入 `advanced.proxy`（启动时注入 `platform::http` 的进程级代理）；
+/// 首个下载地址为回环（测试 mock server / 本地镜像）时按 `platform::http` 规则 `no_proxy()`，
+/// 避免本机系统代理不绕过 127.0.0.1 导致下载被拦截。
+fn build_http_client(first_url: Option<&str>) -> Result<reqwest::Client, DownloadError> {
+    crate::platform::http::client_builder_for(first_url.unwrap_or_default())
         .user_agent(concat!("snip-ask/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(CONNECT_TIMEOUT)
         .timeout(REQUEST_TIMEOUT)

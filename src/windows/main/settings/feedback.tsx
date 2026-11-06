@@ -1,6 +1,7 @@
 /** 设置页反馈类局部组件（保存栏 / 二次确认 / 错误提示 / 状态标签） */
 
 import { useState, type ReactNode } from "react";
+import { t } from "@/i18n";
 import { Button } from "@/components/ui";
 import { fallbackLabel } from "./presets";
 import type { UiError } from "./types";
@@ -17,7 +18,7 @@ export function SaveBar(props: SaveBarProps) {
   return (
     <div className="sa-savebar">
       <span className={`sa-savebar-state${props.dirty ? " is-dirty" : ""}`}>
-        {props.dirty ? "有未保存的修改" : "本组设置已保存"}
+        {props.dirty ? t("有未保存的修改") : t("本组设置已保存")}
       </span>
       <Button
         variant="primary"
@@ -25,7 +26,7 @@ export function SaveBar(props: SaveBarProps) {
         disabled={!props.dirty || props.saving || props.disabled}
         onClick={props.onSave}
       >
-        {props.saving ? "保存中…" : `应用${props.label}`}
+        {props.saving ? t("保存中…") : t("应用{label}", { label: props.label })}
       </Button>
     </div>
   );
@@ -66,10 +67,10 @@ export function ConfirmAction(props: ConfirmActionProps) {
           props.onConfirm();
         }}
       >
-        {props.confirmLabel ?? "确认执行"}
+        {props.confirmLabel ?? t("确认执行")}
       </Button>
       <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-        取消
+        {t("取消")}
       </Button>
     </span>
   );
@@ -90,22 +91,24 @@ export function ErrorNotice(props: ErrorNoticeProps) {
       <div className="sa-error-head">
         <strong className="sa-error-message">{error.message}</strong>
         <code className="sa-error-code">{error.code}</code>
-        {error.retryable ? <span className="sa-error-retry">可重试</span> : null}
+        {error.retryable ? <span className="sa-error-retry">{t("可重试")}</span> : null}
         {error.detail ? (
           <button type="button" className="sa-linkbtn" onClick={() => setOpen(!open)}>
-            {open ? "收起详情" : "查看详情"}
+            {open ? t("收起详情") : t("查看详情")}
           </button>
         ) : null}
         {props.onDismiss ? (
           <button type="button" className="sa-linkbtn" onClick={props.onDismiss}>
-            关闭
+            {t("关闭")}
           </button>
         ) : null}
       </div>
       {open && error.detail ? <pre className="sa-error-detail">{error.detail}</pre> : null}
       {error.fallback.length > 0 ? (
         <p className="sa-error-fallback">
-          可以试试：{error.fallback.map((item) => fallbackLabel(item)).join("、")}
+          {t("可以试试：{list}", {
+            list: error.fallback.map((item) => fallbackLabel(item)).join("、"),
+          })}
         </p>
       ) : null}
     </div>

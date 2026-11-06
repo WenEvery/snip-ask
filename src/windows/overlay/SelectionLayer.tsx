@@ -7,6 +7,7 @@
 import { useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { RectPhys } from "../../shared/contract/types";
+import { t } from "../../i18n";
 import { normalizeRect, toCssRect, toPhys } from "./coords";
 import type { Point } from "./coords";
 
@@ -101,7 +102,10 @@ export function SelectionLayer({
                 sizeBelow ? " overlay-selection__size--below" : " overlay-selection__size--above"
               }`}
             >
-              宽 {Math.round(rect.width)} × 高 {Math.round(rect.height)} px（物理）
+              {t("宽 {width} × 高 {height} px（物理）", {
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+              })}
             </span>
           </div>
         </>

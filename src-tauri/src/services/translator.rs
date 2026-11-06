@@ -1315,19 +1315,26 @@ fn build_local_attempt(
     })
 }
 
-/// 云端 provider 的尝试顺序：`translate.providerId` 优先，其余启用供应商按配置顺序。
+/// 云端 provider 的尝试顺序（v1.1.0 起按 provider caps 过滤）。
+///
+/// `translate.providerId` 优先（但必须已启用且具备翻译能力），其余具备翻译能力
+/// （`translate` cap，或 `kind = qwenMt`）的启用供应商按配置顺序。
+/// 无翻译能力的供应商**不会**进入云端翻译尝试链——动作可用性同样按该规则置灰。
 pub fn cloud_provider_order(config: &Config) -> Vec<&crate::contract::config::Provider> {
+    use crate::services::action_router::can_translate;
     let mut ordered: Vec<&crate::contract::config::Provider> = Vec::new();
     if let Some(primary_id) = config.translate.provider_id.as_deref() {
-        if let Some(provider) = config
-            .providers
-            .iter()
-            .find(|provider| provider.id == primary_id && provider.enabled)
-        {
+        if let Some(provider) = config.providers.iter().find(|provider| {
+            provider.id == primary_id && provider.enabled && can_translate(provider)
+        }) {
             ordered.push(provider);
         }
     }
-    for provider in config.providers.iter().filter(|provider| provider.enabled) {
+    for provider in config
+        .providers
+        .iter()
+        .filter(|provider| provider.enabled && can_translate(provider))
+    {
         if ordered.iter().any(|item| item.id == provider.id) {
             continue;
         }
@@ -1626,6 +1633,29 @@ mod tests {
         let order = cloud_provider_order(&config);
         assert_eq!(order[0].id, "dashscope");
         assert_eq!(order[1].id, "deepseek");
+    }
+
+    #[test]
+    fn cloud_provider_order_skips_providers_without_translate_cap() {
+        use crate::contract::config::Cap;
+        let mut config = Config::default();
+        // generic-openai 启用但只声明 vision：即便作为 translate.providerId 也不应出现。
+        config.providers[2].enabled = true;
+        config.providers[2].caps = vec![Cap::Vision];
+        config.translate.provider_id = Some("generic-openai".to_string());
+        let order = cloud_provider_order(&config);
+        assert_eq!(
+            order
+                .iter()
+                .map(|provider| provider.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["deepseek"]
+        );
+
+        // 全部供应商都不具备翻译能力（且无 qwenMt）→ 空链，调用方据此给出可操作错误。
+        config.providers[0].caps = vec![Cap::Vision, Cap::Search];
+        config.providers[1].enabled = false;
+        assert!(cloud_provider_order(&config).is_empty());
     }
 
     #[test]

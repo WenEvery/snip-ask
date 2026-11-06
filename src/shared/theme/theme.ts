@@ -10,6 +10,8 @@
 import { COMMANDS, EVENTS } from "../contract/names";
 import type { ConfigChangedPayload, ConfigView, Theme } from "../contract/types";
 import { ipc } from "../ipc";
+import { applyLanguageFromConfig } from "../../i18n";
+import { applyResultWindowOpacity } from "./resultWindowPrefs";
 
 export type ResolvedTheme = "light" | "dark";
 
@@ -107,6 +109,9 @@ export async function initTheme(): Promise<() => void> {
     currentCleanup?.();
     currentCleanup = applyUiPreferences(config.ui.theme, config.ui.accent, config.ui.fontSize);
     cacheTheme(config.ui.theme);
+    applyResultWindowOpacity(config.ui.resultWindow?.opacity);
+    // 语言变化：写入缓存并 reload（各窗口独立加载，下次启动/重开窗口即为新语言）。
+    applyLanguageFromConfig(config.app?.language);
   };
 
   let disposed = false;

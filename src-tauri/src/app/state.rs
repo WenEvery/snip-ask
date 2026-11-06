@@ -344,7 +344,7 @@ mod tests {
         assert_eq!(state.active_task_count(), 0);
         assert_eq!(state.engine_status(), EngineStatus::Stopped);
         assert!(!state.is_paused());
-        assert_eq!(state.snapshot_config().schema_version, 6);
+        assert_eq!(state.snapshot_config().schema_version, 7);
         assert!(!state.onboarding.lock().completed);
         assert!(paths.config_file.is_file());
         assert!(state.history.is_enabled());

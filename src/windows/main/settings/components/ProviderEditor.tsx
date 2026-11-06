@@ -8,13 +8,14 @@ import type {
   TestResult,
 } from "@/shared/contract/types";
 import { Button } from "@/components/ui";
+import { t } from "@/i18n";
 import { ALL_CAPS, CAP_LABELS } from "../presets";
 import { Field, NumberField, SelectField, StatusTag, TextInput } from "../parts";
 
 /** 契约 v5：供应商 API 类型（`openAiCompatible` 默认 / `qwenMt` 专用翻译 API）。 */
 const PROVIDER_KIND_OPTIONS: { value: ProviderKind; label: string }[] = [
-  { value: "openAiCompatible", label: "OpenAI 兼容（Chat Completions）" },
-  { value: "qwenMt", label: "DashScope Qwen-MT（专用翻译）" },
+  { value: "openAiCompatible", label: t("OpenAI 兼容（Chat Completions）") },
+  { value: "qwenMt", label: t("DashScope Qwen-MT（专用翻译）") },
 ];
 
 export interface ProviderEditorProps {
@@ -41,24 +42,24 @@ export function ProviderEditor(props: ProviderEditorProps) {
 
   const idError = ID_PATTERN.test(provider.id)
     ? undefined
-    : "仅允许小写字母、数字、- 和 _，长度 1–32";
+    : t("仅允许小写字母、数字、- 和 _，长度 1–32");
   const urlError = URL_PATTERN.test(provider.baseUrl)
     ? undefined
-    : "仅允许 https:// 或 http://127.0.0.1[:端口]";
+    : t("仅允许 https:// 或 http://127.0.0.1[:端口]");
 
   return (
     <div className="sa-provider-editor">
       <div className="sa-grid-2">
         <TextInput
-          label="显示名称"
+          label={t("显示名称")}
           value={provider.name}
-          placeholder="例如 DeepSeek"
+          placeholder={t("例如 DeepSeek")}
           onChange={(name) => props.onChange({ name })}
         />
         <TextInput
-          label="供应商 ID"
+          label={t("供应商 ID")}
           value={provider.id}
-          placeholder="例如 my-provider"
+          placeholder={t("例如 my-provider")}
           error={idError}
           monospace
           onChange={(id) => props.onChange({ id: id.toLowerCase() })}
@@ -70,15 +71,15 @@ export function ProviderEditor(props: ProviderEditorProps) {
         placeholder="https://api.deepseek.com"
         error={urlError}
         monospace
-        hint="OpenAI 兼容服务填服务地址；本机服务请用 http://127.0.0.1:端口"
+        hint={t("OpenAI 兼容服务填服务地址；本机服务请用 http://127.0.0.1:端口")}
         onChange={(baseUrl) => props.onChange({ baseUrl: baseUrl.trim() })}
       />
       <div className="sa-grid-2">
         <SelectField
-          label="API 类型"
+          label={t("API 类型")}
           value={provider.kind}
           options={PROVIDER_KIND_OPTIONS}
-          hint="多数服务选「OpenAI 兼容」；DashScope 的 Qwen-MT 是专门的翻译接口，只用于翻译"
+          hint={t("多数服务选「OpenAI 兼容」；DashScope 的 Qwen-MT 是专门的翻译接口，只用于翻译")}
           onChange={(value) =>
             props.onChange({
               kind: value === "qwenMt" ? "qwenMt" : "openAiCompatible",
@@ -86,10 +87,10 @@ export function ProviderEditor(props: ProviderEditorProps) {
           }
         />
         <TextInput
-          label="模型名"
+          label={t("模型名")}
           value={provider.model}
           placeholder="deepseek-flash"
-          error={provider.model.trim() ? undefined : "模型名不能为空"}
+          error={provider.model.trim() ? undefined : t("模型名不能为空")}
           monospace
           onChange={(model) => props.onChange({ model: model.trim() })}
         />
@@ -98,11 +99,14 @@ export function ProviderEditor(props: ProviderEditorProps) {
         label="API Key"
         value={props.apiKey}
         type="password"
-        placeholder={provider.hasKey ? "已保存；不修改请留空" : "粘贴 API Key"}
-        hint="保存在 Windows 凭据管理器，不会写进配置文件；点「测试连接」时会一并保存"
+        placeholder={provider.hasKey ? t("已保存；不修改请留空") : t("粘贴 API Key")}
+        hint={t("保存在 Windows 凭据管理器，不会写进配置文件；点「测试连接」时会一并保存")}
         onChange={props.onApiKeyChange}
       />
-      <Field label="能力标记" hint="决定该供应商能被哪些动作选用（视觉 / 搜索 / 思考 / 翻译）。">
+      <Field
+        label={t("能力标记")}
+        hint={t("决定该供应商能被哪些动作选用（视觉 / 搜索 / 思考 / 翻译）。")}
+      >
         <div className="sa-caps">
           {ALL_CAPS.map((cap) => (
             <button
@@ -136,10 +140,14 @@ export function ProviderEditor(props: ProviderEditorProps) {
       </div>
       <div className="sa-inline sa-provider-editor-foot">
         <Button variant="secondary" size="sm" disabled={props.testing} onClick={props.onTest}>
-          {props.testing ? "测试中…" : "测试连接"}
+          {props.testing ? t("测试中…") : t("测试连接")}
         </Button>
         <span className="sa-field-hint">
-          密钥状态：{provider.hasKey ? `已配置（${provider.keyMask ?? "••••"}）` : "未配置"}
+          {t("密钥状态：{state}", {
+            state: provider.hasKey
+              ? t("已配置（{mask}）", { mask: provider.keyMask ?? "••••" })
+              : t("未配置"),
+          })}
         </span>
       </div>
       {props.testResult ? <TestResultBlock result={props.testResult} /> : null}
@@ -152,9 +160,12 @@ function TestResultBlock(props: { result: TestResult }) {
   if (result.ok) {
     return (
       <div className="sa-testresult is-ok">
-        <StatusTag tone="ok">连接成功</StatusTag>
+        <StatusTag tone="ok">{t("连接成功")}</StatusTag>
         <span>
-          延迟 {result.latencyMs ?? "—"} ms · 模型 {result.model ?? "未知"}
+          {t("延迟 {latency} ms · 模型 {model}", {
+            latency: result.latencyMs ?? "—",
+            model: result.model ?? t("未知"),
+          })}
         </span>
       </div>
     );
@@ -162,13 +173,15 @@ function TestResultBlock(props: { result: TestResult }) {
   const error = result.error;
   return (
     <div className="sa-testresult is-bad">
-      <StatusTag tone="danger">连接失败</StatusTag>
+      <StatusTag tone="danger">{t("连接失败")}</StatusTag>
       <span>
         {error?.code ? `${error.code} · ` : ""}
-        {error?.message ?? `HTTP ${result.status ?? "无响应"}`}
+        {error?.message ?? t("HTTP {status}", { status: result.status ?? t("无响应") })}
       </span>
       {error?.fallback.length ? (
-        <span className="sa-field-hint">可以试试：{error.fallback.join("、")}</span>
+        <span className="sa-field-hint">
+          {t("可以试试：{list}", { list: error.fallback.join("、") })}
+        </span>
       ) : null}
     </div>
   );

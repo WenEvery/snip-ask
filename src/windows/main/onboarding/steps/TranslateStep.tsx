@@ -14,6 +14,7 @@ import { ModelDownloadList } from "../components/ModelDownloadList";
 import { OptionCard } from "../components/OptionCard";
 import { TINY_LOCAL_MODEL_ID, TRANSLATE_TIERS, type TranslateTier } from "../presets";
 import type { StepProps } from "../types";
+import { t } from "../../../../i18n";
 
 type TranslateDraft = NonNullable<StepProps["draft"]["translate"]>;
 type TierId = TranslateTier["id"];
@@ -50,11 +51,11 @@ export function TranslateStep(props: StepProps) {
 
   return (
     <div className="ob-step">
-      <h2 className="ob-step-title">选择翻译方式</h2>
+      <h2 className="ob-step-title">{t("选择翻译方式")}</h2>
       <p className="ob-hint">
-        三种方式任选其一：云端翻译最快、效果最好（需要 API
-        Key，文字会上传）；本地模型不上传、不按次收费， 但用 CPU 运行会慢一些。之后可以随时在「设置
-        → 翻译」中更改。
+        {t(
+          "三种方式任选其一：云端翻译最快、效果最好（需要 API Key，文字会上传）；本地模型不上传、不按次收费，但用 CPU 运行会慢一些。之后可以随时在「设置 → 翻译」中更改。",
+        )}
       </p>
 
       <div className="ob-cards3">
@@ -70,7 +71,7 @@ export function TranslateStep(props: StepProps) {
               {tier.tag ? <strong className="ob-tier-tag">{tier.tag}</strong> : null}
               {tier.sizeText ? (
                 <span>
-                  体积 {tier.sizeText} · {tier.ramText}
+                  {t("体积 {size} · {ram}", { size: tier.sizeText, ram: tier.ramText ?? "" })}
                 </span>
               ) : null}
               <span>{tier.speedText}</span>
@@ -82,7 +83,7 @@ export function TranslateStep(props: StepProps) {
 
       {activeTierId === "cloud" ? (
         <div className="ob-block">
-          <h3 className="ob-block-title">云端配置</h3>
+          <h3 className="ob-block-title">{t("云端配置")}</h3>
           <div className="ob-radio-group">
             <label className="ob-radio">
               <input
@@ -94,7 +95,7 @@ export function TranslateStep(props: StepProps) {
                   update({ cloudModel: "", modelId: null });
                 }}
               />
-              <span>复用第 2 步的 AI 服务（推荐）</span>
+              <span>{t("复用第 2 步的 AI 服务（推荐）")}</span>
             </label>
             <label className="ob-radio">
               <input
@@ -103,12 +104,12 @@ export function TranslateStep(props: StepProps) {
                 checked={cloudMode === "separate"}
                 onChange={() => setCloudMode("separate")}
               />
-              <span>单独使用 Qwen-MT 专用翻译模型</span>
+              <span>{t("单独使用 Qwen-MT 专用翻译模型")}</span>
             </label>
           </div>
           {cloudMode === "separate" ? (
             <label className="ob-field">
-              <span className="ob-field-label">翻译模型名</span>
+              <span className="ob-field-label">{t("翻译模型名")}</span>
               <input
                 className="ob-input is-mono"
                 value={translate.cloudModel}
@@ -116,28 +117,28 @@ export function TranslateStep(props: StepProps) {
                 onChange={(event) => update({ cloudModel: event.target.value.trim() })}
               />
               <span className="ob-hint">
-                使用同一供应商的 Key，可在设置 → 翻译中调整目标语言与术语表。
+                {t("使用同一供应商的 Key，可在设置 → 翻译中调整目标语言与术语表。")}
               </span>
             </label>
           ) : (
             <p className="ob-hint">
-              将使用上一步填写的 AI 服务；稍后可以在「设置 → 翻译」中换成专门的翻译模型。
+              {t("将使用上一步填写的 AI 服务；稍后可以在「设置 → 翻译」中换成专门的翻译模型。")}
             </p>
           )}
         </div>
       ) : (
         <div className="ob-block">
           <h3 className="ob-block-title">
-            {activeTierId === "tiny" ? "小模型（约 470 MB）" : "普通模型（约 1.08 GB）"}
+            {activeTierId === "tiny" ? t("小模型（约 470 MB）") : t("普通模型（约 1.08 GB）")}
           </h3>
           <p className="ob-notice">
-            本地模型的好处是内容不离开本机、不按次数收费；代价是只用 CPU 时会慢一些
+            {t("本地模型的好处是内容不离开本机、不按次数收费；代价是只用 CPU 时会慢一些")}
             {activeTierId === "standard"
-              ? "（一段 200 字大约要 10–20 秒）"
-              : "（小模型译文质量一般）"}
-            。 下载会在后台继续，中途退出也没关系；模型没下载完之前，本地翻译暂时用不了。
+              ? t("（一段 200 字大约要 10–20 秒）")
+              : t("（小模型译文质量一般）")}
+            {t("。下载会在后台继续，中途退出也没关系；模型没下载完之前，本地翻译暂时用不了。")}
           </p>
-          <h3 className="ob-block-title">对应模型下载</h3>
+          <h3 className="ob-block-title">{t("对应模型下载")}</h3>
           <ModelDownloadList
             selectedModelId={translate.modelId}
             focusModelId={activeTier.modelId}
@@ -145,9 +146,11 @@ export function TranslateStep(props: StepProps) {
             onError={onError}
           />
           {translate.modelId ? (
-            <p className="ob-hint">已选用模型：{translate.modelId}；保存后生效。</p>
+            <p className="ob-hint">
+              {t("已选用模型：{model}；保存后生效。", { model: translate.modelId })}
+            </p>
           ) : (
-            <p className="ob-hint">尚未选用模型；也可以先跳过，稍后在设置 → 翻译中下载。</p>
+            <p className="ob-hint">{t("尚未选用模型；也可以先跳过，稍后在设置 → 翻译中下载。")}</p>
           )}
         </div>
       )}

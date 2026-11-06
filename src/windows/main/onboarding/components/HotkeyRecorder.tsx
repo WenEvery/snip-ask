@@ -6,6 +6,7 @@ import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { captureHotkey, hotkeyLabel, hotkeyStatusHint } from "../hotkey";
 import { DEFAULT_CAPTURE_HOTKEY } from "../presets";
+import { t } from "../../../../i18n";
 
 export interface HotkeyRecorderProps {
   value: string;
@@ -63,9 +64,9 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
         }}
         onKeyDown={handleKeyDown}
         onBlur={() => setRecording(false)}
-        title="点击后按下组合键；Backspace 清空，Esc 取消"
+        title={t("点击后按下组合键；Backspace 清空，Esc 取消")}
       >
-        {recording ? "请按下组合键…" : hotkeyLabel(props.value)}
+        {recording ? t("请按下组合键…") : hotkeyLabel(props.value)}
       </button>
       <button
         type="button"
@@ -73,7 +74,7 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
         disabled={probing || !props.value}
         onClick={() => void probe()}
       >
-        {probing ? "检测中…" : "检测冲突"}
+        {probing ? t("检测中…") : t("检测冲突")}
       </button>
       <button
         type="button"
@@ -83,7 +84,7 @@ export function HotkeyRecorder(props: HotkeyRecorderProps) {
           setStatus(null);
         }}
       >
-        恢复默认 Ctrl+Q
+        {t("恢复默认 Ctrl+Q")}
       </button>
       {status ? <HotkeyStatusText status={status} /> : null}
     </div>

@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button, Spinner } from "../../components/ui";
+import { t } from "../../i18n";
 import type { CoveredBlock, FrozenFrameMeta, OcrBox, RectPhys } from "../../shared/contract/types";
 import { engineLabel, engineTitle } from "../shared/engineLabel";
 import {
@@ -344,87 +345,105 @@ export function TranslationOverlay({
   const isTranslating = phase === "translating";
   const done = progress?.done ?? 0;
   const total = progress?.total ?? 0;
-  const viewLabel = view === "cover" ? "覆盖" : view === "bilingual" ? "双语" : "原文";
+  const viewLabel = view === "cover" ? t("覆盖") : view === "bilingual" ? t("双语") : t("原文");
 
   return (
-    <div className="translation-overlay" aria-label="覆盖翻译层">
+    <div className="translation-overlay" aria-label={t("覆盖翻译层")}>
       <canvas
         ref={canvasRef}
         className="translation-canvas"
         role="img"
-        aria-label={`覆盖翻译结果：${plan.total} 段，当前 ${viewLabel} 模式`}
+        aria-label={t("覆盖翻译结果：{total} 段，当前 {view} 模式", {
+          total: plan.total,
+          view: viewLabel,
+        })}
         data-testid="translation-canvas"
       />
 
       {!frame.dataUrl ? (
         // 降级提示（研究 §8.2）：DRM/受保护窗口没有可模糊的冻结帧时，只能绘制译文，不能「擦掉原文」。
         <div className="translation-notice" role="note">
-          没能读取到原来的画面（可能被系统保护），无法遮住原文；这里只显示译文。
+          {t("没能读取到原来的画面（可能被系统保护），无法遮住原文；这里只显示译文。")}
         </div>
       ) : null}
 
-      <div className="translation-toolbar" role="toolbar" aria-label="覆盖翻译工具条">
+      <div className="translation-toolbar" role="toolbar" aria-label={t("覆盖翻译工具条")}>
         <span className="translation-toolbar__status" role="status" aria-live="polite">
           {isTranslating ? (
             <>
               <Spinner size="sm" />
-              <span>
-                翻译中 {done}/{total || plan.total}
-              </span>
+              <span>{t("翻译中 {done}/{total}", { done, total: total || plan.total })}</span>
             </>
           ) : (
             <span title={engineTitle(engine)}>
-              已翻译 {plan.total} 段{engine ? ` · ${engineLabel(engine)}` : ""}
+              {t("已翻译 {count} 段", { count: plan.total })}
+              {engine ? ` · ${engineLabel(engine)}` : ""}
             </span>
           )}
         </span>
 
-        <div className="translation-toolbar__views" role="group" aria-label="显示模式">
+        <div className="translation-toolbar__views" role="group" aria-label={t("显示模式")}>
           <button
             type="button"
             className={`translation-toolbar__view${view === "original" ? " translation-toolbar__view--active" : ""}`}
             aria-pressed={view === "original"}
-            title="只看原文（O）"
+            title={t("只看原文（O）")}
             onClick={() => onViewChange("original")}
           >
-            原文
+            {t("原文")}
           </button>
           <button
             type="button"
             className={`translation-toolbar__view${view === "bilingual" ? " translation-toolbar__view--active" : ""}`}
             aria-pressed={view === "bilingual"}
-            title="原文 + 译文对照（B）"
+            title={t("原文 + 译文对照（B）")}
             onClick={() => onViewChange("bilingual")}
           >
-            双语
+            {t("双语")}
           </button>
           <button
             type="button"
             className={`translation-toolbar__view${view === "cover" ? " translation-toolbar__view--active" : ""}`}
             aria-pressed={view === "cover"}
-            title="把译文直接盖在原文位置（C）"
+            title={t("把译文直接盖在原文位置（C）")}
             onClick={() => onViewChange("cover")}
           >
-            覆盖
+            {t("覆盖")}
           </button>
         </div>
 
         <span
           className="translation-toolbar__meta"
-          title={`本窗口画面 ${frame.width}×${frame.height}${frame.dataUrl ? "（已读取）" : "（未读取）"}。覆盖翻译只改这里的显示，不会改动原应用。`}
+          title={
+            frame.dataUrl
+              ? t(
+                  "本窗口画面 {width}×{height}（已读取）。覆盖翻译只改这里的显示，不会改动原应用。",
+                  {
+                    width: frame.width,
+                    height: frame.height,
+                  },
+                )
+              : t(
+                  "本窗口画面 {width}×{height}（未读取）。覆盖翻译只改这里的显示，不会改动原应用。",
+                  {
+                    width: frame.width,
+                    height: frame.height,
+                  },
+                )
+          }
         >
-          只在本窗口显示译文，不会改动原应用
+          {t("只在本窗口显示译文，不会改动原应用")}
         </span>
 
         <div className="translation-toolbar__actions">
           <Button size="sm" variant="ghost" onClick={onRetranslate} disabled={isTranslating}>
-            重译
+            {t("重译")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onRecapture}>
-            重新截屏
+            {t("重新截屏")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onClose}>
-            关闭
+            {t("关闭")}
           </Button>
         </div>
       </div>

@@ -47,7 +47,19 @@ impl ConfigCenter {
     }
 
     /// 加载配置（永不失败：损坏时备份并回退默认值）。
+    ///
+    /// v1.1.0：加载后把 `advanced.proxy` 注入 `platform::http` 的进程级代理
+    /// （该配置「需重启应用」生效，因此只在启动加载时应用一次）。
     pub fn load(&self) -> LoadedConfig {
+        let loaded = self.load_inner();
+        // 测试环境：全局代理是进程级状态，串行化注入以避免并行单测互相干扰（生产无额外开销）。
+        #[cfg(test)]
+        let _proxy_guard = crate::platform::http::proxy_test_guard();
+        crate::platform::http::configure_proxy(loaded.config.advanced.proxy.as_deref());
+        loaded
+    }
+
+    fn load_inner(&self) -> LoadedConfig {
         let mut notes = Vec::new();
         if !self.paths.config_file.is_file() {
             let config = Config::default();

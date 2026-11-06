@@ -141,12 +141,23 @@ export function threadIsStreaming(turns: ResultTurn[]): boolean {
   return turns.some((turn) => turn.status === "streaming");
 }
 
+/** 复制全文时「问 / 答」前缀（由界面层注入翻译，保持本模块纯逻辑、可被 node --test 直接加载）。 */
+export interface ThreadCopyLabels {
+  question: string;
+  answer: string;
+}
+
+const DEFAULT_COPY_LABELS: ThreadCopyLabels = { question: "问：", answer: "答：" };
+
 /** 复制全文：按「问 / 答」拼接所有轮次；无追问时等价于最后一条回答。 */
-export function threadPlainText(turns: ResultTurn[]): string {
+export function threadPlainText(
+  turns: ResultTurn[],
+  labels: ThreadCopyLabels = DEFAULT_COPY_LABELS,
+): string {
   const blocks: string[] = [];
   for (const turn of turns) {
-    if (turn.question) blocks.push(`问：${turn.question}`);
-    if (turn.answer) blocks.push(`答：${turn.answer}`);
+    if (turn.question) blocks.push(`${labels.question}${turn.question}`);
+    if (turn.answer) blocks.push(`${labels.answer}${turn.answer}`);
   }
   return blocks.join("\n\n");
 }

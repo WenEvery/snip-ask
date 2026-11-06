@@ -16,18 +16,61 @@ use super::mode::mode_label;
 
 /// 受限模式下「无云端能力」的可操作提示（设置页路径 + 本地模型备选）。
 pub const REASON_NO_CLOUD_KEY: &str = "未配置 API Key：请到设置 → AI 服务填写，或下载本地模型";
+/// 有云端 Key 但没有供应商声明「联网搜索」能力时的可操作提示。
+pub const REASON_NO_SEARCH_CAP: &str =
+    "没有可用联网搜索能力：请到设置 → AI 服务为供应商勾选「联网搜索」，或改用浏览器搜索";
+/// 有云端 Key 但没有供应商声明「视觉（看图）」能力时的可操作提示。
+pub const REASON_NO_VISION_CAP: &str =
+    "没有可用的视觉能力：请到设置 → AI 服务为供应商勾选「视觉（看图）」";
+/// 有云端 Key 但没有供应商声明「翻译」能力（且无 Qwen-MT）时的可操作提示。
+pub const REASON_NO_TRANSLATE_CAP: &str =
+    "没有可用的云端翻译能力：请到设置 → AI 服务为供应商勾选「翻译」，或改用本地翻译";
 /// 本地翻译后端但模型未就绪时的可操作提示。
 pub const REASON_NO_LOCAL_MODEL: &str = "本地模型未下载：请到设置 → 模型库下载";
 /// 本地 OCR 不可用（正常情况下内嵌引擎始终可用，保留兜底文案）。
 pub const REASON_NO_LOCAL_OCR: &str = "本地 OCR 不可用：请重新安装应用或到设置 → 高级检查";
+
+/// 云端供应商能力快照（按 `enabled && hasKey` 的 provider `caps` 派生；v1.1.0）。
+///
+/// `config.providers[].caps` 在 v1.1.0 起真正参与动作可用性：
+/// AI 搜索需要至少一个可用供应商具备 `search`、图片搜索需要 `vision`、
+/// 云端翻译需要 `translate`（`kind = qwenMt` 视为具备）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct CloudCaps {
+    /// 视觉（图片搜索主路径）。
+    pub vision: bool,
+    /// 联网搜索（AI 搜索）。
+    pub search: bool,
+    /// 云端翻译（`translate` cap，或 `kind = qwenMt`）。
+    pub translate: bool,
+}
+
+impl CloudCaps {
+    /// 合并一个「可用」供应商（调用方需先按 `enabled && hasKey` 过滤）的能力。
+    ///
+    /// `translate_by_kind` 对应 `provider.kind = qwenMt`：Qwen-MT 专用翻译端点
+    /// 即使没有显式 `translate` cap 也具备云端翻译能力（契约 v5 语义）。
+    pub fn add_provider(&mut self, caps: &[crate::contract::config::Cap], translate_by_kind: bool) {
+        use crate::contract::config::Cap;
+        self.vision |= caps.contains(&Cap::Vision);
+        self.search |= caps.contains(&Cap::Search);
+        self.translate |= caps.contains(&Cap::Translate) || translate_by_kind;
+    }
+}
 
 /// 环境能力快照（S-07「受限模式」的输入，纯数据、可单测）。
 ///
 /// 由 IPC 命令层在运行时探测后注入；`domain` 层不直接访问凭据/文件系统。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Capabilities {
-    /// 存在 `enabled` 且已保存 API Key 的供应商。
+    /// 存在 `enabled` 且已保存 API Key 的供应商（任意能力）。
     pub cloud_available: bool,
+    /// 存在可用供应商具备 `vision` cap。
+    pub vision_available: bool,
+    /// 存在可用供应商具备 `search` cap。
+    pub search_available: bool,
+    /// 存在可用供应商具备 `translate` cap（或 `kind = qwenMt`）。
+    pub translate_available: bool,
     /// 本地 OCR 引擎可用（骨架模式视为可用）。
     pub local_ocr_available: bool,
     /// 浏览器搜索可用（外部浏览器始终存在）。
@@ -41,6 +84,9 @@ impl Capabilities {
     pub fn all_available() -> Self {
         Self {
             cloud_available: true,
+            vision_available: true,
+            search_available: true,
+            translate_available: true,
             local_ocr_available: true,
             browser_search_available: true,
             local_model_available: true,
@@ -48,9 +94,35 @@ impl Capabilities {
     }
 
     /// 由运行时探测结果派生（浏览器搜索与本地 OCR 视为内建能力）。
+    ///
+    /// 兼容旧签名：只按「是否有云端 Key」派生，三个云端能力随 `cloud_available`，
+    /// 等价于 v1.1.0 之前「有 Key 即可用」的语义。
     pub fn derive(cloud_available: bool, local_model_available: bool) -> Self {
         Self {
             cloud_available,
+            vision_available: cloud_available,
+            search_available: cloud_available,
+            translate_available: cloud_available,
+            local_ocr_available: true,
+            browser_search_available: true,
+            local_model_available,
+        }
+    }
+
+    /// 由运行时探测结果 + 云端 provider caps 派生（v1.1.0 真实语义）。
+    ///
+    /// `cloud_available` 仍表示「存在 enabled+hasKey 的供应商」（解答等通用云端动作使用），
+    /// `cloud_caps` 则按各供应商声明的能力细化搜索 / 图片搜索 / 云端翻译的可用性。
+    pub fn derive_from_cloud_caps(
+        cloud_available: bool,
+        cloud_caps: CloudCaps,
+        local_model_available: bool,
+    ) -> Self {
+        Self {
+            cloud_available,
+            vision_available: cloud_caps.vision,
+            search_available: cloud_caps.search,
+            translate_available: cloud_caps.translate,
             local_ocr_available: true,
             browser_search_available: true,
             local_model_available,
@@ -172,6 +244,9 @@ pub fn availability_with_capabilities(
                 (true, None)
             } else if !caps.cloud_available {
                 (false, Some(REASON_NO_CLOUD_KEY.to_string()))
+            } else if !caps.search_available {
+                // v1.1.0：AI 搜索需要至少一个可用供应商声明 `search` 能力。
+                (false, Some(REASON_NO_SEARCH_CAP.to_string()))
             } else if config.privacy.local_only {
                 (false, Some("已开启仅本地模式，AI 搜索不可用".to_string()))
             } else if !config.privacy.allow_text_upload {
@@ -183,6 +258,9 @@ pub fn availability_with_capabilities(
         ActionId::ImageSearch => {
             if !caps.cloud_available {
                 (false, Some(REASON_NO_CLOUD_KEY.to_string()))
+            } else if !caps.vision_available {
+                // v1.1.0：图片搜索需要至少一个可用供应商声明 `vision` 能力。
+                (false, Some(REASON_NO_VISION_CAP.to_string()))
             } else if config.privacy.local_only {
                 (false, Some("已开启仅本地模式，图片搜索不可用".to_string()))
             } else if !config.privacy.allow_image_upload {
@@ -201,6 +279,9 @@ pub fn availability_with_capabilities(
                 }
             } else if !caps.cloud_available {
                 (false, Some(REASON_NO_CLOUD_KEY.to_string()))
+            } else if !caps.translate_available {
+                // v1.1.0：云端翻译需要至少一个可用供应商声明 `translate`（或 kind = qwenMt）。
+                (false, Some(REASON_NO_TRANSLATE_CAP.to_string()))
             } else if config.privacy.local_only {
                 (false, Some("已开启仅本地模式，云端翻译不可用".to_string()))
             } else if !config.privacy.allow_text_upload {
@@ -296,7 +377,7 @@ pub fn action_mode_label(config: &Config, action: ActionId) -> &'static str {
 mod tests {
     use super::*;
     use crate::contract::config::{
-        PrivacyPrefs, SearchMode, SearchPrefs, TranslateBackend, TranslatePrefs,
+        Cap, PrivacyPrefs, SearchMode, SearchPrefs, TranslateBackend, TranslatePrefs,
     };
 
     #[test]
@@ -528,5 +609,134 @@ mod tests {
         assert!(Capabilities::all_available().cloud_available);
         assert!(!restricted().cloud_available);
         assert!(restricted().restricted());
+    }
+
+    /* ───────────── v1.1.0：provider caps 参与动作可用性 ───────────── */
+
+    fn cloud_caps(vision: bool, search: bool, translate: bool) -> Capabilities {
+        Capabilities::derive_from_cloud_caps(
+            true,
+            CloudCaps {
+                vision,
+                search,
+                translate,
+            },
+            false,
+        )
+    }
+
+    #[test]
+    fn cloud_caps_merges_provider_caps_and_qwen_mt_kind() {
+        let mut caps = CloudCaps::default();
+        caps.add_provider(&[Cap::Vision], false);
+        assert!(caps.vision && !caps.search && !caps.translate);
+        caps.add_provider(&[Cap::Translate], false);
+        assert!(caps.translate);
+        // qwenMt 即使没有显式 translate cap 也视为可翻译（契约 v5 语义）。
+        let mut only_kind = CloudCaps::default();
+        only_kind.add_provider(&[], true);
+        assert!(only_kind.translate && !only_kind.vision && !only_kind.search);
+    }
+
+    #[test]
+    fn ai_search_requires_search_cap_when_cloud_key_exists() {
+        let mut config = Config::default();
+        config.search = SearchPrefs {
+            mode: SearchMode::Ai,
+            ..SearchPrefs::default()
+        };
+        // 有 Key 但没有供应商声明 search → 禁用并提示勾选能力。
+        let items =
+            visible_actions_with_capabilities(&config, true, &cloud_caps(true, false, true));
+        let search = item(&items, ActionId::Search);
+        assert!(!search.enabled);
+        assert!(search
+            .disabled_reason
+            .as_deref()
+            .unwrap()
+            .contains("联网搜索"));
+        // 具备 search cap → 可用。
+        let items = visible_actions_with_capabilities(&config, true, &cloud_caps(true, true, true));
+        assert!(item(&items, ActionId::Search).enabled);
+        // 浏览器搜索不受 caps 影响。
+        let mut browser = Config::default();
+        browser.search = SearchPrefs {
+            mode: SearchMode::Browser,
+            ..SearchPrefs::default()
+        };
+        let items =
+            visible_actions_with_capabilities(&browser, true, &cloud_caps(false, false, false));
+        assert!(item(&items, ActionId::Search).enabled);
+    }
+
+    #[test]
+    fn image_search_requires_vision_cap_when_cloud_key_exists() {
+        let config = Config::default();
+        let items =
+            visible_actions_with_capabilities(&config, false, &cloud_caps(false, true, true));
+        let image_search = item(&items, ActionId::ImageSearch);
+        assert!(!image_search.enabled);
+        assert!(image_search
+            .disabled_reason
+            .as_deref()
+            .unwrap()
+            .contains("视觉"));
+        let items =
+            visible_actions_with_capabilities(&config, false, &cloud_caps(true, false, false));
+        assert!(item(&items, ActionId::ImageSearch).enabled);
+    }
+
+    #[test]
+    fn cloud_translate_requires_translate_cap() {
+        let config = Config::default();
+        let items =
+            visible_actions_with_capabilities(&config, true, &cloud_caps(true, true, false));
+        let translate = item(&items, ActionId::Translate);
+        assert!(!translate.enabled);
+        assert!(translate
+            .disabled_reason
+            .as_deref()
+            .unwrap()
+            .contains("翻译"));
+        let items = visible_actions_with_capabilities(&config, true, &cloud_caps(true, true, true));
+        assert!(item(&items, ActionId::Translate).enabled);
+    }
+
+    #[test]
+    fn local_translate_ignores_translate_cap() {
+        let mut config = Config::default();
+        config.translate = TranslatePrefs {
+            backend: TranslateBackend::Local,
+            ..TranslatePrefs::default()
+        };
+        let caps = Capabilities::derive_from_cloud_caps(
+            true,
+            CloudCaps::default(),
+            true, // 本地模型已安装
+        );
+        let items = visible_actions_with_capabilities(&config, true, &caps);
+        assert!(item(&items, ActionId::Translate).enabled);
+        // 未安装本地模型 → 仍按本地模型缺失提示。
+        let caps = Capabilities::derive_from_cloud_caps(true, CloudCaps::default(), false);
+        let items = visible_actions_with_capabilities(&config, true, &caps);
+        let translate = item(&items, ActionId::Translate);
+        assert!(!translate.enabled);
+        assert!(translate
+            .disabled_reason
+            .as_deref()
+            .unwrap()
+            .contains("本地模型未下载"));
+    }
+
+    #[test]
+    fn answer_ignores_specific_caps_but_needs_cloud_key() {
+        let config = Config::default();
+        let items =
+            visible_actions_with_capabilities(&config, true, &cloud_caps(false, false, false));
+        // 解答是通用云端能力：不要求 vision/search/translate 任一 cap。
+        assert!(item(&items, ActionId::Answer).enabled);
+        let no_key = Capabilities::derive_from_cloud_caps(false, CloudCaps::default(), false);
+        let items = visible_actions_with_capabilities(&config, true, &no_key);
+        assert!(!item(&items, ActionId::Answer).enabled);
     }
 }

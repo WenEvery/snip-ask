@@ -1,6 +1,7 @@
 /** 结果窗工具：错误归一化、降级动作中文名、时延/费用格式化 */
 
 import type { TaskErrorPayload } from "@/shared/contract/types";
+import { t } from "@/i18n";
 
 export interface ResultError {
   code: string;
@@ -11,20 +12,20 @@ export interface ResultError {
 }
 
 const FALLBACK_LABELS: Record<string, string> = {
-  retry: "重试",
-  browser_search: "改用浏览器搜索",
-  local_translate: "改用本地翻译",
-  cloud_translate: "改用云端翻译",
-  open_settings: "打开设置",
-  image_path: "改用图片识别",
-  download_model: "下载本地模型",
-  light_model: "换用轻量模型",
-  change_hotkey: "更换热键",
-  pause_hotkey: "暂停热键",
-  mirror: "切换镜像源",
-  manual_download: "手动下载",
-  redownload: "重新下载",
-  reset_group: "恢复该分组默认值",
+  retry: t("重试"),
+  browser_search: t("改用浏览器搜索"),
+  local_translate: t("改用本地翻译"),
+  cloud_translate: t("改用云端翻译"),
+  open_settings: t("打开设置"),
+  image_path: t("改用图片识别"),
+  download_model: t("下载本地模型"),
+  light_model: t("换用轻量模型"),
+  change_hotkey: t("更换热键"),
+  pause_hotkey: t("暂停热键"),
+  mirror: t("切换镜像源"),
+  manual_download: t("手动下载"),
+  redownload: t("重新下载"),
+  reset_group: t("恢复该分组默认值"),
 };
 
 export function fallbackLabel(value: string): string {
@@ -32,7 +33,7 @@ export function fallbackLabel(value: string): string {
 }
 
 export function fallbackText(fallbacks: string[]): string {
-  return fallbacks.map(fallbackLabel).join("、");
+  return fallbacks.map(fallbackLabel).join(t("、"));
 }
 
 /** 命令 reject 的 AppError / 任意异常 → 可展示错误 */
@@ -55,7 +56,7 @@ export function normalizeError(error: unknown): ResultError {
     if (error instanceof Error) {
       return {
         code: "SA-0000",
-        message: error.message || "操作失败，请稍后重试。",
+        message: error.message || t("操作失败，请稍后重试。"),
         detail: null,
         retryable: true,
         fallback: [],
@@ -64,7 +65,7 @@ export function normalizeError(error: unknown): ResultError {
   }
   return {
     code: "SA-0000",
-    message: "操作失败，请稍后重试。",
+    message: t("操作失败，请稍后重试。"),
     detail: typeof error === "string" ? error : null,
     retryable: true,
     fallback: [],

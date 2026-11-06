@@ -12,6 +12,7 @@
  */
 
 import type { ConfigView, ModelInfo } from "@/shared/contract/types";
+import { t } from "../../../i18n";
 
 export interface Capabilities {
   cloudAvailable: boolean;
@@ -44,15 +45,15 @@ export function isRestricted(capabilities: Capabilities): boolean {
 
 /** 受限模式下仍可用的能力（中文枚举，用于提示文案）。 */
 export function availableLabels(capabilities: Capabilities): string[] {
-  const labels = ["本地文字识别", "浏览器搜索", "复制文字"];
-  if (capabilities.localModelAvailable) labels.push("本地翻译");
+  const labels = [t("本地文字识别"), t("浏览器搜索"), t("复制文字")];
+  if (capabilities.localModelAvailable) labels.push(t("本地翻译"));
   return labels;
 }
 
 /** 受限模式下不可用的能力（中文枚举，用于提示文案）。 */
 export function unavailableLabels(capabilities: Capabilities): string[] {
-  const labels = ["AI 搜索", "解答", "图片搜索", "云端翻译"];
-  if (!capabilities.localModelAvailable) labels.push("本地翻译");
+  const labels = [t("AI 搜索"), t("解答"), t("图片搜索"), t("云端翻译")];
+  if (!capabilities.localModelAvailable) labels.push(t("本地翻译"));
   return labels;
 }
 

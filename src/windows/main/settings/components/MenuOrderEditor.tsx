@@ -1,6 +1,7 @@
 /** 动作菜单顺序编辑：勾选显隐 + 上移/下移调整顺序（数组顺序即菜单顺序） */
 
 import type { ActionId } from "@/shared/contract/types";
+import { t } from "@/i18n";
 import { ACTION_LABELS } from "../presets";
 
 export interface MenuOrderEditorProps {
@@ -41,7 +42,7 @@ export function MenuOrderEditor(props: MenuOrderEditorProps) {
       </div>
       <div className="sa-menu-order">
         {value.length === 0 ? (
-          <p className="sa-hint">全部隐藏：该选区下动作菜单将为空。</p>
+          <p className="sa-hint">{t("全部隐藏：该选区下动作菜单将为空。")}</p>
         ) : (
           value.map((action, index) => (
             <div key={action} className="sa-menu-item">
@@ -53,7 +54,7 @@ export function MenuOrderEditor(props: MenuOrderEditorProps) {
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
               >
-                上移
+                {t("上移")}
               </button>
               <button
                 type="button"
@@ -61,10 +62,10 @@ export function MenuOrderEditor(props: MenuOrderEditorProps) {
                 disabled={index === value.length - 1}
                 onClick={() => move(index, 1)}
               >
-                下移
+                {t("下移")}
               </button>
               <button type="button" className="sa-linkbtn is-danger" onClick={() => toggle(action)}>
-                隐藏
+                {t("隐藏")}
               </button>
             </div>
           ))
@@ -77,7 +78,7 @@ export function MenuOrderEditor(props: MenuOrderEditorProps) {
                 key={action}
                 type="button"
                 className={`sa-chip${included ? " is-on" : ""}`}
-                title={included ? "点击从菜单隐藏" : "点击加入菜单"}
+                title={included ? t("点击从菜单隐藏") : t("点击加入菜单")}
                 onClick={() => toggle(action)}
               >
                 {included ? "✓ " : "+ "}

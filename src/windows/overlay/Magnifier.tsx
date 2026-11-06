@@ -5,6 +5,7 @@
 
 import type { CSSProperties } from "react";
 import type { FrozenFrameMeta, RectPhys } from "../../shared/contract/types";
+import { t } from "../../i18n";
 import { toCssPoint } from "./coords";
 import type { Point } from "./coords";
 
@@ -58,7 +59,7 @@ export function Magnifier({ cursorPhys, rect, virtualRect, dpr, frame }: Magnifi
         <div className="overlay-magnifier__placeholder">
           <span className="overlay-magnifier__grid" />
           <span className="overlay-magnifier__crosshair" />
-          <span className="overlay-magnifier__hint">没有读取到屏幕画面</span>
+          <span className="overlay-magnifier__hint">{t("没有读取到屏幕画面")}</span>
         </div>
       )}
       <span className="overlay-magnifier__readout">{readout}</span>

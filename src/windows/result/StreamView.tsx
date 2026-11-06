@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from "react";
+import { t } from "@/i18n";
 
 export interface StreamViewProps {
   text: string;
@@ -18,7 +19,7 @@ export function StreamView(props: StreamViewProps) {
     <div className="result-stream">
       {props.reasoning ? (
         <details className="result-reasoning">
-          <summary>思考过程（{props.reasoning.length} 字）</summary>
+          <summary>{t("思考过程（{count} 字）", { count: props.reasoning.length })}</summary>
           <pre className="result-reasoning-text">{props.reasoning}</pre>
         </details>
       ) : null}

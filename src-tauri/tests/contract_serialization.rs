@@ -49,8 +49,8 @@ const EXPECTED_EVENTS: [&str; 15] = [
 #[test]
 fn contract_version_is_one() {
     assert_eq!(IPC_CONTRACT_VERSION, 1);
-    // 契约 v5：配置 schema 5（去 updateChannel / Provider.kind / 骨架模式默认关闭）。
-    assert_eq!(CONFIG_SCHEMA_VERSION, 6);
+    // v7：配置 schema 7（provider caps 生效；openAiCompatible 迁移补 translate cap）。
+    assert_eq!(CONFIG_SCHEMA_VERSION, 7);
 }
 
 #[test]
@@ -110,7 +110,7 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(keys, expected_keys);
 
     // 关键默认值。
-    assert_eq!(value["schemaVersion"], 6);
+    assert_eq!(value["schemaVersion"], 7);
     assert_eq!(value["app"]["language"], "zh-CN");
     assert_eq!(value["app"]["singleInstance"].as_bool(), Some(true));
     assert_eq!(value["ui"]["theme"], "system");
@@ -121,7 +121,10 @@ fn config_default_serializes_to_contract_json() {
     assert_eq!(value["actions"]["defaultAction"], serde_json::Value::Null);
     assert_eq!(value["providers"][0]["id"], "deepseek");
     assert_eq!(value["providers"][0]["kind"], "openAiCompatible");
-    assert_eq!(value["providers"][0]["caps"][0], "vision");
+    assert_eq!(
+        value["providers"][0]["caps"],
+        serde_json::json!(["vision", "search", "thinking", "translate"])
+    );
     assert_eq!(value["providers"][1]["id"], "dashscope");
     assert_eq!(value["providers"][1]["kind"], "qwenMt");
     assert_eq!(value["providers"][1]["enabled"].as_bool(), Some(false));
@@ -159,7 +162,7 @@ fn config_partial_json_fills_defaults() {
     // 缺失字段必须用默认值补齐（契约 §16：后端提供默认值）。
     let partial: Config = serde_json::from_str(r#"{"ui":{"theme":"dark"}}"#).unwrap();
     assert_eq!(partial.ui.theme, Theme::Dark);
-    assert_eq!(partial.schema_version, 6);
+    assert_eq!(partial.schema_version, 7);
     assert_eq!(partial.hotkeys.capture, "Ctrl+Q");
     assert_eq!(partial.providers.len(), 3);
 }

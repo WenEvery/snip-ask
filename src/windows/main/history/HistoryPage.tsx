@@ -14,6 +14,7 @@ import { Button, EmptyState, Spinner } from "@/components/ui";
 import type { HistorySession, HistoryThread } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc, toAppError } from "@/shared/ipc";
+import { t } from "@/i18n";
 import {
   filterSessions,
   formatAbsoluteTime,
@@ -116,7 +117,7 @@ export default function HistoryPage() {
     setListError(null);
     try {
       await ipc.invoke<void>(COMMANDS.historyClear, { session: session.session });
-      setNotice(`已清空「${summarizeTitle(session.title)}」的记录。`);
+      setNotice(t("已清空「{name}」的记录。", { name: summarizeTitle(session.title, 60, t) }));
       if (selected === session.session) {
         setSelected(null);
         setThread(null);
@@ -136,7 +137,7 @@ export default function HistoryPage() {
     setListError(null);
     try {
       await ipc.invoke<void>(COMMANDS.historyClear, {});
-      setNotice("已清空全部历史记录。");
+      setNotice(t("已清空全部历史记录。"));
       setSelected(null);
       setThread(null);
       await loadList(false);
@@ -148,7 +149,7 @@ export default function HistoryPage() {
     }
   };
 
-  const visible = useMemo(() => filterSessions(sessions, query), [sessions, query]);
+  const visible = useMemo(() => filterSessions(sessions, query, t), [sessions, query]);
   const selectedSummary = useMemo(
     () => sessions.find((item) => item.session === selected) ?? null,
     [sessions, selected],
@@ -158,9 +159,9 @@ export default function HistoryPage() {
     <div className="history-root">
       <header className="history-header">
         <div>
-          <h1 className="history-title">历史</h1>
+          <h1 className="history-title">{t("历史")}</h1>
           <p className="history-subtitle">
-            每次框选的问答都记录在这里，只保存在本机；清空后无法恢复。
+            {t("每次框选的问答都记录在这里，只保存在本机；清空后无法恢复。")}
           </p>
         </div>
         <div className="history-header-actions">
@@ -170,16 +171,18 @@ export default function HistoryPage() {
             disabled={listLoading}
             onClick={() => void loadList(true)}
           >
-            {listLoading ? "读取中…" : "刷新"}
+            {listLoading ? t("读取中…") : t("刷新")}
           </Button>
           {confirm?.type === "all" ? (
             <span className="history-confirm">
-              <span className="history-confirm-text">将清空全部历史记录，且不可恢复，确定？</span>
+              <span className="history-confirm-text">
+                {t("将清空全部历史记录，且不可恢复，确定？")}
+              </span>
               <Button variant="danger" size="sm" disabled={busy} onClick={() => void clearAll()}>
-                {busy ? "清空中…" : "确认清空全部"}
+                {busy ? t("清空中…") : t("确认清空全部")}
               </Button>
               <Button variant="ghost" size="sm" disabled={busy} onClick={() => setConfirm(null)}>
-                取消
+                {t("取消")}
               </Button>
             </span>
           ) : (
@@ -189,7 +192,7 @@ export default function HistoryPage() {
               disabled={busy || sessions.length === 0}
               onClick={() => setConfirm({ type: "all" })}
             >
-              清空全部历史
+              {t("清空全部历史")}
             </Button>
           )}
         </div>
@@ -199,7 +202,7 @@ export default function HistoryPage() {
         <div className="history-error" role="alert">
           <strong>{listError}</strong>
           <Button variant="ghost" size="sm" onClick={() => void loadList(true)}>
-            重试
+            {t("重试")}
           </Button>
         </div>
       ) : null}
@@ -210,28 +213,28 @@ export default function HistoryPage() {
           className="history-search"
           type="search"
           value={query}
-          placeholder="按标题、动作或模型筛选…"
+          placeholder={t("按标题、动作或模型筛选…")}
           onChange={(event) => setQuery(event.target.value)}
         />
         <span className="history-count">
-          {visible.length} / {sessions.length} 个会话
+          {t("{visible} / {total} 个会话", { visible: visible.length, total: sessions.length })}
         </span>
       </div>
 
       <div className="history-layout">
-        <section className="history-list" aria-label="历史会话列表">
+        <section className="history-list" aria-label={t("历史会话列表")}>
           {listLoading && sessions.length === 0 ? (
             <div className="history-loading">
               <Spinner />
-              <span>正在读取历史…</span>
+              <span>{t("正在读取历史…")}</span>
             </div>
           ) : visible.length === 0 ? (
             <EmptyState
-              title={sessions.length === 0 ? "还没有历史记录" : "没有找到匹配的记录"}
+              title={sessions.length === 0 ? t("还没有历史记录") : t("没有找到匹配的记录")}
               description={
                 sessions.length === 0
-                  ? "框选并完成一次动作后，记录会自动出现在这里（可在「设置 → 核心」关闭历史）。"
-                  : "换个关键词试试。"
+                  ? t("框选并完成一次动作后，记录会自动出现在这里（可在「设置 → 核心」关闭历史）。")
+                  : t("换个关键词试试。")
               }
             />
           ) : (
@@ -244,12 +247,12 @@ export default function HistoryPage() {
                   className={`history-item${active ? " is-active" : ""}`}
                   onClick={() => void openThread(session)}
                 >
-                  <span className="history-item-title">{summarizeTitle(session.title)}</span>
+                  <span className="history-item-title">{summarizeTitle(session.title, 60, t)}</span>
                   <span className="history-item-meta">
-                    <span>{formatHistoryTime(session.startedAt)}</span>
-                    <span>· {session.turns} 轮</span>
-                    <span>· {historyActionLabel(session.action)}</span>
-                    <span>· {historyEngineLabel(session.engine)}</span>
+                    <span>{formatHistoryTime(session.startedAt, Date.now(), t)}</span>
+                    <span>· {t("{count} 轮", { count: session.turns })}</span>
+                    <span>· {historyActionLabel(session.action, t)}</span>
+                    <span>· {historyEngineLabel(session.engine, t)}</span>
                   </span>
                 </button>
               );
@@ -257,18 +260,20 @@ export default function HistoryPage() {
           )}
         </section>
 
-        <section className="history-detail" aria-label="历史线程详情">
+        <section className="history-detail" aria-label={t("历史线程详情")}>
           {!selectedSummary && !threadLoading ? (
             <EmptyState
-              title="选择一个对话查看内容"
-              description="左边是最近的记录，点一下就能看到每一轮的问题、回答、使用的模型和时间。"
+              title={t("选择一个对话查看内容")}
+              description={t(
+                "左边是最近的记录，点一下就能看到每一轮的问题、回答、使用的模型和时间。",
+              )}
             />
           ) : null}
 
           {threadLoading ? (
             <div className="history-loading">
               <Spinner />
-              <span>正在读取…</span>
+              <span>{t("正在读取…")}</span>
             </div>
           ) : null}
 
@@ -276,7 +281,7 @@ export default function HistoryPage() {
             <div className="history-error" role="alert">
               <strong>{threadError}</strong>
               <Button variant="ghost" size="sm" onClick={() => void refreshSelection()}>
-                重试
+                {t("重试")}
               </Button>
             </div>
           ) : null}
@@ -284,11 +289,14 @@ export default function HistoryPage() {
           {selectedSummary ? (
             <div className="history-thread-head">
               <div>
-                <h2 className="history-thread-title">{summarizeTitle(selectedSummary.title)}</h2>
+                <h2 className="history-thread-title">
+                  {summarizeTitle(selectedSummary.title, 60, t)}
+                </h2>
                 <p className="history-thread-meta">
                   {formatAbsoluteTime(selectedSummary.startedAt)} ·{" "}
-                  {historyActionLabel(selectedSummary.action)} · {threadTurnCount(thread)} 轮 ·{" "}
-                  {historyEngineLabel(selectedSummary.engine)}
+                  {historyActionLabel(selectedSummary.action, t)} ·{" "}
+                  {t("{count} 轮", { count: threadTurnCount(thread) })} ·{" "}
+                  {historyEngineLabel(selectedSummary.engine, t)}
                 </p>
               </div>
               <div className="history-thread-actions">
@@ -298,18 +306,18 @@ export default function HistoryPage() {
                   disabled={threadLoading}
                   onClick={() => void refreshSelection()}
                 >
-                  重新读取
+                  {t("重新读取")}
                 </Button>
                 {confirm?.type === "one" ? (
                   <span className="history-confirm">
-                    <span className="history-confirm-text">清空该会话？</span>
+                    <span className="history-confirm-text">{t("清空该会话？")}</span>
                     <Button
                       variant="danger"
                       size="sm"
                       disabled={busy}
                       onClick={() => void clearSession(selectedSummary)}
                     >
-                      确认清空
+                      {t("确认清空")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -317,7 +325,7 @@ export default function HistoryPage() {
                       disabled={busy}
                       onClick={() => setConfirm(null)}
                     >
-                      取消
+                      {t("取消")}
                     </Button>
                   </span>
                 ) : (
@@ -327,7 +335,7 @@ export default function HistoryPage() {
                     disabled={busy}
                     onClick={() => setConfirm({ type: "one", session: selectedSummary })}
                   >
-                    清空该会话
+                    {t("清空该会话")}
                   </Button>
                 )}
               </div>
@@ -336,30 +344,32 @@ export default function HistoryPage() {
 
           {thread && selectedSummary ? (
             thread.turns.length === 0 ? (
-              <p className="history-hint">这个对话没有可显示的内容。</p>
+              <p className="history-hint">{t("这个对话没有可显示的内容。")}</p>
             ) : (
               <div className="history-turns">
                 {thread.turns.map((turn, index) => (
                   <article key={turn.task} className={`history-turn is-${turn.status}`}>
                     <div className="history-turn-head">
-                      <span className="history-turn-index">第 {index + 1} 轮</span>
+                      <span className="history-turn-index">
+                        {t("第 {index} 轮", { index: index + 1 })}
+                      </span>
                       <span className={`history-turn-status is-${turn.status}`}>
-                        {turnStatusLabel(turn.status)}
+                        {turnStatusLabel(turn.status, t)}
                       </span>
                       <span className="history-turn-meta">
-                        {historyEngineLabel(turn.engine)} · {formatAbsoluteTime(turn.createdAt)}
+                        {historyEngineLabel(turn.engine, t)} · {formatAbsoluteTime(turn.createdAt)}
                       </span>
                     </div>
                     <div className="history-turn-question">
-                      <span className="history-turn-role">问</span>
+                      <span className="history-turn-role">{t("问")}</span>
                       <span className="history-turn-question-text">
-                        {turn.question || "（第一次框选，没有追问）"}
+                        {turn.question || t("（第一次框选，没有追问）")}
                       </span>
                     </div>
                     <div className="history-turn-answer">
-                      <span className="history-turn-role is-ai">答</span>
+                      <span className="history-turn-role is-ai">{t("答")}</span>
                       <pre className="history-turn-answer-text">
-                        {turn.answer || "（无回答内容）"}
+                        {turn.answer || t("（无回答内容）")}
                       </pre>
                     </div>
                   </article>

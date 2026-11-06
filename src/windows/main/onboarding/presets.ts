@@ -1,6 +1,7 @@
 /** 引导页内置预设（静态文案参考可行性报告 §2.4.3 / §3.2.6） */
 
 import type { Cap, Language, Mode, ProviderKind, TranslateBackend } from "@/shared/contract/types";
+import { t } from "../../../i18n";
 
 export interface OnboardingProviderPreset {
   id: string;
@@ -25,8 +26,8 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     baseUrl: "https://api.deepseek.com",
     model: "deepseek-flash",
     kind: "openAiCompatible",
-    caps: ["vision", "search", "thinking"],
-    note: "默认推荐：能看图、能联网搜索，回答质量高",
+    caps: ["vision", "search", "thinking", "translate"],
+    note: t("默认推荐：能看图、能联网搜索，回答质量高"),
   },
   {
     id: "dashscope",
@@ -35,7 +36,7 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     model: "qwen-mt-lite",
     kind: "qwenMt",
     caps: ["translate"],
-    note: "专门的翻译服务：填入 DashScope 的 Key 后可以用于翻译（不参与搜索和看图）",
+    note: t("专门的翻译服务：填入 DashScope 的 Key 后可以用于翻译（不参与搜索和看图）"),
   },
   {
     id: "generic-openai",
@@ -44,7 +45,7 @@ export const ONBOARDING_PROVIDERS: OnboardingProviderPreset[] = [
     model: "gpt-4o-mini",
     kind: "openAiCompatible",
     caps: ["vision", "search", "thinking", "translate"],
-    note: "支持任何 OpenAI 兼容的服务，可自行填写地址和模型名",
+    note: t("支持任何 OpenAI 兼容的服务，可自行填写地址和模型名"),
   },
 ];
 
@@ -81,39 +82,39 @@ export interface TranslateTier {
 export const TRANSLATE_TIERS: TranslateTier[] = [
   {
     id: "cloud",
-    title: "云端翻译",
-    tag: "推荐 · 最快",
-    description: "需要 API Key；不占磁盘和内存，按使用量付费",
+    title: t("云端翻译"),
+    tag: t("推荐 · 最快"),
+    description: t("需要 API Key；不占磁盘和内存，按使用量付费"),
     backend: "cloud",
     modelId: null,
     sizeText: null,
     ramText: null,
-    speedText: "通常 1 秒左右就能出结果",
-    qualityText: "效果最好；需要联网，文字会上传到你的 AI 服务",
+    speedText: t("通常 1 秒左右就能出结果"),
+    qualityText: t("效果最好；需要联网，文字会上传到你的 AI 服务"),
   },
   {
     id: "tiny",
-    title: "小模型（本地）",
-    tag: "省资源",
-    description: "适合低配电脑，不上传内容、不按次收费",
+    title: t("小模型（本地）"),
+    tag: t("省资源"),
+    description: t("适合低配电脑，不上传内容、不按次收费"),
     backend: "local",
     modelId: TINY_LOCAL_MODEL_ID,
-    sizeText: "约 470 MB",
-    ramText: "内存约 1 GB",
-    speedText: "短句通常 1 秒内，长段落几秒",
-    qualityText: "速度快、占用低；译文质量一般，适合短句和日常使用",
+    sizeText: t("约 470 MB"),
+    ramText: t("内存约 1 GB"),
+    speedText: t("短句通常 1 秒内，长段落几秒"),
+    qualityText: t("速度快、占用低；译文质量一般，适合短句和日常使用"),
   },
   {
     id: "standard",
-    title: "普通模型（本地）",
-    tag: "本地效果最好",
-    description: "专注翻译的本地模型，译文更自然",
+    title: t("普通模型（本地）"),
+    tag: t("本地效果最好"),
+    description: t("专注翻译的本地模型，译文更自然"),
     backend: "local",
     modelId: STANDARD_LOCAL_MODEL_ID,
-    sizeText: "约 1.08 GB",
-    ramText: "内存约 2.1 GB",
-    speedText: "一段 200 字大约需要 10–20 秒（仅用 CPU 时）",
-    qualityText: "译文质量好，但纯 CPU 运行较慢；适合愿意等待、看重质量的场景",
+    sizeText: t("约 1.08 GB"),
+    ramText: t("内存约 2.1 GB"),
+    speedText: t("一段 200 字大约需要 10–20 秒（仅用 CPU 时）"),
+    qualityText: t("译文质量好，但纯 CPU 运行较慢；适合愿意等待、看重质量的场景"),
   },
 ];
 
@@ -129,31 +130,31 @@ export interface ModeRow {
 export const MODE_ROWS: ModeRow[] = [
   {
     key: "search",
-    label: "文本搜索",
-    description: "框选文字后生成检索结论与来源",
-    quick: "1–3 秒 · 花费少",
-    deep: "5–25 秒 · 花费高",
+    label: t("文本搜索"),
+    description: t("框选文字后生成检索结论与来源"),
+    quick: t("1–3 秒 · 花费少"),
+    deep: t("5–25 秒 · 花费高"),
   },
   {
     key: "imageSearch",
-    label: "图片搜索",
-    description: "识别图像内容并检索来源",
-    quick: "2–4 秒 · 花费少",
-    deep: "6–25 秒 · 花费高",
+    label: t("图片搜索"),
+    description: t("识别图像内容并检索来源"),
+    quick: t("2–4 秒 · 花费少"),
+    deep: t("6–25 秒 · 花费高"),
   },
   {
     key: "translate",
-    label: "翻译",
-    description: "框选文字直接翻译为目标语言",
-    quick: "1–3 秒 · 花费少",
-    deep: "5–15 秒 · 花费较高",
+    label: t("翻译"),
+    description: t("框选文字直接翻译为目标语言"),
+    quick: t("1–3 秒 · 花费少"),
+    deep: t("5–15 秒 · 花费较高"),
   },
   {
     key: "answer",
-    label: "解答",
-    description: "解释、分析或改写框选内容",
-    quick: "1–3 秒 · 花费少",
-    deep: "5–25 秒 · 花费高",
+    label: t("解答"),
+    description: t("解释、分析或改写框选内容"),
+    quick: t("1–3 秒 · 花费少"),
+    deep: t("5–25 秒 · 花费高"),
   },
 ];
 
@@ -166,8 +167,8 @@ export interface LanguageOption {
 export const LANGUAGES: LanguageOption[] = [
   {
     value: "zh-CN",
-    label: "简体中文",
-    preview: "框选屏幕任意区域，立刻获得搜索、翻译与解答。",
+    label: t("简体中文"),
+    preview: t("框选屏幕任意区域，立刻获得搜索、翻译与解答。"),
   },
   {
     value: "en-US",
@@ -177,10 +178,10 @@ export const LANGUAGES: LanguageOption[] = [
 ];
 
 export const CAP_LABELS: Record<Cap, string> = {
-  vision: "视觉",
-  search: "联网搜索",
-  thinking: "深度思考",
-  translate: "翻译",
+  vision: t("视觉"),
+  search: t("联网搜索"),
+  thinking: t("深度思考"),
+  translate: t("翻译"),
 };
 
 /** 所有动作默认快速 */
@@ -194,7 +195,7 @@ export const DEFAULT_MODES: Record<ModeRow["key"], Mode> = {
 export const DEFAULT_CAPTURE_HOTKEY = "Ctrl+Q";
 
 export const DEFAULT_THEME_OPTIONS = [
-  { value: "system", label: "跟随系统" },
-  { value: "light", label: "浅色" },
-  { value: "dark", label: "深色" },
+  { value: "system", label: t("跟随系统") },
+  { value: "light", label: t("浅色") },
+  { value: "dark", label: t("深色") },
 ] as const;

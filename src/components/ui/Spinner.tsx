@@ -4,6 +4,8 @@ export interface SpinnerProps {
   className?: string;
 }
 
+import { t } from "../../i18n";
+
 export function Spinner({ size = "md", label, className }: SpinnerProps) {
   const classes = ["sa-spinner", `sa-spinner--${size}`, className].filter(Boolean).join(" ");
   return (
@@ -12,7 +14,7 @@ export function Spinner({ size = "md", label, className }: SpinnerProps) {
       {label ? (
         <span className="sa-spinner__label">{label}</span>
       ) : (
-        <span className="sa-visually-hidden">加载中</span>
+        <span className="sa-visually-hidden">{t("加载中")}</span>
       )}
     </span>
   );

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui";
 import type { HotkeyStatus } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { captureHotkey, hotkeyLabel, hotkeyStatusHint } from "../hotkey";
 
 export interface HotkeyFieldProps {
@@ -80,12 +81,12 @@ export function HotkeyField(props: HotkeyFieldProps) {
           }}
           onKeyDown={handleKeyDown}
           onBlur={() => setRecording(false)}
-          title="点击后按下组合键；Backspace 清空，Esc 取消"
+          title={t("点击后按下组合键；Backspace 清空，Esc 取消")}
         >
-          {recording ? "请按下组合键…" : hotkeyLabel(props.value)}
+          {recording ? t("请按下组合键…") : hotkeyLabel(props.value)}
         </button>
         <Button variant="secondary" size="sm" disabled={probing || !props.value} onClick={probe}>
-          {probing ? "检测中…" : "检测"}
+          {probing ? t("检测中…") : t("检测")}
         </Button>
         {resetVisible ? (
           <Button
@@ -97,7 +98,7 @@ export function HotkeyField(props: HotkeyFieldProps) {
               setStatus(null);
             }}
           >
-            恢复默认
+            {t("恢复默认")}
           </Button>
         ) : null}
       </div>

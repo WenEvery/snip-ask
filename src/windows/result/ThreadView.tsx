@@ -11,6 +11,7 @@ import { StreamView } from "./StreamView";
 import { SourceList } from "./SourceList";
 import { fallbackText, formatCost, formatLatency } from "./helpers";
 import { engineLabel, engineTitle } from "../shared/engineLabel";
+import { t } from "@/i18n";
 
 export interface ThreadViewProps {
   turns: ResultTurn[];
@@ -49,7 +50,7 @@ function TurnBubble(props: TurnBubbleProps) {
   const body = <TurnBody turn={turn} latest={props.latest} onSourceError={props.onSourceError} />;
   const question = turn.question ? (
     <div className="result-turn-question">
-      <span className="result-turn-role">问</span>
+      <span className="result-turn-role">{t("问")}</span>
       <span className="result-turn-question-text">{turn.question}</span>
     </div>
   ) : null;
@@ -59,7 +60,7 @@ function TurnBubble(props: TurnBubbleProps) {
       <div className="result-turn is-latest">
         {question}
         <div className="result-turn-answer">
-          <span className="result-turn-role is-ai">{isCopy ? "原文" : "答"}</span>
+          <span className="result-turn-role is-ai">{isCopy ? t("原文") : t("答")}</span>
           {body}
         </div>
       </div>
@@ -70,18 +71,20 @@ function TurnBubble(props: TurnBubbleProps) {
   return (
     <details className="result-turn is-history">
       <summary className="result-turn-summary">
-        <span className="result-turn-index">第 {props.round} 轮</span>
+        <span className="result-turn-index">{t("第 {round} 轮", { round: props.round })}</span>
         <span className="result-turn-brief">
-          {summarize(turn.question || turn.answer, 80) || "（无内容）"}
+          {summarize(turn.question || turn.answer, 80) || t("（无内容）")}
         </span>
-        {turn.status === "error" ? <span className="result-turn-flag is-error">失败</span> : null}
+        {turn.status === "error" ? (
+          <span className="result-turn-flag is-error">{t("失败")}</span>
+        ) : null}
         {turn.status === "cancelled" ? (
-          <span className="result-turn-flag is-cancelled">已取消</span>
+          <span className="result-turn-flag is-cancelled">{t("已取消")}</span>
         ) : null}
       </summary>
       {question}
       <div className="result-turn-answer">
-        <span className="result-turn-role is-ai">答</span>
+        <span className="result-turn-role is-ai">{t("答")}</span>
         {body}
       </div>
     </details>
@@ -110,23 +113,25 @@ function TurnBody(props: {
           <div className="result-error-head">
             <strong className="result-error-message">{turn.error.message}</strong>
             <code className="result-error-code">{turn.error.code}</code>
-            {turn.error.retryable ? <span className="result-hint">可重试</span> : null}
+            {turn.error.retryable ? <span className="result-hint">{t("可重试")}</span> : null}
           </div>
           {turn.error.detail ? (
             <pre className="result-error-detail">{turn.error.detail}</pre>
           ) : null}
           {turn.error.fallback.length > 0 ? (
-            <p className="result-error-fallback">可以试试：{fallbackText(turn.error.fallback)}</p>
+            <p className="result-error-fallback">
+              {t("可以试试：{name}", { name: fallbackText(turn.error.fallback) })}
+            </p>
           ) : null}
         </div>
       ) : null}
 
-      {turn.status === "cancelled" ? <p className="result-hint">已取消本次生成。</p> : null}
+      {turn.status === "cancelled" ? <p className="result-hint">{t("已取消本次生成。")}</p> : null}
 
       {turn.done && !isCopy ? (
         <div className="result-usage">
-          <span>用时 {formatLatency(turn.done.latencyMs)}</span>
-          <span>费用 {formatCost(turn.done.usage.costEstimate)}</span>
+          <span>{t("用时 {value}", { value: formatLatency(turn.done.latencyMs) })}</span>
+          <span>{t("费用 {value}", { value: formatCost(turn.done.usage.costEstimate) })}</span>
           <span title={engineTitle(turn.done.engine)}>{engineLabel(turn.done.engine)}</span>
         </div>
       ) : null}

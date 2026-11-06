@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import type { EngineStatusPayload, EngineStatus, Stats } from "@/shared/contract/types";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
 import { buildPatch, hasChanges } from "../diff";
 import { errorMessage } from "../error";
@@ -26,22 +27,22 @@ import type { SectionProps } from "../types";
 const STATS_POLL_MS = 5000;
 
 const ENGINE_LABELS: Record<EngineStatus, string> = {
-  stopped: "未启动（用到时自动启动）",
-  starting: "正在启动…",
-  ready: "已就绪",
-  failed: "启动失败",
+  stopped: t("未启动（用到时自动启动）"),
+  starting: t("正在启动…"),
+  ready: t("已就绪"),
+  failed: t("启动失败"),
 };
 
 const HELP_LINKS: { label: string; url: string; description: string }[] = [
   {
-    label: "DeepSeek 接口文档",
+    label: t("DeepSeek 接口文档"),
     url: "https://api-docs.deepseek.com/",
-    description: "查询地址、模型名与计费方式",
+    description: t("查询地址、模型名与计费方式"),
   },
   {
-    label: "Ollama 官网",
+    label: t("Ollama 官网"),
     url: "https://ollama.com",
-    description: "在本机运行开源模型",
+    description: t("在本机运行开源模型"),
   },
 ];
 
@@ -109,7 +110,7 @@ export function AdvancedSection(props: SectionProps) {
   const save = async () => {
     const patch = buildPatch(baseline, draft, ["modes", "advanced"]);
     if (Object.keys(patch).length === 0) return;
-    await onApply(patch, "高级设置");
+    await onApply(patch, t("高级设置"));
   };
 
   const startEngine = async () => {
@@ -147,64 +148,72 @@ export function AdvancedSection(props: SectionProps) {
   };
 
   const engineRunning = engine?.local === "ready" || engine?.local === "starting";
-  const engineLabel = engine ? ENGINE_LABELS[engine.local] : "正在读取…";
+  const engineLabel = engine ? ENGINE_LABELS[engine.local] : t("正在读取…");
 
   return (
-    <SectionShell title="高级" description="深度模式的用量上限、网络代理，以及本地模型的运行情况。">
+    <SectionShell
+      title={t("高级")}
+      description={t("深度模式的用量上限、网络代理，以及本地模型的运行情况。")}
+    >
       <Panel
-        title="深度模式的用量上限"
-        description="深度模式为了答得更准，会多搜索几次、多读几篇网页；这里限制它每次最多花多少。"
+        title={t("深度模式的用量上限")}
+        description={t(
+          "深度模式为了答得更准，会多搜索几次、多读几篇网页；这里限制它每次最多花多少。",
+        )}
       >
         <div className="sa-grid-3">
           <NumberField
-            label="最多搜索几次"
+            label={t("最多搜索几次")}
             value={budget.search}
             min={0}
             max={5}
-            suffix="次"
+            suffix={t("次")}
             onChange={(search) => updateBudget({ search })}
           />
           <NumberField
-            label="最多读几篇网页"
+            label={t("最多读几篇网页")}
             value={budget.fetch}
             min={0}
             max={5}
-            suffix="篇"
+            suffix={t("篇")}
             onChange={(fetch) => updateBudget({ fetch })}
           />
           <NumberField
-            label="最长输出多少字"
+            label={t("最长输出多少字")}
             value={budget.maxTokens}
             min={128}
             max={8192}
             step={128}
-            suffix="字"
+            suffix={t("字")}
             onChange={(maxTokens) => updateBudget({ maxTokens })}
           />
         </div>
         <Hint>
-          数值越大答得越完整，也越慢、越费钱；一般保持默认即可（搜索 3 次、读 2 篇、约 1500
-          字）。只影响「深度」模式。
+          {t(
+            "数值越大答得越完整，也越慢、越费钱；一般保持默认即可（搜索 3 次、读 2 篇、约 1500 字）。只影响「深度」模式。",
+          )}
         </Hint>
       </Panel>
 
-      <Panel title="网络">
+      <Panel title={t("网络")}>
         <TextInput
-          label="代理地址"
+          label={t("代理地址")}
           value={advanced.proxy ?? ""}
           placeholder="http://127.0.0.1:7890"
           monospace
-          hint="如果访问云端服务需要代理，在这里填写；留空表示直连。修改后重新打开应用生效。"
+          hint={t("如果访问云端服务需要代理，在这里填写；留空表示直连。修改后重新打开应用生效。")}
           onChange={(proxy) => updateAdvanced({ proxy: proxy.trim() ? proxy.trim() : null })}
         />
         <Hint>
-          本软件不会自动更新。需要升级时，下载新的安装包覆盖安装即可，配置和历史记录都会保留。
+          {t(
+            "本软件不会自动更新。需要升级时，下载新的安装包覆盖安装即可，配置和历史记录都会保留。",
+          )}
         </Hint>
       </Panel>
 
       <Panel
-        title="本地引擎"
-        description="本地翻译和本地模型需要它。平时用到时会自动启动，也可以在这里手动开关。"
+        title={t("本地引擎")}
+        description={t("本地翻译和本地模型需要它。平时用到时会自动启动，也可以在这里手动开关。")}
         actions={
           <div className="sa-inline">
             {engineRunning ? (
@@ -214,7 +223,7 @@ export function AdvancedSection(props: SectionProps) {
                 disabled={engineBusy !== null}
                 onClick={() => void stopEngine()}
               >
-                {engineBusy === "stop" ? "正在停止…" : "停止引擎"}
+                {engineBusy === "stop" ? t("正在停止…") : t("停止引擎")}
               </Button>
             ) : (
               <Button
@@ -223,62 +232,77 @@ export function AdvancedSection(props: SectionProps) {
                 disabled={engineBusy !== null}
                 onClick={() => void startEngine()}
               >
-                {engineBusy === "start" ? "正在启动…" : "启动引擎"}
+                {engineBusy === "start" ? t("正在启动…") : t("启动引擎")}
               </Button>
             )}
           </div>
         }
       >
         <div className="sa-stats">
-          <InfoRow label="运行状态" value={engineLabel} />
-          <InfoRow label="计算设备" value={engine?.device ? DEVICE_LABELS[engine.device] : "—"} />
+          <InfoRow label={t("运行状态")} value={engineLabel} />
           <InfoRow
-            label="显卡加速"
-            value={engine?.backend ? LOCAL_BACKEND_LABELS[engine.backend] : "—"}
-            hint="没有可用显卡时会自动用 CPU"
+            label={t("计算设备")}
+            value={engine?.device ? DEVICE_LABELS[engine.device] : "—"}
           />
-          <InfoRow label="设备名称" value={engine?.deviceName ?? "—"} />
           <InfoRow
-            label="显存使用"
+            label={t("显卡加速")}
+            value={engine?.backend ? LOCAL_BACKEND_LABELS[engine.backend] : "—"}
+            hint={t("没有可用显卡时会自动用 CPU")}
+          />
+          <InfoRow label={t("设备名称")} value={engine?.deviceName ?? "—"} />
+          <InfoRow
+            label={t("显存使用")}
             value={
               engine?.offloadLayers === null || engine?.offloadLayers === undefined
                 ? "—"
-                : `已加载 ${engine.offloadLayers} 层到显卡`
+                : t("已加载 {count} 层到显卡", { count: engine.offloadLayers })
             }
           />
-          <InfoRow label="本机端口" value={engine?.port ? `127.0.0.1:${engine.port}` : "—"} mono />
+          <InfoRow
+            label={t("本机端口")}
+            value={engine?.port ? `127.0.0.1:${engine.port}` : "—"}
+            mono
+          />
         </div>
         {engine?.fallbackReason ? <WarnText>{engine.fallbackReason}</WarnText> : null}
         {engineError ? (
           <p className="sa-error-inline" role="alert">
-            启动本地引擎失败：{engineError}
+            {t("启动本地引擎失败：{error}", { error: engineError })}
           </p>
         ) : null}
-        <Hint>本地引擎没有启动时，云端 AI 和浏览器搜索仍然可以正常使用。</Hint>
+        <Hint>{t("本地引擎没有启动时，云端 AI 和浏览器搜索仍然可以正常使用。")}</Hint>
       </Panel>
 
-      <Panel title="运行信息" description="每 5 秒自动更新。">
-        {statsError ? <WarnText>读取运行信息失败：{statsError}</WarnText> : null}
+      <Panel title={t("运行信息")} description={t("每 5 秒自动更新。")}>
+        {statsError ? (
+          <WarnText>{t("读取运行信息失败：{error}", { error: statsError })}</WarnText>
+        ) : null}
         {stats ? (
           <div className="sa-stats">
-            <InfoRow label="版本" value={stats.version} mono />
-            <InfoRow label="安装包" value={editionLabel(stats.edition)} />
+            <InfoRow label={t("版本")} value={stats.version} mono />
+            <InfoRow label={t("安装包")} value={editionLabel(stats.edition, t)} />
             <InfoRow
-              label="文字识别"
-              value={stats.ocrReady ? "已就绪" : "未就绪（缺少模型，可在「翻译」中下载）"}
+              label={t("文字识别")}
+              value={stats.ocrReady ? t("已就绪") : t("未就绪（缺少模型，可在「翻译」中下载）")}
             />
-            <InfoRow label="运行时长" value={formatDuration(stats.uptimeSec)} />
-            <InfoRow label="内存占用" value={`${stats.memoryMb} MB`} />
-            <InfoRow label="本地引擎" value={ENGINE_LABELS[stats.localEngine]} />
-            <InfoRow label="正在处理的任务" value={`${stats.activeTasks} 个`} />
-            <InfoRow label="已下载模型" value={`${stats.modelsInstalled} 个`} />
+            <InfoRow label={t("运行时长")} value={formatDuration(stats.uptimeSec)} />
+            <InfoRow label={t("内存占用")} value={`${stats.memoryMb} MB`} />
+            <InfoRow label={t("本地引擎")} value={ENGINE_LABELS[stats.localEngine]} />
+            <InfoRow
+              label={t("正在处理的任务")}
+              value={t("{count} 个", { count: stats.activeTasks })}
+            />
+            <InfoRow
+              label={t("已下载模型")}
+              value={t("{count} 个", { count: stats.modelsInstalled })}
+            />
           </div>
         ) : (
-          <Hint>正在读取运行信息…</Hint>
+          <Hint>{t("正在读取运行信息…")}</Hint>
         )}
       </Panel>
 
-      <Panel title="帮助与文档">
+      <Panel title={t("帮助与文档")}>
         <div className="sa-linklist">
           {HELP_LINKS.map((link) => (
             <div key={link.url} className="sa-linkrow">
@@ -287,14 +311,14 @@ export function AdvancedSection(props: SectionProps) {
                 <span className="sa-field-hint">{link.description}</span>
               </div>
               <Button variant="secondary" size="sm" onClick={() => void openExternal(link.url)}>
-                打开
+                {t("打开")}
               </Button>
             </div>
           ))}
         </div>
       </Panel>
 
-      <SaveBar label="高级设置" dirty={dirty} saving={saving} onSave={() => void save()} />
+      <SaveBar label={t("高级设置")} dirty={dirty} saving={saving} onSave={() => void save()} />
     </SectionShell>
   );
 }

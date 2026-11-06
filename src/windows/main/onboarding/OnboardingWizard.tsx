@@ -16,6 +16,7 @@ import type {
 } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
+import { t } from "../../../i18n";
 import { toUiError } from "./error";
 import type { Capabilities } from "./capabilities";
 import { deriveCapabilities, isRestricted } from "./capabilities";
@@ -155,7 +156,7 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
     if (!skip && !draft.privacy.agreed) {
       setError({
         code: "SA-5001",
-        message: "请先勾选同意隐私声明，或选择跳过引导。",
+        message: t("请先勾选同意隐私声明，或选择跳过引导。"),
         detail: null,
         retryable: false,
         fallback: [],
@@ -187,11 +188,11 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
                 className="ob-btn ob-btn-primary"
                 onClick={() => setReloadKey(reloadKey + 1)}
               >
-                重新加载
+                {t("重新加载")}
               </button>
             </>
           ) : (
-            <p className="ob-hint">正在读取引导状态…</p>
+            <p className="ob-hint">{t("正在读取引导状态…")}</p>
           )}
         </div>
       </div>
@@ -211,12 +212,16 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
     <div className="ob-root">
       <header className="ob-header">
         <div className="ob-header-title">
-          <span className="ob-brand">框选 AI</span>
+          <span className="ob-brand">{t("框选 AI")}</span>
           <span className="ob-step-counter">
-            第 {step + 1} / {STEP_COUNT} 步 · {meta.title}
+            {t("第 {step} / {total} 步 · {title}", {
+              step: step + 1,
+              total: STEP_COUNT,
+              title: meta.title,
+            })}
           </span>
         </div>
-        <div className="ob-progress" aria-label="引导进度">
+        <div className="ob-progress" aria-label={t("引导进度")}>
           {STEP_META.map((item, index) => (
             <span
               key={item.title}
@@ -233,7 +238,7 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           <span className="ob-error-code">{error.code}</span>
           {error.detail ? <code className="ob-error-detail">{error.detail}</code> : null}
           <button type="button" className="ob-linkbtn" onClick={() => setError(null)}>
-            关闭
+            {t("关闭")}
           </button>
         </div>
       ) : null}
@@ -247,7 +252,7 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
             onConfigure={onOpenSettings}
           >
             <p style={{ margin: "2px 0 0" }}>
-              完成后可随时在「设置 → AI 服务 / 翻译」补齐；补齐后云动作会自动恢复可用。
+              {t("完成后可随时在「设置 → AI 服务 / 翻译」补齐；补齐后云动作会自动恢复可用。")}
             </p>
           </RestrictedNotice>
         ) : null}
@@ -258,9 +263,9 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
           {confirmSkip ? (
             <span className="ob-inline">
               <span className="ob-warn-inline">
-                跳过之后，AI
-                搜索、解答、图片搜索和云端翻译暂时用不了；本地识别、复制和浏览器搜索仍然可用，
-                随时可以在设置里补齐。确定跳过吗？
+                {t(
+                  "跳过之后，AI 搜索、解答、图片搜索和云端翻译暂时用不了；本地识别、复制和浏览器搜索仍然可用，随时可以在设置里补齐。确定跳过吗？",
+                )}
               </span>
               <button
                 type="button"
@@ -268,19 +273,19 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
                 disabled={busy}
                 onClick={() => void finish(true)}
               >
-                确认跳过
+                {t("确认跳过")}
               </button>
               <button
                 type="button"
                 className="ob-btn ob-btn-ghost"
                 onClick={() => setConfirmSkip(false)}
               >
-                继续配置
+                {t("继续配置")}
               </button>
             </span>
           ) : (
             <button type="button" className="ob-linkbtn" onClick={() => setConfirmSkip(true)}>
-              跳过引导
+              {t("跳过引导")}
             </button>
           )}
         </div>
@@ -291,17 +296,17 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
             disabled={step === 0 || busy}
             onClick={() => void goPrev()}
           >
-            上一步
+            {t("上一步")}
           </button>
           {isLast ? (
             <button
               type="button"
               className="ob-btn ob-btn-primary"
               disabled={!canFinish}
-              title={canFinish ? undefined : "需勾选同意隐私声明"}
+              title={canFinish ? undefined : t("需勾选同意隐私声明")}
               onClick={() => void finish(false)}
             >
-              {busy ? "完成中…" : "完成并进入"}
+              {busy ? t("完成中…") : t("完成并进入")}
             </button>
           ) : (
             <button
@@ -310,7 +315,7 @@ export default function OnboardingWizard({ onFinish, onOpenSettings }: Onboardin
               disabled={busy}
               onClick={() => void goNext()}
             >
-              {busy ? "保存中…" : "下一步"}
+              {busy ? t("保存中…") : t("下一步")}
             </button>
           )}
         </div>

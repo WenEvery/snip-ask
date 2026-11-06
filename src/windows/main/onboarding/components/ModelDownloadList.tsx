@@ -10,6 +10,7 @@ import type {
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
+import { t } from "../../../../i18n";
 import { formatBytes, formatSpeed } from "../format";
 
 const STATE_LABELS: Record<DownloadState, string> = {
@@ -91,14 +92,16 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
     }
   };
 
-  if (loading) return <p className="ob-hint">正在读取本地模型…</p>;
+  if (loading) return <p className="ob-hint">{t("正在读取本地模型…")}</p>;
   const focusModelId = props.focusModelId ?? null;
   const visibleModels = focusModelId ? models.filter((model) => model.id === focusModelId) : models;
-  if (models.length === 0) return <p className="ob-hint">这里暂时没有可下载的模型。</p>;
+  if (models.length === 0) return <p className="ob-hint">{t("这里暂时没有可下载的模型。")}</p>;
   if (visibleModels.length === 0) {
     return (
       <p className="ob-hint">
-        没有找到 {focusModelId}；也可以先继续，稍后在「设置 → 翻译」中下载。
+        {t("没有找到 {model}；也可以先继续，稍后在「设置 → 翻译」中下载。", {
+          model: focusModelId ?? "",
+        })}
       </p>
     );
   }
@@ -118,11 +121,13 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
             <div className="ob-model-main">
               <div className="ob-model-title">
                 <strong>{model.name}</strong>
-                <span className={`ob-tag${installed ? " is-ok" : ""}`}>{STATE_LABELS[state]}</span>
-                {selected ? <span className="ob-tag is-ok">已选用</span> : null}
+                <span className={`ob-tag${installed ? " is-ok" : ""}`}>
+                  {t(STATE_LABELS[state])}
+                </span>
+                {selected ? <span className="ob-tag is-ok">{t("已选用")}</span> : null}
               </div>
               <p className="ob-hint">
-                {formatBytes(model.sizeBytes)} · 运行内存约{" "}
+                {formatBytes(model.sizeBytes)} · {t("运行内存约")}{" "}
                 {formatBytes(model.minRamMB * 1024 * 1024)}
               </p>
               {active ? (
@@ -133,7 +138,7 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                   <p className="ob-hint">
                     {item
                       ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
-                      : "正在准备下载…"}
+                      : t("正在准备下载…")}
                   </p>
                 </>
               ) : null}
@@ -146,7 +151,7 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                   disabled={selected}
                   onClick={() => props.onSelectModel(model.id)}
                 >
-                  {selected ? "已选用" : "选用此模型"}
+                  {selected ? t("已选用") : t("选用此模型")}
                 </button>
               ) : active ? (
                 <button
@@ -155,7 +160,7 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                   disabled={busyId === model.id}
                   onClick={() => void cancel(model)}
                 >
-                  取消下载
+                  {t("取消下载")}
                 </button>
               ) : (
                 <button
@@ -164,7 +169,7 @@ export function ModelDownloadList(props: ModelDownloadListProps) {
                   disabled={busyId === model.id}
                   onClick={() => void download(model)}
                 >
-                  {state === "failed" ? "重试下载" : "下载"}
+                  {state === "failed" ? t("重试下载") : t("下载")}
                 </button>
               )}
             </div>

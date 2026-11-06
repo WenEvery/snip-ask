@@ -37,6 +37,7 @@ import type {
 } from "../../shared/contract/types";
 import { useIpcEvent } from "../../shared/hooks/useIpcEvent";
 import { ipc, isTauri, toAppError } from "../../shared/ipc";
+import { t } from "../../i18n";
 import { ActionMenu } from "./ActionMenu";
 import { Magnifier } from "./Magnifier";
 import { SelectionLayer } from "./SelectionLayer";
@@ -304,7 +305,7 @@ export default function OverlayWindow() {
       if (blocks.length === 0) {
         handleError({
           code: "SA-2002",
-          message: "选区内没有可翻译的文字",
+          message: t("选区内没有可翻译的文字"),
           detail: null,
           retryable: false,
           fallback: ["image_path"],
@@ -365,7 +366,7 @@ export default function OverlayWindow() {
     if (boxesRef.current.length === 0) {
       handleError({
         code: "SA-2002",
-        message: "选区内没有可翻译的文字",
+        message: t("选区内没有可翻译的文字"),
         detail: null,
         retryable: false,
         fallback: ["image_path"],
@@ -486,9 +487,9 @@ export default function OverlayWindow() {
   const coverActive = cover !== null;
   const coverAvailable = Boolean(menu?.hasText) && boxes.length > 0;
   const coverDisabledReason = !menu?.hasText
-    ? "未识别到文本"
+    ? t("未识别到文本")
     : boxes.length === 0
-      ? "选区内没有文字框"
+      ? t("选区内没有文字框")
       : null;
 
   return (
@@ -510,14 +511,14 @@ export default function OverlayWindow() {
           className="overlay-frame-badge"
           title={
             frozen.frame.dataUrl
-              ? "已读取屏幕画面，框选、放大镜和覆盖翻译都基于这张画面"
-              : "没能读取屏幕画面（可能被系统保护），覆盖翻译只能显示译文"
+              ? t("已读取屏幕画面，框选、放大镜和覆盖翻译都基于这张画面")
+              : t("没能读取屏幕画面（可能被系统保护），覆盖翻译只能显示译文")
           }
         >
           <span className={`overlay-frame-badge__dot${frozen.frame.dataUrl ? "" : " is-off"}`} />
           <span>
-            {frozen.frame.dataUrl ? "已读取屏幕画面" : "没能读取屏幕画面"} {frozen.frame.width}×
-            {frozen.frame.height}
+            {frozen.frame.dataUrl ? t("已读取屏幕画面") : t("没能读取屏幕画面")}{" "}
+            {frozen.frame.width}×{frozen.frame.height}
           </span>
         </div>
       ) : null}
@@ -566,24 +567,24 @@ export default function OverlayWindow() {
           {ocrState === "scanning" ? (
             <span className="overlay-status__pill">
               <Spinner size="sm" />
-              识别中…
+              {t("识别中…")}
             </span>
           ) : null}
           {phase === "committing" ? (
             <span className="overlay-status__pill">
               <Spinner size="sm" />
-              正在识别选区…
+              {t("正在识别选区…")}
             </span>
           ) : null}
           {phase === "executing" ? (
             <span className="overlay-status__pill">
               <Spinner size="sm" />
-              正在执行动作…
+              {t("正在执行动作…")}
             </span>
           ) : null}
           {phase === "selecting" && !rect && ocrState !== "scanning" ? (
             <span className="overlay-status__hint">
-              拖拽选择区域 · Esc 取消 · Enter 确认 · 方向键微调 1px（Shift 10px）
+              {t("拖拽选择区域 · Esc 取消 · Enter 确认 · 方向键微调 1px（Shift 10px）")}
             </span>
           ) : null}
         </div>
@@ -609,23 +610,23 @@ export default function OverlayWindow() {
       {!frozen ? (
         <div className="overlay-waiting">
           <div className="overlay-waiting__card sa-anim-slide">
-            <h1 className="overlay-waiting__title">框选 AI</h1>
+            <h1 className="overlay-waiting__title">{t("框选 AI")}</h1>
             <p className="overlay-waiting__desc">
               {isTauri()
-                ? "按下框选热键（默认 Ctrl+Q），或右键托盘图标选择「框选」即可开始。"
-                : "预览模式：点击下方按钮模拟一次框选。"}
+                ? t("按下框选热键（默认 Ctrl+Q），或右键托盘图标选择「框选」即可开始。")
+                : t("预览模式：点击下方按钮模拟一次框选。")}
             </p>
             {isTauri() ? (
-              <Spinner size="md" label="等待开始框选…" />
+              <Spinner size="md" label={t("等待开始框选…")} />
             ) : (
               <Button variant="primary" onClick={triggerCapture}>
-                模拟触发框选
+                {t("模拟触发框选")}
               </Button>
             )}
             <p className="overlay-waiting__hint">
               {isTauri()
-                ? "识别与翻译都在本机进行，只有你主动使用云端功能时才会上传。"
-                : "预览模式，不会访问真实屏幕与网络。"}
+                ? t("识别与翻译都在本机进行，只有你主动使用云端功能时才会上传。")
+                : t("预览模式，不会访问真实屏幕与网络。")}
             </p>
           </div>
         </div>
@@ -636,7 +637,7 @@ export default function OverlayWindow() {
           <span className="overlay-error__code">{error.code}</span>
           <span className="overlay-error__message">{error.message}</span>
           <Button size="sm" variant="ghost" onClick={() => setError(null)}>
-            关闭
+            {t("关闭")}
           </Button>
         </div>
       ) : null}

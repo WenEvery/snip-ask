@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { Select, Switch, TextField } from "@/components/ui";
 
 export * from "./layout";
@@ -144,7 +145,7 @@ export function NumberField(props: NumberFieldProps) {
         />
         {props.suffix ? <span className="sa-numfield-suffix">{props.suffix}</span> : null}
       </span>
-      <span className="sa-numfield-hint">{props.hint ?? `范围 ${range}`}</span>
+      <span className="sa-numfield-hint">{props.hint ?? t("范围 {range}", { range })}</span>
     </label>
   );
 }

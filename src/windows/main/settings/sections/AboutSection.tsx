@@ -12,25 +12,54 @@ import { Button } from "@/components/ui";
 import type { OpenPathKind, Stats } from "@/shared/contract/types";
 import { COMMANDS } from "@/shared/contract/names";
 import { ipc, toAppError } from "@/shared/ipc";
+import { t } from "@/i18n";
 import { editionLabel } from "../../ocr/status";
 import { Hint, InfoRow, Panel, SectionShell, StatusTag, WarnText } from "../parts";
 import type { SectionProps } from "../types";
 
 const OPEN_PATHS: { kind: OpenPathKind; label: string; description: string }[] = [
-  { kind: "config", label: "配置", description: "应用的所有设置都在这里，可直接编辑" },
-  { kind: "prompts", label: "提示词", description: "各动作使用的提示词，可按自己的习惯修改" },
-  { kind: "models", label: "模型", description: "下载的本地模型与文字识别模型" },
-  { kind: "logs", label: "日志", description: "运行记录，反馈问题时可以附上" },
-  { kind: "backends", label: "本地引擎", description: "显卡加速组件所在位置" },
-  { kind: "data", label: "数据", description: "历史记录与导出的配置文件" },
-  { kind: "docs", label: "安装文档", description: "使用说明、自定义指南与许可证" },
+  {
+    kind: "config",
+    label: t("配置"),
+    description: t("应用的所有设置都在这里，可直接编辑"),
+  },
+  {
+    kind: "prompts",
+    label: t("提示词"),
+    description: t("各动作使用的提示词，可按自己的习惯修改"),
+  },
+  {
+    kind: "models",
+    label: t("模型"),
+    description: t("下载的本地模型与文字识别模型"),
+  },
+  {
+    kind: "logs",
+    label: t("日志"),
+    description: t("运行记录，反馈问题时可以附上"),
+  },
+  {
+    kind: "backends",
+    label: t("本地引擎"),
+    description: t("显卡加速组件所在位置"),
+  },
+  {
+    kind: "data",
+    label: t("数据"),
+    description: t("历史记录与导出的配置文件"),
+  },
+  {
+    kind: "docs",
+    label: t("安装文档"),
+    description: t("使用说明、自定义指南与许可证"),
+  },
 ];
 
 const ENGINE_TEXT: Record<string, string> = {
-  stopped: "未启动",
-  starting: "正在启动",
-  ready: "已就绪",
-  failed: "启动失败",
+  stopped: t("未启动"),
+  starting: t("正在启动"),
+  ready: t("已就绪"),
+  failed: t("启动失败"),
 };
 
 export function AboutSection(_props: SectionProps) {
@@ -64,7 +93,7 @@ export function AboutSection(_props: SectionProps) {
     setNotice(null);
     try {
       await ipc.invoke<void>(COMMANDS.openPath, { kind });
-      setNotice(`已打开「${label}」文件夹。`);
+      setNotice(t("已打开「{label}」文件夹。", { label }));
     } catch (err) {
       // 文件夹不存在或没有权限时，把原因直接显示在按钮下面。
       setPathError({ message: toAppError(err).message, kind: label });
@@ -75,41 +104,54 @@ export function AboutSection(_props: SectionProps) {
 
   return (
     <SectionShell
-      title="自定义与关于"
-      description="查看版本与运行情况、打开本机的配置与文档。按《自定义指南》可以修改提示词、术语表、设置、模型和本地引擎。"
+      title={t("自定义与关于")}
+      description={t(
+        "查看版本与运行情况、打开本机的配置与文档。按《自定义指南》可以修改提示词、术语表、设置、模型和本地引擎。",
+      )}
     >
       <Panel
-        title="版本与状态"
+        title={t("版本与状态")}
         actions={
           <Button variant="secondary" size="sm" disabled={loading} onClick={() => void loadStats()}>
-            {loading ? "刷新中…" : "刷新"}
+            {loading ? t("刷新中…") : t("刷新")}
           </Button>
         }
       >
-        {statsError ? <WarnText>读取版本信息失败：{statsError}</WarnText> : null}
+        {statsError ? (
+          <WarnText>{t("读取版本信息失败：{error}", { error: statsError })}</WarnText>
+        ) : null}
         {stats ? (
           <div className="sa-stats">
-            <InfoRow label="版本" value={stats.version} mono />
-            <InfoRow label="安装包" value={editionLabel(stats.edition)} />
+            <InfoRow label={t("版本")} value={stats.version} mono />
+            <InfoRow label={t("安装包")} value={editionLabel(stats.edition, t)} />
             <InfoRow
-              label="文字识别"
+              label={t("文字识别")}
               value={
                 stats.ocrReady ? (
-                  <StatusTag tone="ok">可以正常使用</StatusTag>
+                  <StatusTag tone="ok">{t("可以正常使用")}</StatusTag>
                 ) : (
-                  <StatusTag tone="warn">缺少模型，可在「翻译」中下载</StatusTag>
+                  <StatusTag tone="warn">{t("缺少模型，可在「翻译」中下载")}</StatusTag>
                 )
               }
             />
-            <InfoRow label="本地引擎" value={ENGINE_TEXT[stats.localEngine] ?? stats.localEngine} />
-            <InfoRow label="已下载模型" value={`${stats.modelsInstalled} 个`} />
+            <InfoRow
+              label={t("本地引擎")}
+              value={ENGINE_TEXT[stats.localEngine] ?? stats.localEngine}
+            />
+            <InfoRow
+              label={t("已下载模型")}
+              value={t("{count} 个", { count: stats.modelsInstalled })}
+            />
           </div>
         ) : (
-          <Hint>正在读取…</Hint>
+          <Hint>{t("正在读取…")}</Hint>
         )}
       </Panel>
 
-      <Panel title="本机文件夹" description="需要手动修改设置或查看文件时，可以在这里直接打开。">
+      <Panel
+        title={t("本机文件夹")}
+        description={t("需要手动修改设置或查看文件时，可以在这里直接打开。")}
+      >
         <div className="sa-linklist">
           {OPEN_PATHS.map((item) => (
             <div key={item.kind} className="sa-linkrow">
@@ -123,48 +165,55 @@ export function AboutSection(_props: SectionProps) {
                 disabled={busyKind !== null}
                 onClick={() => void openPath(item.kind, item.label)}
               >
-                {busyKind === item.kind ? "打开中…" : "打开"}
+                {busyKind === item.kind ? t("打开中…") : t("打开")}
               </Button>
             </div>
           ))}
         </div>
         {pathError ? (
           <p className="sa-error-inline" role="alert">
-            打开「{pathError.kind}」失败：{pathError.message}
+            {t("打开「{label}」失败：{error}", {
+              label: pathError.kind,
+              error: pathError.message,
+            })}
           </p>
         ) : null}
         {notice ? <Hint>{notice}</Hint> : null}
       </Panel>
 
-      <Panel title="关于更新与自定义">
+      <Panel title={t("关于更新与自定义")}>
         <p className="sa-hint">
-          本软件不会自动更新，也不会在后台检查新版本。需要升级时，下载新的安装包覆盖安装即可，配置和历史记录都会保留。
+          {t(
+            "本软件不会自动更新，也不会在后台检查新版本。需要升级时，下载新的安装包覆盖安装即可，配置和历史记录都会保留。",
+          )}
         </p>
         <p className="sa-hint">
-          想改提示词、术语表、设置、模型或本地引擎，可以打开「安装文档」里的《自定义指南》；本机设置也可以直接在「配置」文件夹中查看。
+          {t(
+            "想改提示词、术语表、设置、模型或本地引擎，可以打开「安装文档」里的《自定义指南》；本机设置也可以直接在「配置」文件夹中查看。",
+          )}
         </p>
         <p className="sa-hint">
-          想重新看一遍首次使用的引导：右键点击托盘图标，选择「重新运行引导」。
+          {t("想重新看一遍首次使用的引导：右键点击托盘图标，选择「重新运行引导」。")}
         </p>
         <div className="sa-inline">
           <Button
             variant="secondary"
             size="sm"
             disabled={busyKind !== null}
-            onClick={() => void openPath("docs", "安装文档")}
+            onClick={() => void openPath("docs", t("安装文档"))}
           >
-            打开《自定义指南》
+            {t("打开《自定义指南》")}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             disabled={busyKind !== null}
-            onClick={() => void openPath("config", "配置")}
+            onClick={() => void openPath("config", t("配置"))}
           >
-            打开配置文件夹
+            {t("打开配置文件夹")}
           </Button>
         </div>
-        <Hint>修改配置文件后，重新打开应用即可生效；提示词修改后下次动作会使用新内容。</Hint>
+        <Hint>{t("修改配置文件后，重新打开应用即可生效；提示词修改后下次动作会使用新内容。")}</Hint>
       </Panel>
     </SectionShell>
   );

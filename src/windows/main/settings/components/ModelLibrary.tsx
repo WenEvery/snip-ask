@@ -21,6 +21,7 @@ import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { ipc } from "@/shared/ipc";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
 import { formatBytes, formatSpeed } from "../format";
+import { t } from "@/i18n";
 import { EmptyHint, Hint, LoadingBlock, StatusTag } from "../parts";
 
 export interface ModelLibraryProps {
@@ -29,13 +30,13 @@ export interface ModelLibraryProps {
 }
 
 const STATE_LABELS: Record<DownloadState, string> = {
-  idle: "未下载",
-  queued: "等待下载",
-  downloading: "下载中",
-  verifying: "正在检查文件",
-  installed: "已安装",
-  failed: "下载失败",
-  cancelled: "已取消",
+  idle: t("未下载"),
+  queued: t("等待下载"),
+  downloading: t("下载中"),
+  verifying: t("正在检查文件"),
+  installed: t("已安装"),
+  failed: t("下载失败"),
+  cancelled: t("已取消"),
 };
 
 function engineKind(engine: LocalEngine): ModelInfo["kind"] | null {
@@ -111,7 +112,7 @@ export function ModelLibrary(props: ModelLibraryProps) {
     setBusyId(model.id);
     try {
       await ipc.invoke<void>(COMMANDS.modelsRemove, { id: model.id });
-      setNotice(`已删除本地模型「${model.name}」`);
+      setNotice(t("已删除本地模型「{name}」", { name: model.name }));
       await refresh();
     } catch (err) {
       onError(err);
@@ -123,14 +124,15 @@ export function ModelLibrary(props: ModelLibraryProps) {
   if (engine === "ollama") {
     return (
       <EmptyHint>
-        使用 Ollama 时不需要在这里下载模型。先在终端执行 `ollama pull
-        &lt;模型名&gt;`，再在上方填写模型名即可。
+        {t(
+          "使用 Ollama 时不需要在这里下载模型。先在终端执行 `ollama pull <模型名>`，再在上方填写模型名即可。",
+        )}
       </EmptyHint>
     );
   }
 
   if (loading && models.length === 0) {
-    return <LoadingBlock text="正在读取模型列表…" />;
+    return <LoadingBlock text={t("正在读取模型列表…")} />;
   }
 
   const kind = engineKind(engine);
@@ -138,8 +140,8 @@ export function ModelLibrary(props: ModelLibraryProps) {
 
   return (
     <div className="sa-models">
-      <Hint>下载前请预留足够的磁盘空间；中途退出后可以继续下载。</Hint>
-      {visible.length === 0 ? <EmptyHint>这里还没有可下载的模型。</EmptyHint> : null}
+      <Hint>{t("下载前请预留足够的磁盘空间；中途退出后可以继续下载。")}</Hint>
+      {visible.length === 0 ? <EmptyHint>{t("这里还没有可下载的模型。")}</EmptyHint> : null}
       {visible.map((model) => {
         const state = states[model.id] ?? model.downloadState;
         const installed = state === "installed" || model.installed;
@@ -162,7 +164,7 @@ export function ModelLibrary(props: ModelLibraryProps) {
                 </StatusTag>
               </div>
               <p className="sa-model-meta">
-                {formatBytes(model.sizeBytes)} · 运行内存约{" "}
+                {formatBytes(model.sizeBytes)} · {t("运行内存约")}{" "}
                 {formatBytes(model.minRamMB * 1024 * 1024)}
               </p>
               {active || (installed && model.installedBytes > 0) ? (
@@ -175,10 +177,12 @@ export function ModelLibrary(props: ModelLibraryProps) {
                   </div>
                   <span className="sa-progress-text">
                     {installed
-                      ? `已下载 ${formatBytes(model.installedBytes || model.sizeBytes)}`
+                      ? t("已下载 {size}", {
+                          size: formatBytes(model.installedBytes || model.sizeBytes),
+                        })
                       : item
                         ? `${formatBytes(item.loaded)} / ${formatBytes(item.total)} · ${formatSpeed(item.speedBps)} · ${percent}%`
-                        : "正在准备下载…"}
+                        : t("正在准备下载…")}
                   </span>
                 </div>
               ) : null}
@@ -191,7 +195,7 @@ export function ModelLibrary(props: ModelLibraryProps) {
                   disabled={busyId === model.id}
                   onClick={() => void removeModel(model)}
                 >
-                  删除
+                  {t("删除")}
                 </Button>
               ) : active ? (
                 <Button
@@ -200,7 +204,7 @@ export function ModelLibrary(props: ModelLibraryProps) {
                   disabled={busyId === model.id}
                   onClick={() => void cancelDownload(model)}
                 >
-                  取消
+                  {t("取消")}
                 </Button>
               ) : (
                 <Button
@@ -209,7 +213,11 @@ export function ModelLibrary(props: ModelLibraryProps) {
                   disabled={busyId === model.id}
                   onClick={() => void startDownload(model)}
                 >
-                  {busyId === model.id ? "启动中…" : state === "failed" ? "重试下载" : "下载"}
+                  {busyId === model.id
+                    ? t("启动中…")
+                    : state === "failed"
+                      ? t("重试下载")
+                      : t("下载")}
                 </Button>
               )}
             </div>

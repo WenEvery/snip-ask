@@ -3,22 +3,23 @@
 import type { FontSize, ResultPosition, Theme } from "@/shared/contract/types";
 import { HotkeyRecorder } from "../components/HotkeyRecorder";
 import type { StepProps } from "../types";
+import { t } from "../../../../i18n";
 
 const THEMES: { value: Theme; label: string }[] = [
-  { value: "system", label: "跟随系统" },
-  { value: "light", label: "浅色" },
-  { value: "dark", label: "深色" },
+  { value: "system", label: t("跟随系统") },
+  { value: "light", label: t("浅色") },
+  { value: "dark", label: t("深色") },
 ];
 
 const FONT_SIZES: { value: FontSize; label: string; hint: string }[] = [
-  { value: "sm", label: "小", hint: "紧凑，适合小屏" },
-  { value: "md", label: "中", hint: "默认" },
-  { value: "lg", label: "大", hint: "更易读" },
+  { value: "sm", label: t("小"), hint: t("紧凑，适合小屏") },
+  { value: "md", label: t("中"), hint: t("默认") },
+  { value: "lg", label: t("大"), hint: t("更易读") },
 ];
 
 const POSITIONS: { value: ResultPosition; label: string; hint: string }[] = [
-  { value: "follow", label: "跟随选区", hint: "贴近框选位置" },
-  { value: "fixed", label: "固定位置", hint: "固定在右下角" },
+  { value: "follow", label: t("跟随选区"), hint: t("贴近框选位置") },
+  { value: "fixed", label: t("固定位置"), hint: t("固定在右下角") },
 ];
 
 export function AppearanceStep(props: StepProps) {
@@ -39,11 +40,11 @@ export function AppearanceStep(props: StepProps) {
 
   return (
     <div className="ob-step">
-      <h2 className="ob-step-title">外观与行为</h2>
-      <p className="ob-hint">这些设置保存后立即生效，之后可随时在设置中调整。</p>
+      <h2 className="ob-step-title">{t("外观与行为")}</h2>
+      <p className="ob-hint">{t("这些设置保存后立即生效，之后可随时在设置中调整。")}</p>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">主题</h3>
+        <h3 className="ob-block-title">{t("主题")}</h3>
         <div className="ob-option-row">
           {THEMES.map((theme) => (
             <button
@@ -59,7 +60,7 @@ export function AppearanceStep(props: StepProps) {
       </div>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">字号</h3>
+        <h3 className="ob-block-title">{t("字号")}</h3>
         <div className="ob-option-row">
           {FONT_SIZES.map((size) => (
             <button
@@ -76,7 +77,7 @@ export function AppearanceStep(props: StepProps) {
       </div>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">结果窗位置</h3>
+        <h3 className="ob-block-title">{t("结果窗位置")}</h3>
         <div className="ob-option-row">
           {POSITIONS.map((position) => (
             <button
@@ -91,7 +92,7 @@ export function AppearanceStep(props: StepProps) {
           ))}
         </div>
         <p className="ob-hint">
-          结果窗置顶、透明度、尺寸可在设置 → 外观中调整；启动时最小化在设置 → 核心中调整。
+          {t("结果窗置顶、透明度、尺寸可在设置 → 外观中调整；启动时最小化在设置 → 核心中调整。")}
         </p>
       </div>
 
@@ -103,23 +104,23 @@ export function AppearanceStep(props: StepProps) {
             onChange={(event) => updateUi({ autostart: event.target.checked })}
           />
           <span>
-            <strong>开机自动启动</strong>
+            <strong>{t("开机自动启动")}</strong>
             <span className="ob-hint">
-              随 Windows 登录启动并常驻托盘（注册失败不影响完成引导）。
+              {t("随 Windows 登录启动并常驻托盘（注册失败不影响完成引导）。")}
             </span>
           </span>
         </label>
       </div>
 
       <div className="ob-block">
-        <h3 className="ob-block-title">框选热键</h3>
+        <h3 className="ob-block-title">{t("框选热键")}</h3>
         <HotkeyRecorder
           value={hotkeys.capture}
           onChange={(spec) => onEdit({ hotkeys: { capture: spec } })}
           onError={onError}
         />
         <p className="ob-hint">
-          按下的组合键会注册为全局热键；若与系统或其他软件冲突，检测结果会给出占用提示。
+          {t("按下的组合键会注册为全局热键；若与系统或其他软件冲突，检测结果会给出占用提示。")}
         </p>
       </div>
     </div>

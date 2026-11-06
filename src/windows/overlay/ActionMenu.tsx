@@ -7,6 +7,7 @@
 import { Fragment, useMemo } from "react";
 import { Button, Kbd } from "../../components/ui";
 import type { ActionItem, MenuReadyPayload, Mode, RectPhys } from "../../shared/contract/types";
+import { t } from "../../i18n";
 import { toCssRect } from "./coords";
 
 const MENU_WIDTH = 300;
@@ -66,18 +67,18 @@ export function ActionMenu({
       className="overlay-menu sa-anim-slide"
       style={{ left: position.left, top: position.top, width: MENU_WIDTH }}
       role="dialog"
-      aria-label="动作菜单"
+      aria-label={t("动作菜单")}
     >
       <div className="overlay-menu__header">
-        <span className="overlay-menu__title">识别到的内容</span>
-        <div className="overlay-menu__mode" role="group" aria-label="回答模式">
+        <span className="overlay-menu__title">{t("识别到的内容")}</span>
+        <div className="overlay-menu__mode" role="group" aria-label={t("回答模式")}>
           <button
             type="button"
             className={`overlay-menu__mode-btn${mode === "quick" ? " overlay-menu__mode-btn--active" : ""}`}
             aria-pressed={mode === "quick"}
             onClick={onToggleMode}
           >
-            快速
+            {t("快速")}
           </button>
           <button
             type="button"
@@ -85,7 +86,7 @@ export function ActionMenu({
             aria-pressed={mode === "deep"}
             onClick={onToggleMode}
           >
-            深入
+            {t("深入")}
           </button>
         </div>
       </div>
@@ -94,11 +95,13 @@ export function ActionMenu({
         {menu.preview}
       </p>
 
-      <div className="overlay-menu__actions" role="group" aria-label="动作">
+      <div className="overlay-menu__actions" role="group" aria-label={t("动作")}>
         {menu.items.map((item) => {
           const unavailable = disabled || !item.enabled;
-          const reason = item.disabledReason ?? "当前不可用";
-          const title = item.enabled ? item.label : `${item.label}：${reason}`;
+          // 后端 disabledReason 是静态中文常量：精确 key 命中词典即英文，未命中自动回退中文。
+          const reason = item.disabledReason ? t(item.disabledReason) : t("当前不可用");
+          const label = t(item.label);
+          const title = item.enabled ? label : t("{label}：{reason}", { label, reason });
           return (
             <Fragment key={item.id}>
               <button
@@ -119,7 +122,7 @@ export function ActionMenu({
                     flex: "1 1 auto",
                   }}
                 >
-                  <span className="overlay-menu__action-label">{item.label}</span>
+                  <span className="overlay-menu__action-label">{label}</span>
                   {unavailable ? (
                     // 受限模式：禁用原因直接可见（不只放在 tooltip），文案为可操作路径。
                     <span
@@ -142,7 +145,7 @@ export function ActionMenu({
                   <span
                     className={`overlay-menu__action-mode overlay-menu__action-mode--${item.mode}`}
                   >
-                    {item.mode === "deep" ? "深度" : "快速"}
+                    {item.mode === "deep" ? t("深度") : t("快速")}
                   </span>
                 </span>
               </button>
@@ -154,15 +157,15 @@ export function ActionMenu({
                   disabled={disabled || !coverAvailable}
                   title={
                     coverAvailable
-                      ? "把译文直接盖在原句位置（只在这个窗口里显示，不会改动原应用）"
-                      : (coverDisabledReason ?? "选区内没有可翻译的文字")
+                      ? t("把译文直接盖在原句位置（只在这个窗口里显示，不会改动原应用）")
+                      : (coverDisabledReason ?? t("选区内没有可翻译的文字"))
                   }
                   onClick={onCover}
                 >
-                  <span className="overlay-menu__action-label">覆盖翻译</span>
+                  <span className="overlay-menu__action-label">{t("覆盖翻译")}</span>
                   <span className="overlay-menu__action-meta">
                     <span className="overlay-menu__action-mode overlay-menu__action-mode--cover">
-                      {coverAvailable ? "原位显示译文" : (coverDisabledReason ?? "没有文字")}
+                      {coverAvailable ? t("原位显示译文") : (coverDisabledReason ?? t("没有文字"))}
                     </span>
                   </span>
                 </button>
@@ -174,10 +177,10 @@ export function ActionMenu({
 
       <div className="overlay-menu__footer">
         <Button size="sm" variant="ghost" onClick={onReset} disabled={disabled}>
-          重新框选
+          {t("重新框选")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel} disabled={disabled}>
-          取消
+          {t("取消")}
         </Button>
       </div>
     </div>

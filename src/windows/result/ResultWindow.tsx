@@ -16,6 +16,7 @@ import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { ipc, isTauri } from "@/shared/ipc";
 import { COMMANDS, EVENTS } from "@/shared/contract/names";
 import { useIpcEvent } from "@/shared/hooks/useIpcEvent";
+import { t } from "@/i18n";
 import type {
   ActionId,
   SelectionResult,
@@ -42,11 +43,11 @@ import {
 import "./result.css";
 
 const ACTION_TITLES: Record<ActionId, string> = {
-  search: "文本搜索",
-  imageSearch: "图片搜索",
-  translate: "翻译",
-  answer: "解答",
-  copy: "复制文字",
+  search: t("文本搜索"),
+  imageSearch: t("图片搜索"),
+  translate: t("翻译"),
+  answer: t("解答"),
+  copy: t("复制文字"),
 };
 
 export default function ResultWindow() {
@@ -136,7 +137,7 @@ export default function ResultWindow() {
 
   // ── 操作 ────────────────────────────────────────────────────
   const copyText = useCallback(async () => {
-    const content = threadPlainText(turns);
+    const content = threadPlainText(turns, { question: t("问："), answer: t("答：") });
     if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
@@ -148,7 +149,7 @@ export default function ResultWindow() {
       if (!ok) {
         setSubmitError({
           code: "SA-0000",
-          message: "复制失败：剪贴板不可用，请手动选择文本复制。",
+          message: t("复制失败：剪贴板不可用，请手动选择文本复制。"),
           detail: null,
           retryable: false,
           fallback: [],
@@ -295,7 +296,7 @@ export default function ResultWindow() {
     };
   }, []);
 
-  const title = first ? ACTION_TITLES[first.action] : "结果";
+  const title = first ? ACTION_TITLES[first.action] : t("结果");
 
   return (
     <div className="result-root">
@@ -316,8 +317,10 @@ export default function ResultWindow() {
         <div className="result-body" ref={bodyRef} onScroll={onBodyScroll}>
           {turns.length === 0 ? (
             <div className="result-empty">
-              <p className="result-empty-title">等待框选结果…</p>
-              <p className="result-hint">框选屏幕上的内容并选择一个动作，回答会显示在这里。</p>
+              <p className="result-empty-title">{t("等待框选结果…")}</p>
+              <p className="result-hint">
+                {t("框选屏幕上的内容并选择一个动作，回答会显示在这里。")}
+              </p>
             </div>
           ) : (
             <ThreadView
@@ -331,14 +334,14 @@ export default function ResultWindow() {
               <div className="result-error-head">
                 <strong className="result-error-message">{submitError.message}</strong>
                 <code className="result-error-code">{submitError.code}</code>
-                {submitError.retryable ? <span className="result-hint">可重试</span> : null}
+                {submitError.retryable ? <span className="result-hint">{t("可重试")}</span> : null}
               </div>
               {submitError.detail ? (
                 <pre className="result-error-detail">{submitError.detail}</pre>
               ) : null}
               {submitError.fallback.length > 0 ? (
                 <p className="result-error-fallback">
-                  可以试试：{fallbackText(submitError.fallback)}
+                  {t("可以试试：{name}", { name: fallbackText(submitError.fallback) })}
                 </p>
               ) : null}
             </div>

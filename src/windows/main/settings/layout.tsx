@@ -1,6 +1,7 @@
 /** 设置页布局类局部组件（分组外壳 / 面板 / 字段行 / 提示） */
 
 import type { ReactNode } from "react";
+import { t } from "@/i18n";
 import { Spinner } from "@/components/ui";
 
 export interface SectionShellProps {
@@ -89,7 +90,7 @@ export function LoadingBlock(props: { text?: string }) {
   return (
     <div className="sa-loading">
       <Spinner />
-      <span>{props.text ?? "加载中…"}</span>
+      <span>{props.text ?? t("加载中…")}</span>
     </div>
   );
 }

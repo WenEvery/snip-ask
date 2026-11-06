@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui";
 import type { ActionId, Hotkeys, Mode } from "@/shared/contract/types";
+import { t } from "@/i18n";
 import { buildPatch, hasChanges } from "../diff";
 import { HOTKEY_ROWS } from "../hotkey";
 import { ACTION_LABELS, DEFAULT_HOTKEYS, IMAGE_MENU_ACTIONS, TEXT_MENU_ACTIONS } from "../presets";
@@ -24,10 +25,14 @@ const MODE_ACTIONS: {
   label: string;
   description: string;
 }[] = [
-  { key: "search", label: "搜索", description: "框选文字后联网搜索并给出结论" },
-  { key: "imageSearch", label: "图片搜索", description: "识别图片内容后搜索来源" },
-  { key: "translate", label: "翻译", description: "把选中文字翻译成目标语言" },
-  { key: "answer", label: "解答", description: "解释、分析或改写选中内容" },
+  { key: "search", label: t("搜索"), description: t("框选文字后联网搜索并给出结论") },
+  {
+    key: "imageSearch",
+    label: t("图片搜索"),
+    description: t("识别图片内容后搜索来源"),
+  },
+  { key: "translate", label: t("翻译"), description: t("把选中文字翻译成目标语言") },
+  { key: "answer", label: t("解答"), description: t("解释、分析或改写选中内容") },
 ];
 
 export function ActionsHotkeysSection(props: SectionProps) {
@@ -56,17 +61,17 @@ export function ActionsHotkeysSection(props: SectionProps) {
   const save = async () => {
     const patch = buildPatch(baseline, draft, ["actions", "hotkeys", "modes"]);
     if (Object.keys(patch).length === 0) return;
-    await onApply(patch, "动作与热键");
+    await onApply(patch, t("动作与热键"));
   };
 
   return (
     <SectionShell
-      title="动作与热键"
-      description="挑选框选后显示哪些动作、每个动作默认用多快的方式回答，并设置全局热键。"
+      title={t("动作与热键")}
+      description={t("挑选框选后显示哪些动作、每个动作默认用多快的方式回答，并设置全局热键。")}
     >
       <Panel
-        title="动作菜单"
-        description="菜单从上到下按这里的顺序显示；取消勾选即可隐藏该动作。"
+        title={t("动作菜单")}
+        description={t("菜单从上到下按这里的顺序显示；取消勾选即可隐藏该动作。")}
         actions={
           <Button
             variant="ghost"
@@ -81,20 +86,20 @@ export function ActionsHotkeysSection(props: SectionProps) {
               }))
             }
           >
-            恢复默认菜单
+            {t("恢复默认菜单")}
           </Button>
         }
       >
         <MenuOrderEditor
-          title="框选到文字"
-          description="选中文字时出现的动作"
+          title={t("框选到文字")}
+          description={t("选中文字时出现的动作")}
           candidates={TEXT_MENU_ACTIONS}
           value={actions.menu.text}
           onChange={(next) => changeMenu("text", next)}
         />
         <MenuOrderEditor
-          title="框选到图片"
-          description="选中图片时出现的动作"
+          title={t("框选到图片")}
+          description={t("选中图片时出现的动作")}
           candidates={IMAGE_MENU_ACTIONS}
           value={actions.menu.image}
           onChange={(next) => changeMenu("image", next)}
@@ -102,8 +107,10 @@ export function ActionsHotkeysSection(props: SectionProps) {
       </Panel>
 
       <Panel
-        title="每个动作的默认模式"
-        description="快速模式几秒内出结果、费用低；深度模式会多搜索几次、读更多内容，更慢也更贵。"
+        title={t("每个动作的默认模式")}
+        description={t(
+          "快速模式几秒内出结果、费用低；深度模式会多搜索几次、读更多内容，更慢也更贵。",
+        )}
       >
         <div className="sa-action-modes">
           {MODE_ACTIONS.map((row) => (
@@ -116,23 +123,23 @@ export function ActionsHotkeysSection(props: SectionProps) {
                 value={modes[row.key]}
                 onChange={(mode) => setMode(row.key, mode)}
                 options={[
-                  { value: "quick", label: "快速" },
-                  { value: "deep", label: "深度" },
+                  { value: "quick", label: t("快速") },
+                  { value: "deep", label: t("深度") },
                 ]}
               />
             </div>
           ))}
         </div>
-        <Hint>在框选后的动作菜单里还能临时切换这一次的模式。</Hint>
+        <Hint>{t("在框选后的动作菜单里还能临时切换这一次的模式。")}</Hint>
       </Panel>
 
-      <Panel title="其他行为">
+      <Panel title={t("其他行为")}>
         <div className="sa-grid-2">
           <SelectField
-            label="自动执行的动作"
+            label={t("自动执行的动作")}
             value={actions.defaultAction ?? ""}
             options={[
-              { value: "", label: "不自动执行（每次手动选）" },
+              { value: "", label: t("不自动执行（每次手动选）") },
               ...menuActions.map((action) => ({ value: action, label: ACTION_LABELS[action] })),
             ]}
             onChange={(value) =>
@@ -146,13 +153,13 @@ export function ActionsHotkeysSection(props: SectionProps) {
                 },
               }))
             }
-            hint="可选当前菜单中已有的动作"
+            hint={t("可选当前菜单中已有的动作")}
           />
           <div className="sa-field is-stacked">
-            <span className="sa-field-label">结果处理</span>
+            <span className="sa-field-label">{t("结果处理")}</span>
             <SwitchRow
-              label="自动复制结果"
-              description="结果生成后自动复制到剪贴板"
+              label={t("自动复制结果")}
+              description={t("结果生成后自动复制到剪贴板")}
               checked={actions.autoCopy}
               onChange={(autoCopy) =>
                 onEdit((current) => ({ ...current, actions: { ...current.actions, autoCopy } }))
@@ -163,15 +170,17 @@ export function ActionsHotkeysSection(props: SectionProps) {
       </Panel>
 
       <Panel
-        title="全局热键"
-        description="点击热键框后按下组合键（至少一个修饰键 + 字母/数字）；留空表示不使用。图片搜索/解答选区按下后会先进入框选，选完自动执行对应动作。"
+        title={t("全局热键")}
+        description={t(
+          "点击热键框后按下组合键（至少一个修饰键 + 字母/数字）；留空表示不使用。图片搜索/解答选区按下后会先进入框选，选完自动执行对应动作。",
+        )}
         actions={
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onEdit((current) => ({ ...current, hotkeys: { ...DEFAULT_HOTKEYS } }))}
           >
-            恢复全部默认
+            {t("恢复全部默认")}
           </Button>
         }
       >
@@ -186,10 +195,10 @@ export function ActionsHotkeysSection(props: SectionProps) {
             onError={onError}
           />
         ))}
-        <Hint>如果热键被其他软件占用，这里会显示冲突提示，换一个组合即可。</Hint>
+        <Hint>{t("如果热键被其他软件占用，这里会显示冲突提示，换一个组合即可。")}</Hint>
       </Panel>
 
-      <SaveBar label="动作与热键" dirty={dirty} saving={saving} onSave={() => void save()} />
+      <SaveBar label={t("动作与热键")} dirty={dirty} saving={saving} onSave={() => void save()} />
     </SectionShell>
   );
 }
