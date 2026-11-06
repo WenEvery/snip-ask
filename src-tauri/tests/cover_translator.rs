@@ -155,9 +155,12 @@ async fn skeleton_translator_returns_deterministic_placeholders() {
 
 #[tokio::test]
 async fn gateway_failure_keeps_source_and_marks_failed() {
-    // 生产 `HttpLlmGateway` 当前为骨架实现（返回 SA-9001），正好覆盖「网关失败」路径。
+    // 取一个「刚释放、几乎必然无人监听」的回环端口，避免依赖固定 39281 被真实本地引擎占用。
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind ephemeral port");
+    let port = listener.local_addr().expect("local addr").port();
+    drop(listener);
     let gateway = Arc::new(snip_ask_lib::services::local_gateway::HttpLlmGateway::new(
-        "http://127.0.0.1:39281/v1",
+        format!("http://127.0.0.1:{port}/v1"),
         None,
         "local-model",
     ));

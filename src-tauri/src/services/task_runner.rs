@@ -277,6 +277,13 @@ async fn run_task(app: AppHandle, task_id: TaskId, request: TaskRequest, cancel:
                 return;
             }
             let current_thread = is_current_thread(&state, &request.session, &task_id);
+            // 「完成后自动复制结果」（契约 actions.autoCopy）：此前字段存在但无实现（v1.0.5 补齐）。
+            // 复制动作本身已写剪贴板，不重复；失败只记日志，不改变任务成功语义。
+            if request.action != ActionId::Copy && state.snapshot_config().actions.auto_copy {
+                if let Err(err) = crate::platform::clipboard::set_text(&text) {
+                    tracing::warn!(code = %err.code, "自动复制结果到剪贴板失败（不影响任务完成）");
+                }
+            }
             // 多轮上下文：先记录本轮问答（完整正文），再发 `task:done`。
             // 顺序很重要：前端收到 done 后用户可能立刻追问，此时 `{context}` 必须已包含本轮。
             // 取消 / 失败 / 已被取代的路径不写正文。
@@ -416,6 +423,12 @@ async fn execute(
     request: &TaskRequest,
     cancel: &Arc<AtomicBool>,
 ) -> AppResult<ExecutedTask> {
+    // 「复制文字」：不调用任何 LLM，直接把选区 OCR 原文写入系统剪贴板并把原文回显到结果窗
+    // （v1.0.5 修复：此前 Copy 会被当作解答走 LLM 网关，结果窗显示 AI 回答且剪贴板没有内容）。
+    if request.action == ActionId::Copy {
+        return run_copy_task(app, task_id, request, cancel).await;
+    }
+
     // 浏览器搜索分支：不走 LLM，直接拼 URL 并真实打开系统浏览器。
     if request.routed.kind == TaskKind::Search && request.routed.engine == "browser" {
         return run_browser_search(app, task_id, request, cancel).await;
@@ -438,6 +451,54 @@ async fn execute(
 
     // 网关选择（契约 v4）：骨架模式 / 本地引擎（Vulkan 优先）/ 云端真实 SSE。
     run_llm_task(app, task_id, request, cancel).await
+}
+
+/// 「复制文字」：把选区 OCR 原文写入剪贴板，并把原文作为本次任务正文回显。
+///
+/// 设计：不经过 LLM（无 token 费用、无模型延迟、不产生 AI 内容）；失败时返回可操作错误，
+/// 而不是静默成功——用户点击「复制文字」的预期是剪贴板里出现原文。
+async fn run_copy_task(
+    app: &AppHandle,
+    task_id: &TaskId,
+    request: &TaskRequest,
+    cancel: &Arc<AtomicBool>,
+) -> AppResult<ExecutedTask> {
+    let started = Instant::now();
+    if cancel.load(Ordering::SeqCst) {
+        return Err(AppError::invalid_state("任务已取消"));
+    }
+    let text = request.input_text.clone();
+    if text.trim().is_empty() {
+        return Err(AppError::invalid_config("text", "选区内没有可复制的文字")
+            .with_message("没有可复制的文字：请重新框选包含文字的区域")
+            .with_fallback(vec!["retry"]));
+    }
+    crate::platform::clipboard::set_text(&text)?;
+    // 结果窗显示原文（一次 delta 完整推送，避免走 LLM 的流式增量）。
+    emit_task_delta(
+        app,
+        &TaskDeltaPayload {
+            task: task_id.clone(),
+            kind: StreamKind::Text,
+            chunk: text.clone(),
+        },
+    );
+    let elapsed_ms = started.elapsed().as_millis() as u64;
+    Ok(ExecutedTask {
+        outcome: TaskOutcome {
+            usage: TokenUsage {
+                input_tokens: 0,
+                output_tokens: 0,
+                cached_input_tokens: 0,
+                cost_estimate: 0.0,
+                currency: Currency::Cny,
+            },
+            latency_ms: elapsed_ms,
+            engine: "local".to_string(),
+            sources: Vec::new(),
+        },
+        text,
+    })
 }
 
 /// 通用 LLM 流式任务（解答 / 追问 / 骨架模式所有动作）。

@@ -75,6 +75,13 @@ pub async fn selection_commit(
             merged
         }
     };
+    // 诊断（不记录文本内容）：行数/是否命中/字符数，便于反馈「部分文字没识别」时定位 det/rec 阶段。
+    tracing::info!(
+        boxes = boxes.len(),
+        has_text,
+        preview_chars = preview.chars().count(),
+        "选区 OCR 完成"
+    );
 
     let result = SelectionResult {
         session: session.clone(),

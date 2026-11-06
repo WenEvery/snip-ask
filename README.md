@@ -5,14 +5,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2B%20x64-0078D4.svg)
-![Release](https://img.shields.io/badge/release-v1.0.4-2ea44f.svg)
+![Release](https://img.shields.io/badge/release-v1.0.5-2ea44f.svg)
 ![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
 
 **框选 AI** 是 BYOK（Bring Your Own Key）的桌面工具：没有服务端、不收集截图、**不收集任何用户信息**
 （无遥测、无崩溃上报、无统计）；用户自备 AI 服务密钥，截图与文本只在用户主动触发云端动作时才发送。
 开源协议为 [Apache-2.0](LICENSE)。
 
-本仓库为 **v1.0.4**：在本机完成屏幕捕获与文字识别，AI 推理可走本地 llama.cpp，也可用 DeepSeek
+本仓库为 **v1.0.5**：在本机完成屏幕捕获与文字识别，AI 推理可走本地 llama.cpp，也可用 DeepSeek
 （对话 / 搜索 / 抓取）、DashScope Qwen-MT 或任意 OpenAI 兼容服务；API Key 存在 Windows 凭据管理器，
 历史消息保存在本机。提供 **内置 OCR 模型版 / 在线安装版** 两个安装包（[`release/`](release/README.md)）与
 **[《自定义指南》](docs/自定义指南.md)**。**本软件不自动更新**（见[升级方式](#升级与自定义)）。
@@ -20,7 +20,7 @@
 > **能力边界（如实标注）**：屏幕捕获、文字识别、凭据与历史均在本机完成；**AMD / Intel 真机 GPU 未测**
 > （Vulkan 路径按「无 NVIDIA 专属依赖」论证）、**安装包未做代码签名**（SmartScreen 提示属预期）、
 > **本机无 DashScope Key**（Qwen-MT 仅协议级验收，真实翻译未验收）。逐项证据与遗留见
-> 本地证据 `.verify/verify-v1.0.4/SUMMARY.md`（gitignored）与
+> 本地证据 `.verify/verify-v1.0.5/SUMMARY.md`（gitignored）与
 > [`docs/技术验证清单.md`](docs/技术验证清单.md)。
 
 ---
@@ -31,35 +31,35 @@
 
 | 产物 | 说明 | 体积 / 门禁 |
 | --- | --- | --- |
-| [`release/SnipAsk_1.0.4_x64-setup.exe`](release/SnipAsk_1.0.4_x64-setup.exe) | **在线安装版（在线下载 OCR 模型）**：内置应用 + 文字识别运行时 + `docs/`；首次使用文字识别时下载 4 个模型/字典（约 16 MB） | **7,784,602 B（7.42 MiB）** / ≤ 25 MiB |
-| [`release/SnipAsk_1.0.4_x64-full-setup.exe`](release/SnipAsk_1.0.4_x64-full-setup.exe) | **内置 OCR 模型版**：在线安装版的全部内容 + 文字识别模型/字典，离线开箱即用 | **22,567,768 B（21.52 MiB）** / ≤ 60 MiB |
+| [`release/SnipAsk_1.0.5_x64-setup.exe`](release/SnipAsk_1.0.5_x64-setup.exe) | **在线安装版（在线下载 OCR 模型）**：内置应用 + 文字识别运行时 + `docs/`；首次使用文字识别时下载 4 个模型/字典（约 16 MB） | **7,791,932 B（7.43 MiB）** / ≤ 25 MiB |
+| [`release/SnipAsk_1.0.5_x64-full-setup.exe`](release/SnipAsk_1.0.5_x64-full-setup.exe) | **内置 OCR 模型版**：在线安装版的全部内容 + 文字识别模型/字典，离线开箱即用 | **22,577,783 B（21.53 MiB）** / ≤ 60 MiB |
 | [`release/SHA256SUMS.txt`](release/SHA256SUMS.txt) | 两个安装包的 SHA256 校验和 | — |
 | [`release/README.md`](release/README.md) | 发行说明：逐包体积/SHA256、构建信息、安装/卸载、已知限制 | — |
 
 > 两版功能完全一致，差异只在「文字识别模型是否随包」。选择建议：
 > 能联网/想要更小安装包 → **在线安装版**；离线/内网/不想首次下载模型 → **内置 OCR 模型版**。
-> 体积为 v1.0.4 最终归档产物实测（2026-11-06）；SHA256 以 `release/SHA256SUMS.txt` 为准。
+> 体积为 v1.0.5 最终归档产物实测（2026-11-06）；SHA256 以 `release/SHA256SUMS.txt` 为准。
 
 ### 安装步骤
 
 1. 下载安装包，先校验完整性：
 
    ```powershell
-   Get-FileHash .\SnipAsk_1.0.4_x64-setup.exe -Algorithm SHA256
+   Get-FileHash .\SnipAsk_1.0.5_x64-setup.exe -Algorithm SHA256
    # 与 release\SHA256SUMS.txt 中对应条目比对
    ```
 
 2. 双击运行安装包；或静默安装（当前用户）：
-   `Start-Process .\SnipAsk_1.0.4_x64-setup.exe -ArgumentList '/S'`。
+   `Start-Process .\SnipAsk_1.0.5_x64-setup.exe -ArgumentList '/S'`。
 3. 安装完成后启动 **SnipAsk**；首次启动进入 6 步引导（无网络 / 无 API Key 可跳过并进入受限模式）。
 4. 按 `Ctrl+Q` 开始框选；托盘左键可直接打开设置，右键菜单可开始框选、重新运行引导、暂停热键或退出。
 
-> **未签名提示**：v1.0.4 安装包**未做代码签名**。首次运行时 Windows SmartScreen 可能显示
+> **未签名提示**：v1.0.5 安装包**未做代码签名**。首次运行时 Windows SmartScreen 可能显示
 > 「Windows 已保护你的电脑」，点击「更多信息 → 仍要运行」即可。已在 Windows 11 + Defender 实机验证
 > 安装/启动/卸载且 Defender 扫描无威胁（[S-16 记录](docs/spikes/S-16-无签名安装包与杀软误报.md)）；
 > Win10 干净机、火绒等环境未覆盖。
 
-### 窗口与托盘操作（v1.0.1–v1.0.4）
+### 窗口与托盘操作（v1.0.1–v1.0.5）
 
 - 主窗口**没有 Windows 系统标题栏**，使用应用内自绘标题栏：拖拽移动、最小化、最大化/还原、
   关闭按钮，以及四边与四角的八向缩放手柄；
@@ -139,11 +139,12 @@
 | **本地 GPU 推理** | GPU 探测、显存预算、组件按需下载、引擎监督者（Vulkan → CUDA → CPU 回退） | ✅ 已实现（NVIDIA RTX 4060 Laptop 真机；**AMD/Intel 真机未测**） |
 | **凭据** | Windows Credential Manager（keyring，service `SnipAsk`），界面仅掩码 | ✅ 已实现 |
 | **历史持久化** | `messages` 表、`history_list` / `history_thread` / `history_clear`，重启后可回溯 | ✅ 已实现 |
-| **双安装包** | 在线安装版（在线下载 OCR 模型，≤25 MiB）/ 内置 OCR 模型版（离线可用，≤60 MiB），安装包类型在「自定义与关于」标注 | ✅ v1.0.4 已归档（7.42 / 21.52 MiB） |
+| **双安装包** | 在线安装版（在线下载 OCR 模型，≤25 MiB）/ 内置 OCR 模型版（离线可用，≤60 MiB），安装包类型在「自定义与关于」标注 | ✅ v1.0.5 已归档（7.43 / 21.53 MiB） |
 | **v1.0.1 修复批** | 自绘窗口/关闭到托盘/托盘左键设置、引导入口隐藏、搜索与隐私独立分组、四个动作默认模式、模型下载 idle/取消、内存真实值、引擎启停、去遥测、用户文案重写 | ✅ 已实现 |
 | **v1.0.2 修复批** | 结果窗不透明铺满 + 高度自适应（到屏高 85% 后内部滚动）、引擎就绪后清空旧「模型缺失」提示、自绘标题栏最小化/最大化/8 向缩放权限补齐 | ✅ 已实现 |
 | **v1.0.3 修复** | 本地 HY-MT1.5-1.8B 翻译改用精简提示词（`LOCAL_MODELS_MINIMAL_PROMPT`），不再复述原文；新增单测 | ✅ 已实现 |
 | **v1.0.4 修复** | 本地翻译语言码→中文语言名 + 术语表分支 + 复述检测/自动降级（不再回显原文）；NSIS 卸载钩子彻底清理模型/配置/后端（静默/勾选/确认，更新保留数据） | ✅ 已实现并真机验证 |
+| **v1.0.5 修复** | `复制文字` 改为直接写系统剪贴板并原样回显（不再走 AI 解答），补齐 `actions.autoCopy`；OCR 合并多行框按行拆分，减少漏字 | ✅ 已实现并真机验证 |
 | **自动更新** | updater 插件/服务、`advanced.updateChannel`、`update:status` 全部移除（[ADR-0008](docs/adr/0008-remove-auto-update.md)） | ✅ 已移除（升级 = 覆盖安装） |
 | 工程底座 | 分层目录、内置资源、图标、pnpm 脚本、`scripts/*.ps1`、CI（windows-latest）、ADR-0001～0009 | ✅ 已实现 |
 | **覆盖式翻译** | 段块合并 + 自适应布局纯函数 / 冻结帧 Canvas 三态 / `translate_cover` 批处理 + 会话级 LRU | ✅ 已实现（布局单测 25/25；真实 OCR/翻译质量依赖真实链路） |
@@ -154,7 +155,7 @@
 本地小模型译文质量/格式保持仍弱于云端（但 v1.0.4 起不再回显原文，并会自动降级/报错）、
 8GB 机型降档提示缺失、Win10/国产杀软/真人可用性（S-19）未覆盖、CI 未在 GitHub runner 实跑、
 关闭窗口 = 托盘常驻（v1.0.1 新设计）、Markdown 渲染/多语言待打磨。
-完整遗留见 [`docs/实施架构.md` §9](docs/实施架构.md) 与本地证据 `.verify/verify-v1.0.4/SUMMARY.md`。
+完整遗留见 [`docs/实施架构.md` §9](docs/实施架构.md) 与本地证据 `.verify/verify-v1.0.5/SUMMARY.md`。
 
 ---
 
@@ -209,8 +210,8 @@ powershell -ExecutionPolicy Bypass -File scripts\fetch-ocr-assets.ps1   # 准备
 powershell -ExecutionPolicy Bypass -File scripts\build-installers.ps1  # 构建两版 + 体积门禁 + 安装冒烟
 ```
 
-产物归档到 `release/`：`SnipAsk_1.0.4_x64-setup.exe`（在线安装版）、
-`SnipAsk_1.0.4_x64-full-setup.exe`（内置 OCR 模型版）、`SHA256SUMS.txt`；
+产物归档到 `release/`：`SnipAsk_1.0.5_x64-setup.exe`（在线安装版）、
+`SnipAsk_1.0.5_x64-full-setup.exe`（内置 OCR 模型版）、`SHA256SUMS.txt`；
 体积门禁：在线安装版 ≤25 MiB、内置 OCR 模型版 ≤60 MiB。详见[《自定义指南》§10](docs/自定义指南.md)。
 
 ### 检查与构建
@@ -335,7 +336,27 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 | 安装包 | 在线安装版 ≤ 25 MiB（不含文字识别模型）；内置 OCR 模型版 ≤ 60 MiB（含模型）；GPU 后端按需下载 |
 | 引导 | 首启 ≤ 3 分钟完成最小配置；无网络/无 Key 可跳过并进入受限模式；下载支持断点续传 + SHA256 |
 
-**v1.0.4（本版本）修复摘要**：
+**v1.0.5（本版本）修复摘要**：
+
+- **「复制文字」变成 AI 解答、剪贴板没有原文**：根因是 Copy 的空 `prompt_key` 被兜底成 `answer`，
+  `task_runner` 没有 Copy 分支 → 走 LLM。修复：新增 Win32 剪贴板写入（`CF_UNICODETEXT`），
+  `task_runner` 在 LLM 前短路 Copy——不调用模型、原文直接进剪贴板并以原文回显；结果窗不再显示
+  「AI 生成」徽标与用量行、角色标注「原文」；并补齐 `actions.autoCopy`（任务完成后自动复制结果）。
+  **真实 App IPC 验证 PASS**：剪贴板与原文逐字符一致，结果窗为原文而非 AI 回答
+  （`.verify/v1/fix/v105-copy-e2e.json`）。
+- **部分文字无法识别（漏行）**：已证实 DB det 在低分辨率整屏检测下可能把相邻多行合并成一个高框，
+  整框送 rec 输出空文本/置信度 0.00，随后被 `textThreshold` 过滤。修复：按行墨迹投影把异常高框拆成多行
+  再逐行 rec（单行大标题不误拆）；同一合并框实测修复前 0.00 空输出 → 修复后恢复 3 行（0.61/0.83/0.99）。
+  选区 OCR 完成新增诊断日志（仅行数/字符数，不记录文本）。
+- 修正易受本机运行环境影响的测试用例（覆盖翻译「网关失败」改用临时空闲端口）。
+- 无契约变更（配置 Schema 6 / 43 命令 / 15 事件 / `IPC_CONTRACT_VERSION=1` 不变）；双安装包用 Tauri 2.12.4
+  重建并归档（`SnipAsk_1.0.5_x64-setup.exe` / `SnipAsk_1.0.5_x64-full-setup.exe`，体积见发行产物表，
+  门禁 PASS，安装/启动/关闭隐藏到托盘/卸载 + 数据清理冒烟 PASS）；SHA256 以 `release/SHA256SUMS.txt` 为准；
+- **v1.0.5 最终门禁（全绿）**：`cargo fmt --check` 0；`cargo clippy --all-targets -- -D warnings` 0 warning；
+  `cargo test --all-targets` **498 passed / 0 failed / 21 ignored**；`pnpm typecheck` 0、`pnpm test` **48/48**、
+  `pnpm build:web` 0；证据见本地 `.verify/verify-v1.0.5/SUMMARY.md`（gitignored）。
+
+**v1.0.4（前置版本）修复摘要**：
 
 - **本地翻译「翻译后仍然为原文」**：根因是本地精简提示词把 BCP-47 语言码（`zh-CHS` 等）直接发给本地小模型，
   真实模型不认识语言码而原样复述原文；非空结果又被当作成功、不降级不报错。修复：本地精简提示词与覆盖翻译提示词
@@ -354,7 +375,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 - **v1.0.4 最终门禁（全绿）**：`cargo fmt --check` 0；`cargo clippy --all-targets -- -D warnings` 0 warning；
   `cargo test --all-targets` **495 passed / 0 failed / 20 ignored**（lib 356 含新增 11 个）；
   `pnpm typecheck` 0、`pnpm test` **48/48**、`pnpm build:web` 0；证据见本地
-  `.verify/verify-v1.0.4/SUMMARY.md`（gitignored）。
+  `.verify/verify-v1.0.5/SUMMARY.md`（gitignored）。
 
 **v1.0.3（前置版本）修复摘要**：
 

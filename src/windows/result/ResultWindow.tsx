@@ -303,7 +303,8 @@ export default function ResultWindow() {
         <ResultHeader
           title={title}
           mode={first ? first.mode : null}
-          engine={latest ? latest.engine : null}
+          engine={first?.action === "copy" ? null : latest ? latest.engine : null}
+          aiGenerated={first?.action !== "copy"}
           round={turns.length}
           browserPreview={!isTauri()}
           canCopy={Boolean(threadPlainText(turns))}
@@ -344,7 +345,7 @@ export default function ResultWindow() {
           ) : null}
         </div>
 
-        {turns.length > 0 ? (
+        {turns.length > 0 && first?.action !== "copy" ? (
           <ResultFooter
             streaming={streaming}
             disabled={busy}

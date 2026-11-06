@@ -7,6 +7,8 @@ export interface ResultHeaderProps {
   title: string;
   mode: Mode | null;
   engine: string | null;
+  /** 是否展示「AI 生成」标注（复制文字是原文，不展示）。 */
+  aiGenerated: boolean;
   /** 线程轮数（>1 时显示「第 N 轮」徽标）；0 表示尚未开始。 */
   round: number;
   browserPreview: boolean;
@@ -30,9 +32,11 @@ export function ResultHeader(props: ResultHeaderProps) {
             {engineLabel(props.engine)}
           </span>
         ) : null}
-        <span className="result-ai-badge" title="内容由 AI 生成，请自行核实">
-          AI 生成
-        </span>
+        {props.aiGenerated ? (
+          <span className="result-ai-badge" title="内容由 AI 生成，请自行核实">
+            AI 生成
+          </span>
+        ) : null}
         {props.browserPreview ? <span className="result-chip">预览</span> : null}
       </div>
       <div className="result-header-actions">

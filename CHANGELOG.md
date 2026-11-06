@@ -11,6 +11,58 @@
 - 发布工程：代码签名（EV/OV 证书）、默认安装目录改为 `%LOCALAPPDATA%\Programs\SnipAsk`（避免与数据目录同名）。
   **自动更新不再列入计划**（v1.0.0 已按用户决策彻底移除，见 [ADR-0008](docs/adr/0008-remove-auto-update.md)）。
 
+## [1.0.5] - 2026-11-06（用户反馈修复）
+
+> 修复版：处理用户反馈「复制文字动作变成 AI 解答、剪贴板没有原文」与「部分文字无法识别」。
+> **无契约变更**（配置 Schema 6 / 43 命令 / 15 事件 / `IPC_CONTRACT_VERSION = 1` 均不变）。
+
+### 修复
+
+- **「复制文字」动作错误地执行 AI 解答**：根因是动作路由里 Copy 的空 `prompt_key` 被兜底成 `answer`，
+  `task_runner` 没有 Copy 分支 → 走 LLM 网关，结果窗显示 AI 回答，剪贴板里没有原文。修复：
+  - 新增 `platform::clipboard`（Win32 `CF_UNICODETEXT`）真实写入系统剪贴板；
+  - `task_runner` 在 LLM 分支之前短路 Copy：**不调用任何模型**，直接把选区 OCR 原文写入剪贴板，
+    并以原文作为任务正文一次性回显（引擎标记 `local`、费用 0）；
+  - Copy 不再渲染提示词（`action_router` 保留空 `prompt_key`）；剪贴板失败时返回可操作错误；
+  - 结果窗对 Copy 隐藏「AI 生成」徽标与「用时/费用/引擎」行，角色标注由「答」改为「原文」，隐藏追问/重答底栏；
+  - 补齐 `actions.autoCopy`：设置为 `true` 时，搜索/解答/翻译任务完成后自动把结果写入剪贴板（此前字段无实现）。
+  - 真实 App IPC 验证（骨架模式，不依赖屏幕/模型）：`menu_execute(action=copy)` 后系统剪贴板与原文逐字符一致，
+    结果窗标题「复制文字」、正文为原文、无「AI 生成」/无 AI 回答文案；`autoCopy` 另行验证 PASS
+    （证据 `.verify/v1/fix/v105-copy-e2e.json`）。
+- **部分文字无法识别（漏行）**：DB det 在低分辨率整屏检测时可能把相邻多行合并成一个高框，整框送 rec 会得到
+  空文本/低置信度（实测三行合并框 rec 置信度 **0.00**），随后被 `textThreshold` 过滤 → 用户看到「部分文字没识别」。
+  修复：新增检测框行拆分（`split_merged_box` / `expand_merged_boxes`）——对高度超过中位行高 1.65 倍的框，
+  按行墨迹投影（灰度中位数 + 显著差异像素计数，深/浅色主题通用）拆成多行再逐行 rec；
+  拆分不出 2 行以上时回退原框，单行大标题不误拆。补 3 个单元测试（三段文本拆 3 行、单行不拆、中位行高扩展）。
+  实测同一合并框：修复前 rec 输出空（0.00）→ 修复后恢复 Red/Blue Top/Blue Bottom 三行（0.61 / 0.83 / 0.99）。
+  选区 OCR 完成时新增诊断日志（仅行数/是否命中/字符数，不记录文本），便于后续反馈定位。
+- 修正易受本机环境影响的门禁用例：`cover_translator` 的「网关失败」用例改用临时空闲端口，
+  避免固定 39281 被真实本地引擎占用时误判。
+
+### 双安装包（重建，最终归档）
+
+- 用 Tauri 2.12.4 + NSIS 3.13 基于 v1.0.5 源码重建并归档到 [release/](release/README.md)：
+  - **在线安装版** `SnipAsk_1.0.5_x64-setup.exe` **7,791,932 B（7.43 MiB）**，
+    SHA256 `1a07c447ed7734fc7c4d6fd1454c7e9eb3d6f1aebfa24c04b7b8aee60e37ab19`；
+  - **内置 OCR 模型版** `SnipAsk_1.0.5_x64-full-setup.exe` **22,577,783 B（21.53 MiB）**，
+    SHA256 `9007d034556dd24d2e044dda131abdd931120982818aba883620f1899be735cd`；
+  - 体积门禁 PASS（≤25 MiB / ≤60 MiB）、双版本主程序 SHA256 不同；v1.0.4 安装包从 `release/` 移除。
+- 安装冒烟 PASS：两版静默安装 `/S` → 启动 → 静默卸载 `/S`；卸载后数据目录/模型探针/注册项无残留
+  （`dataRemoved=true`、`dataResidue=[]`），用户真实数据冒烟后恢复；两版 `NotSigned`。
+
+### 验证
+
+- **最终门禁（全绿）**：`cargo fmt --check` PASS；`cargo clippy --all-targets -- -D warnings` PASS；
+  `cargo test --all-targets` **498 passed / 0 failed / 21 ignored**（新增剪贴板、OCR 行拆分与复述检测等测试）；
+  `pnpm typecheck` 0、`pnpm test` 48/48、`pnpm build:web` 0；双安装包构建 + 冒烟 PASS。
+- 真实 App IPC 证据：`.verify/v1/fix/v105-copy-e2e.json`（复制动作 + autoCopy，PASS）；本地翻译回归：
+  `.verify/v1/fix/v104-local-translate.json`（PASS）；OCR 探针：`.verify/v1/ocr/probe-probe.log`（真机 9 行全部命中 + 合并框拆分行）。
+- 说明：用户提供的 Steam 页面截图在本机跑现有 OCR 管线**可以完整识别**（9 行全部命中），未能直接复现漏行；
+  本次按已证实的「det 合并多行 → rec 空结果」失败模式修复，并保留诊断日志。若升级后仍漏字，请把
+  `%APPDATA%\SnipAsk\logs\snipask.log.*` 中「选区 OCR 完成」行与截图发回，可继续定位。
+
+
+
 ## [1.0.4] - 2026-11-06（用户反馈修复）
 
 > 修复版：处理两项用户反馈（本地翻译仍显示原文 / 卸载残留模型与配置）。**无契约变更**

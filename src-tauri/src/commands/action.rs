@@ -140,14 +140,19 @@ pub async fn menu_execute(
         .unwrap_or_else(|| config.translate.target_lang.clone());
 
     let routed = ActionRouter.resolve(&config, action, mode, selection.has_text)?;
-    let prompt = render_prompt(
-        &state,
-        &routed.prompt_key,
-        &input_text,
-        &config,
-        mode,
-        &target_lang,
-    );
+    // 「复制文字」不调用 LLM（v1.0.5）：不需要渲染提示词，原文即正文。
+    let prompt = if action == ActionId::Copy {
+        input_text.clone()
+    } else {
+        render_prompt(
+            &state,
+            &routed.prompt_key,
+            &input_text,
+            &config,
+            mode,
+            &target_lang,
+        )
+    };
 
     // 显示结果窗（前端据此初始化流式容器）。
     if let Err(err) = crate::app::windows::show_result(&app) {

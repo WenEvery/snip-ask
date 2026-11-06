@@ -14,6 +14,7 @@
 
 pub mod autostart;
 pub mod capture;
+pub mod clipboard;
 pub mod coords;
 pub mod credential;
 pub mod gpu;

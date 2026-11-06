@@ -45,6 +45,7 @@ interface TurnBubbleProps {
 
 function TurnBubble(props: TurnBubbleProps) {
   const { turn } = props;
+  const isCopy = turn.action === "copy";
   const body = <TurnBody turn={turn} latest={props.latest} onSourceError={props.onSourceError} />;
   const question = turn.question ? (
     <div className="result-turn-question">
@@ -58,7 +59,7 @@ function TurnBubble(props: TurnBubbleProps) {
       <div className="result-turn is-latest">
         {question}
         <div className="result-turn-answer">
-          <span className="result-turn-role is-ai">答</span>
+          <span className="result-turn-role is-ai">{isCopy ? "原文" : "答"}</span>
           {body}
         </div>
       </div>
@@ -93,6 +94,7 @@ function TurnBody(props: {
   onSourceError: (error: unknown) => void;
 }) {
   const { turn } = props;
+  const isCopy = turn.action === "copy";
   const streaming = turn.status === "streaming";
   return (
     <>
@@ -121,7 +123,7 @@ function TurnBody(props: {
 
       {turn.status === "cancelled" ? <p className="result-hint">已取消本次生成。</p> : null}
 
-      {turn.done ? (
+      {turn.done && !isCopy ? (
         <div className="result-usage">
           <span>用时 {formatLatency(turn.done.latencyMs)}</span>
           <span>费用 {formatCost(turn.done.usage.costEstimate)}</span>

@@ -135,7 +135,8 @@ impl ActionRouter {
         .map(|mut routed| {
             // 深度模式在提示词层面表达（模板内 {mode} 变量），引擎选择不变。
             let _ = mode;
-            if routed.prompt_key.is_empty() {
+            // 「复制文字」不需要提示词（v1.0.5：此前空 key 被兜底成 answer，导致复制动作走了 LLM）。
+            if routed.prompt_key.is_empty() && routed.kind != TaskKind::Copy {
                 routed.prompt_key = "answer".to_string();
             }
             routed
@@ -294,6 +295,8 @@ mod tests {
             .unwrap();
         assert_eq!(routed.kind, TaskKind::Copy);
         assert!(routed.fallback.is_empty());
+        // v1.0.5：复制动作不渲染提示词（不能被兜底成 answer 后走 LLM）。
+        assert_eq!(routed.prompt_key, "");
 
         let error = router()
             .resolve(&config, ActionId::Copy, Mode::Quick, false)

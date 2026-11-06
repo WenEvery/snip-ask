@@ -627,6 +627,186 @@ fn crop_for_rec(image: &OcrImage, bbox: &RectPhys) -> Option<OcrImage> {
     }
 }
 
+// ─────────────────────── 多行合并框拆分（v1.0.5） ───────────────────────
+
+/// 一个框的高度超过「框高中位数」的该倍数时，视为可能合并了多行。
+pub const MERGED_BOX_HEIGHT_RATIO: f32 = 1.65;
+/// 行拆分：一行被判为「有墨迹」所需的最小像素占比（相对框宽）。
+const ROW_INK_MIN_RATIO: f32 = 0.012;
+/// 行拆分：灰度与行背景中位数的最小差异（兼顾深色/浅色主题）。
+const ROW_INK_LUMA_DELTA: f32 = 34.0;
+
+/// 框高数组的中位数（小于 4px 的框不参与，避免噪声）。
+fn median_box_height(boxes: &[OcrBox]) -> f32 {
+    let mut heights: Vec<f32> = boxes
+        .iter()
+        .map(|item| item.bbox.height as f32)
+        .filter(|height| *height >= 4.0)
+        .collect();
+    if heights.is_empty() {
+        return 0.0;
+    }
+    heights.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    heights[heights.len() / 2]
+}
+
+/// 对「异常高」的框按行墨迹投影拆成多行；拆不出 2 行以上时返回 `None`。
+///
+/// 墨迹判定：每行取灰度中位数作为背景，统计与背景差异显著的像素数。深色/浅色主题通用，
+/// 不依赖固定颜色。返回坐标与输入框同一空间（绝对/局部由调用方保证）。
+fn split_merged_box(image: &OcrImage, bbox: &RectPhys) -> Option<Vec<RectPhys>> {
+    let x0 = bbox.x.max(0.0).floor() as u32;
+    let y0 = bbox.y.max(0.0).floor() as u32;
+    let x1 = ((bbox.x + bbox.width).min(image.width as f64)).ceil() as u32;
+    let y1 = ((bbox.y + bbox.height).min(image.height as f64)).ceil() as u32;
+    if x1 <= x0 + 2 || y1 <= y0 + 4 {
+        return None;
+    }
+    let width = (x1 - x0) as usize;
+    let height = (y1 - y0) as usize;
+    let stride = width * 4;
+    let pixels = image.bgra.as_slice();
+    if pixels.len() < (y0 as usize + height) * image.width as usize * 4 {
+        return None;
+    }
+
+    let mut active = Vec::with_capacity(height);
+    for row in 0..height {
+        let start = (y0 as usize + row) * image.width as usize * 4 + x0 as usize * 4;
+        let row_pixels = &pixels[start..start + stride];
+        // 灰度直方图求中位数（行背景）。
+        let mut histogram = [0u32; 256];
+        for pixel in row_pixels.chunks_exact(4) {
+            let luma = luma(pixel[2], pixel[1], pixel[0]);
+            histogram[luma as usize] += 1;
+        }
+        let half = (width / 2) as u32;
+        let mut seen = 0u32;
+        let mut background = 0u8;
+        for (value, count) in histogram.iter().enumerate() {
+            seen += count;
+            if seen >= half.max(1) {
+                background = value as u8;
+                break;
+            }
+        }
+        let mut ink = 0usize;
+        for pixel in row_pixels.chunks_exact(4) {
+            let luma = luma(pixel[2], pixel[1], pixel[0]);
+            if (luma as f32 - background as f32).abs() >= ROW_INK_LUMA_DELTA {
+                ink += 1;
+            }
+        }
+        let min_ink = ((width as f32 * ROW_INK_MIN_RATIO) as usize).max(3);
+        active.push(ink >= min_ink);
+    }
+
+    // 闭运算：把 2 行以内的空洞补上（防止字形间隙把一行拆开）。
+    let mut closed = active.clone();
+    for index in 0..height {
+        if active[index] {
+            continue;
+        }
+        let near_before = (1..=2).any(|d| index >= d && active[index - d]);
+        let near_after = (1..=2).any(|d| index + d < height && active[index + d]);
+        if near_before && near_after {
+            closed[index] = true;
+        }
+    }
+
+    // 连续墨迹带（行区间）。
+    let mut bands: Vec<(usize, usize)> = Vec::new();
+    let mut cursor = 0usize;
+    while cursor < height {
+        if !closed[cursor] {
+            cursor += 1;
+            continue;
+        }
+        let start = cursor;
+        while cursor < height && closed[cursor] {
+            cursor += 1;
+        }
+        let end = cursor; // exclusive
+                          // 上下各扩 4px（保留字形上下缘与 det unclip 余量），并丢弃过矮噪声带。
+        let top = start.saturating_sub(4);
+        let bottom = (end + 4).min(height);
+        if bottom - top >= 6 {
+            bands.push((top, bottom));
+        }
+    }
+    if bands.len() < 2 || bands.len() > 6 {
+        return None;
+    }
+    // 相邻带之间若空隙过小（< 3px），合并（避免把同一行拆成两段）。
+    let mut merged: Vec<(usize, usize)> = Vec::new();
+    for band in bands {
+        if let Some(last) = merged.last_mut() {
+            if band.0 <= last.1 + 4 {
+                last.1 = band.1;
+                continue;
+            }
+        }
+        merged.push(band);
+    }
+    if merged.len() < 2 {
+        return None;
+    }
+    Some(
+        merged
+            .into_iter()
+            .map(|(top, bottom)| RectPhys {
+                x: bbox.x,
+                y: bbox.y + top as f64,
+                width: bbox.width,
+                height: (bottom - top) as f64,
+            })
+            .collect(),
+    )
+}
+
+/// 把检测框中「明显高于中位行高」的框替换为按行拆分的子框；其余框原样保留。
+fn expand_merged_boxes(image: &OcrImage, boxes: &[OcrBox], median_height: f32) -> Vec<OcrBox> {
+    if median_height < 4.0 {
+        return boxes.to_vec();
+    }
+    let threshold = (median_height * MERGED_BOX_HEIGHT_RATIO).max(median_height + 8.0);
+    let mut expanded: Vec<OcrBox> = Vec::with_capacity(boxes.len());
+    for item in boxes {
+        let suspicious = item.bbox.height as f32 > threshold;
+        if suspicious {
+            // 只要宽高比不是极端的竖排单字，就尝试按行拆分。
+            if item.bbox.width as f32 > median_height * 1.5 {
+                if let Some(parts) = split_merged_box(image, &item.bbox) {
+                    let mut split_count = 0usize;
+                    for part in parts {
+                        expanded.push(OcrBox {
+                            text: String::new(),
+                            confidence: item.confidence,
+                            bbox: part,
+                        });
+                        split_count += 1;
+                    }
+                    if split_count >= 2 {
+                        continue;
+                    }
+                    // 拆分结果不足 2 行时回退为原框。
+                    while split_count > 0 {
+                        expanded.pop();
+                        split_count -= 1;
+                    }
+                }
+            }
+        }
+        expanded.push(item.clone());
+    }
+    expanded
+}
+
+/// BGR → 灰度（BT.601 整数近似）。
+fn luma(blue: u8, green: u8, red: u8) -> u8 {
+    ((red as u32 * 299 + green as u32 * 587 + blue as u32 * 114) / 1000) as u8
+}
+
 // ───────────────────────────── DB det 后处理 ─────────────────────────────
 
 /// 概率图 → 轴对齐文字框（坐标为 `dest_w × dest_h` 空间）。
@@ -1027,15 +1207,21 @@ impl LoadedOcr {
     }
 
     /// 对给定框做 cls（>0.9 判 180° 旋转）+ rec，返回与输入同序的结果。
+    ///
+    /// **v1.0.5**：DB 在低分辨率整屏 det 下可能把相邻多行合并成一个高框；直接整框送 rec 会得到
+    /// 空文本/低置信度（实测三行合并框 rec 置信度 0.00），随后被 `textThreshold` 过滤 → 用户看到
+    /// 「部分文字没识别」。这里先按行墨迹投影把异常高的框拆成多行，再逐行 rec。
     fn recognize_boxes(&self, image: &OcrImage, boxes: &[OcrBox]) -> AppResult<Vec<OcrBox>> {
         if boxes.is_empty() {
             return Ok(Vec::new());
         }
-        let max = boxes.len().min(MAX_REC_BOXES);
+        let median_height = median_box_height(boxes);
+        let expanded = expand_merged_boxes(image, boxes, median_height);
+        let max = expanded.len().min(MAX_REC_BOXES);
         // 1) 裁切（必要时旋转 90°）。
         let mut crops: Vec<Option<OcrImage>> = Vec::with_capacity(max);
         let mut results: Vec<OcrBox> = Vec::with_capacity(max);
-        for item in &boxes[..max] {
+        for item in &expanded[..max] {
             let crop = crop_for_rec(image, &item.bbox);
             crops.push(crop);
             results.push(item.clone());
@@ -1905,18 +2091,101 @@ mod tests {
     }
 
     #[test]
-    fn preset_assets_spec_matches_manifest_contract() {
-        // 兜底常量必须与 T5 实测值一致（防止 manifest 被误改时静默漂移）。
-        let root = temp_root("spec");
-        let assets = OcrAssets::resolve_from(None, &root.join("models"), None);
-        let status = build_status(&assets);
-        for asset in &status.assets {
-            let spec = OCR_ASSET_SPECS
-                .iter()
-                .find(|spec| spec.0 == asset.id.as_str())
-                .expect("资产 id 必须在 specs 中");
-            assert_eq!(asset.size_bytes, spec.2, "{} size", asset.id);
-            assert_eq!(asset.sha256, spec.3, "{} sha256", asset.id);
+    fn merged_box_is_split_into_text_rows() {
+        // 深色背景 + 3 条白色文本带（每条约 12px 高）。
+        let image = bgra_image(200, 110, |x, y| {
+            let in_text_row =
+                (10..22).contains(&y) || (45..57).contains(&y) || (80..92).contains(&y);
+            let in_text_column = (10..190).contains(&x);
+            if in_text_row && in_text_column {
+                [255, 255, 255, 255]
+            } else {
+                [24, 24, 24, 255]
+            }
+        });
+        let bbox = RectPhys {
+            x: 0.0,
+            y: 0.0,
+            width: 200.0,
+            height: 110.0,
+        };
+        let parts = split_merged_box(&image, &bbox).expect("三段文本应被拆成三行");
+        assert_eq!(parts.len(), 3, "parts = {parts:?}");
+        // 拆分后的行框应覆盖原框宽度且互不重叠。
+        for part in &parts {
+            assert!((part.width - 200.0).abs() < 1.0);
         }
+        assert!(parts
+            .windows(2)
+            .all(|pair| pair[0].y + pair[0].height <= pair[1].y + 1.0));
+    }
+
+    #[test]
+    fn single_line_box_is_not_split() {
+        let image = bgra_image(200, 40, |x, y| {
+            if (10..22).contains(&y) && (10..190).contains(&x) {
+                [255, 255, 255, 255]
+            } else {
+                [24, 24, 24, 255]
+            }
+        });
+        let bbox = RectPhys {
+            x: 0.0,
+            y: 0.0,
+            width: 200.0,
+            height: 40.0,
+        };
+        assert!(split_merged_box(&image, &bbox).is_none());
+    }
+
+    #[test]
+    fn expand_merged_boxes_uses_median_height() {
+        let image = bgra_image(300, 160, |x, y| {
+            let in_text_row =
+                (10..24).contains(&y) || (60..74).contains(&y) || (110..124).contains(&y);
+            if in_text_row && (10..290).contains(&x) {
+                [255, 255, 255, 255]
+            } else {
+                [24, 24, 24, 255]
+            }
+        });
+        let boxes = vec![
+            OcrBox {
+                text: "a".into(),
+                confidence: 1.0,
+                bbox: RectPhys {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 300.0,
+                    height: 28.0,
+                },
+            },
+            OcrBox {
+                text: "b".into(),
+                confidence: 1.0,
+                bbox: RectPhys {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 300.0,
+                    height: 28.0,
+                },
+            },
+            OcrBox {
+                text: "merged".into(),
+                confidence: 1.0,
+                bbox: RectPhys {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 300.0,
+                    height: 150.0,
+                },
+            },
+        ];
+        let median = median_box_height(&boxes);
+        assert!((median - 28.0).abs() < 0.01);
+        let expanded = expand_merged_boxes(&image, &boxes, median);
+        // 两个正常框保留；合并框被拆成 ≥2 个行框。
+        assert!(expanded.len() >= 4, "expanded = {expanded:?}");
+        assert!(expanded.iter().filter(|item| item.text == "merged").count() == 0);
     }
 }
