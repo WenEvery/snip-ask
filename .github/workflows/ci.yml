@@ -1,0 +1,173 @@
+# 框选 AI · CI（windows-latest）
+# - web： pnpm install → typecheck → 单测（node --test）→ build:web → 上传 dist 产物（可选）
+# - rust：cargo fmt --check → clippy -D warnings → cargo test
+# - bundle：准备 OCR 资产（SHA256 校验）→ 构建 slim + full 两个 NSIS 安装包（scripts/build-installers.ps1）
+#   → 双体积门禁（slim ≤ 25 MiB、full ≤ 60 MiB；体积基线 JSON 归档）
+#   → 归档安装包与 SHA256SUMS.txt。
+#   说明：CI 只做构建与体积门禁，不做真实安装/启动/卸载冒烟（需要真实桌面会话，由本地
+#   `scripts/build-installers.ps1` 默认冒烟 + .verify/v1/installer/ 证据覆盖）。
+#   仓库变量 SKIP_BUNDLE_GATE=true 可临时停用 bundle job（无 NSIS/受限网络的降级路径，风险见
+#   docs/spikes/S-18-安装包体积门禁.md）。
+# workflow_dispatch 允许手动触发（发布前手动跑一次双版本构建）。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一分支的旧任务自动取消，节省 CI 时间
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  web:
+    name: Web（typecheck + test + build）
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 类型检查
+        run: pnpm typecheck
+
+      - name: 前端纯逻辑单测（Node 原生 TS）
+        run: pnpm test
+
+      - name: Web 构建
+        run: pnpm build:web
+
+      - name: 上传 Web 构建产物（可选）
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+          if-no-files-found: warn
+          retention-days: 7
+
+  rust:
+    name: Rust（fmt + clippy + test）
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: 缓存 Rust 构建
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 格式检查
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+
+      - name: Clippy 静态检查
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: 单元测试
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  bundle:
+    name: Release bundles（slim + full，体积门禁）
+    runs-on: windows-latest
+    timeout-minutes: 120
+    # 降级路径：仓库变量 SKIP_BUNDLE_GATE=true 时跳过（本地已验证；CI 无 NSIS/网络受限时的风险见记录 §遗留）。
+    if: ${{ vars.SKIP_BUNDLE_GATE != 'true' }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 缓存 Rust 构建
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # RELEASE profile 已配置 lto=true / codegen-units=1 / opt-level="s" / strip=true / panic="abort"
+      # （src-tauri/Cargo.toml），冷构建在 GitHub runner 上约 10–20 分钟/版本。
+      - name: 准备 OCR 资产（本机缓存 → manifest 镜像 → 官方镜像，SHA256 强校验）
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fetch-ocr-assets.ps1
+
+      - name: 构建双版本安装包（slim + full；含 edition 注入与内置体积门禁）
+        shell: powershell
+        env:
+          CI: true
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installers.ps1 -SkipSmoke
+
+      - name: 按版本拆分安装包（供遗留 S-18 体积门禁脚本分别检查）
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path .verify/ci/slim, .verify/ci/full | Out-Null
+          Copy-Item release/SnipAsk_*_x64-setup.exe -Destination .verify/ci/slim/ -Force
+          Copy-Item release/SnipAsk_*_x64-full-setup.exe -Destination .verify/ci/full/ -Force
+
+      - name: 体积门禁（slim ≤ 25 MiB，不含模型）
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -BundleDir .verify/ci/slim -ThresholdMiB 25 -BaselineOut .verify/ci/volume_baseline.json -BaselineRef docs/spikes/data/s16_s18/volume_baseline.json
+
+      - name: 体积门禁（full ≤ 60 MiB，内置 OCR 模型）
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/spikes/s10_s16_s18/check_bundle_size.ps1 -BundleDir .verify/ci/full -ThresholdMiB 60 -BaselineOut .verify/ci/volume_baseline_full.json
+
+      - name: 归档双版本安装包 + 校验和 + 构建证据
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-slim-full
+          path: |
+            release/SnipAsk_*-setup.exe
+            release/SHA256SUMS.txt
+            .verify/v1/installer/build-summary.json
+            .verify/v1/installer/ocr-assets.json
+            .verify/v1/installer/logs/**
+            .verify/ci/volume_baseline*.json
+          if-no-files-found: warn
+          retention-days: 30

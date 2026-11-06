@@ -1,0 +1,27 @@
+﻿{
+    "generated_at":  "2026-11-04T23:57:43.6532975+08:00",
+    "purpose":  "S-05/S-06 云端链路 BLOCKED 证据：本机无任何提供商 API Key",
+    "probes":  [
+                   {
+                       "name":  "deepseek",
+                       "url":  "https://api.deepseek.com/chat/completions",
+                       "http_status":  401,
+                       "key_present":  false,
+                       "body_file":  "deepseek_empty_key_body.json"
+                   },
+                   {
+                       "name":  "dashscope-qwen-mt",
+                       "url":  "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                       "http_status":  400,
+                       "key_present":  false,
+                       "body_file":  "dashscope_empty_key_body.json"
+                   }
+               ],
+    "env":  {
+                "SNIPASK_BENCH_BASE_URL":  "",
+                "SNIPASK_BENCH_MODEL":  "",
+                "SNIPASK_BENCH_API_KEY_present":  false,
+                "SNIPASK_BENCH_VISION_API_KEY_present":  false,
+                "SNIPASK_BENCH_SEARCH_PROVIDER":  ""
+            }
+}

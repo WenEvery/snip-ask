@@ -1,0 +1,164 @@
+﻿{
+    "spike":  "S-10",
+    "part":  "idle",
+    "generatedAt":  "2026-11-05T20:25:03.4488878+08:00",
+    "definition":  "空闲 = 启动 → 日志就绪 → 预热 60s → 每 5s 采样；内存取主进程 WorkingSet/Private Working Set（判据 120MB），进程树含 WebView2 单列；CPU 取进程树 CPU 时间差/墙钟/16 逻辑核 ×100%（占总核，≈任务管理器口径），阈值 mean \u003c0.5%。release 为验收口径，debug 5 分钟仅参考。",
+    "release":  {
+                    "label":  "release",
+                    "exePath":  "D:\\game\\项目：框选ai\\src-tauri\\target\\release\\snip-ask.exe",
+                    "exeBytes":  7162880,
+                    "idleMinutes":  30,
+                    "sampleSec":  5,
+                    "warmupSec":  60,
+                    "samples":  {
+                                    "scheduled":  360,
+                                    "actual":  360
+                                },
+                    "memoryMainProcess":  {
+                                              "workingSetMiB":  {
+                                                                    "p50":  34.97,
+                                                                    "p95":  36.74,
+                                                                    "max":  36.8,
+                                                                    "mean":  35.48
+                                                                },
+                                              "privateWorkingSetMiB":  {
+                                                                           "p50":  7.66,
+                                                                           "p95":  10.16,
+                                                                           "max":  10.2,
+                                                                           "mean":  8.42
+                                                                       },
+                                              "privateMemoryMiB":  {
+                                                                       "p50":  11.49,
+                                                                       "p95":  11.61,
+                                                                       "max":  11.68
+                                                                   },
+                                              "thresholdMiB":  120,
+                                              "pass":  true
+                                          },
+                    "memoryProcessTree":  {
+                                              "note":  "主进程 + msedgewebview2 子进程合计（WebView2 多进程架构；本记录判据取主进程，见记录 §6.3）",
+                                              "workingSetMiB":  {
+                                                                    "p50":  451.38,
+                                                                    "p95":  462.15,
+                                                                    "max":  463.16,
+                                                                    "mean":  453.96
+                                                                },
+                                              "childCount":  7
+                                          },
+                    "cpuProcessTree":  {
+                                           "percentOfSystem":  {
+                                                                   "mean":  0.00217,
+                                                                   "p95":  0.0195,
+                                                                   "max":  0.1755,
+                                                                   "threshold":  0.5,
+                                                                   "pass":  true
+                                                               },
+                                           "percentOfOneCore":  {
+                                                                    "mean":  0.0348,
+                                                                    "p95":  0.3114,
+                                                                    "max":  2.8072
+                                                                },
+                                           "totalCpuMsOverWindow":  625.0,
+                                           "mainCpuMsOverWindow":  78.1,
+                                           "wallSeconds":  1799
+                                       },
+                    "systemLoadBaseline":  {
+                                               "cpuPercentTotal":  {
+                                                                       "mean":  19.72,
+                                                                       "max":  44.21
+                                                                   },
+                                               "availableMemoryMiB":  {
+                                                                          "mean":  7595,
+                                                                          "min":  6677,
+                                                                          "max":  8239
+                                                                      },
+                                               "heavyProcesses":  "cargo/rustc/llama-server/python/onnx = 0（采样前/中/后扫描）",
+                                               "mainCpuSource":  "用户桌面常驻程序（WeChatAppEx / DeepSeek Harness GUI / wallpaperui / msedge 等），非其它验证成员"
+                                           },
+                    "threadsHandles":  {
+                                           "threadsFirst":  27,
+                                           "threadsLast":  24,
+                                           "handlesFirst":  375,
+                                           "handlesLast":  370
+                                       }
+                },
+    "debugSupplementary":  {
+                               "label":  "debug",
+                               "exePath":  "D:\\game\\项目：框选ai\\src-tauri\\target\\debug\\snip-ask.exe",
+                               "exeBytes":  25534976,
+                               "idleMinutes":  5,
+                               "sampleSec":  5,
+                               "warmupSec":  60,
+                               "samples":  {
+                                               "scheduled":  60,
+                                               "actual":  60
+                                           },
+                               "memoryMainProcess":  {
+                                                         "workingSetMiB":  {
+                                                                               "p50":  45.3,
+                                                                               "p95":  45.51,
+                                                                               "max":  45.51,
+                                                                               "mean":  45.33
+                                                                           },
+                                                         "privateWorkingSetMiB":  {
+                                                                                      "p50":  10.6,
+                                                                                      "p95":  10.62,
+                                                                                      "max":  10.62,
+                                                                                      "mean":  10.60
+                                                                                  },
+                                                         "privateMemoryMiB":  {
+                                                                                  "p50":  12.02,
+                                                                                  "p95":  12.06,
+                                                                                  "max":  12.06
+                                                                              },
+                                                         "thresholdMiB":  120,
+                                                         "pass":  true
+                                                     },
+                               "memoryProcessTree":  {
+                                                         "note":  "主进程 + msedgewebview2 子进程合计（WebView2 多进程架构；本记录判据取主进程，见记录 §6.3）",
+                                                         "workingSetMiB":  {
+                                                                               "p50":  516.68,
+                                                                               "p95":  518.84,
+                                                                               "max":  518.86,
+                                                                               "mean":  516.58
+                                                                           },
+                                                         "childCount":  8
+                                                     },
+                               "cpuProcessTree":  {
+                                                      "percentOfSystem":  {
+                                                                              "mean":  0.00264,
+                                                                              "p95":  0.0195,
+                                                                              "max":  0.0392,
+                                                                              "threshold":  0.5,
+                                                                              "pass":  true
+                                                                          },
+                                                      "percentOfOneCore":  {
+                                                                               "mean":  0.0423,
+                                                                               "p95":  0.3114,
+                                                                               "max":  0.6267
+                                                                           },
+                                                      "totalCpuMsOverWindow":  125,
+                                                      "mainCpuMsOverWindow":  0.0,
+                                                      "wallSeconds":  296
+                                                  },
+                               "systemLoadBaseline":  {
+                                                          "cpuPercentTotal":  {
+                                                                                  "mean":  18.9,
+                                                                                  "max":  26.71
+                                                                              },
+                                                          "availableMemoryMiB":  {
+                                                                                     "mean":  7525,
+                                                                                     "min":  7364,
+                                                                                     "max":  7591
+                                                                                 },
+                                                          "heavyProcesses":  "cargo/rustc/llama-server/python/onnx = 0（采样前/中/后扫描）",
+                                                          "mainCpuSource":  "用户桌面常驻程序（WeChatAppEx / DeepSeek Harness GUI / wallpaperui / msedge 等），非其它验证成员"
+                                                      },
+                               "threadsHandles":  {
+                                                      "threadsFirst":  27,
+                                                      "threadsLast":  28,
+                                                      "handlesFirst":  386,
+                                                      "handlesLast":  383
+                                                  }
+                           }
+}

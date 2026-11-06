@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "resources": {
+      "resources/ocr/onnxruntime.dll": "ocr/onnxruntime.dll",
+      "../docs/README.md": "docs/README.md",
+      "../docs/自定义指南.md": "docs/自定义指南.md",
+      "../LICENSE": "docs/LICENSE",
+      "../NOTICE": "docs/NOTICE",
+      "../SECURITY.md": "docs/SECURITY.md",
+      "../PRIVACY.md": "docs/PRIVACY.md"
+    }
+  }
+}

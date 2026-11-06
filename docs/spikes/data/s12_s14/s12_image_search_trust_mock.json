@@ -1,0 +1,250 @@
+{
+  "meta": {
+    "script": "bench_image_search_trust.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T19:24:43.426235+08:00",
+    "mode": "MOCK_SELF_TEST",
+    "host": {
+      "os": "win32",
+      "python": "3.11.3",
+      "requests": "2.34.2"
+    },
+    "corpus": {
+      "path": ".verify/spikes/S-12-S-14/corpus/corpus.json",
+      "images": 30,
+      "categories": {
+        "chart": 8,
+        "code": 7,
+        "product": 7,
+        "text": 8
+      },
+      "expect_uncertain": 4
+    },
+    "prompt": {
+      "path": "resources/prompts/image_search.md",
+      "sha256": "03a119edc880681f6612a049457f02eed39f6f4914e949b4de21593b643f3aad",
+      "phases": "阶段A=识别结果+检索词；阶段B=结论+来源（与 S-06 真实链路口径一致）"
+    },
+    "model": {
+      "vision": "deepseek-flash",
+      "summary": "deepseek-flash",
+      "thinking": "disabled",
+      "temperature": 0.0,
+      "base_url_masked": "https://api.deepseek.com",
+      "api_key_provided": false,
+      "api_key_source": "none"
+    },
+    "search": {
+      "endpoint": "https://api.deepseek.com/v1/tools/search",
+      "count": 5,
+      "provider": "mock"
+    },
+    "thresholds": {
+      "four_sections_rate": 1.0,
+      "query_relevance_rate": 1.0,
+      "source_accessible_rate": 0.95,
+      "uncertainty_marked_rate": 1.0
+    },
+    "notes": [
+      "检索词可编辑性属产品 UI 能力，本基准只评生成质量（相关性 / 非整段复述）。",
+      "来源可访问性为脚本实测 HEAD/GET（8s 超时），2xx/3xx 记可访问；反爬/网络不可达在 failure_buckets 单独统计。",
+      "来源真实性 = 来源 URL 与本次 Search 返回结果按 scheme://host/path 身份比对（忽略 query/fragment），模型截断/改写 URL 单独计 truncated；用于识别视觉/摘要幻觉。",
+      "mock 数据只验证检查框架，不得作为 S-12 验收依据。"
+    ],
+    "out_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-12-S-14\\raw\\image_search_trust_mock_20261105-192443.json"
+  },
+  "mock_pass": {
+    "summary": {
+      "images": 30,
+      "four_sections": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "query_relevance": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "source_authenticity": {
+        "ok": 30,
+        "rate": 1.0,
+        "fabricated_urls": 0,
+        "truncated_urls": 0,
+        "cited_urls_total": 60,
+        "target": 1.0
+      },
+      "uncertainty": {
+        "expected_images": 4,
+        "marked": 4,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "recognition_hit_mean": 0.5478,
+      "by_category": {
+        "chart": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.4813,
+          "sources_total": 16
+        },
+        "code": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.2143,
+          "sources_total": 14
+        },
+        "product": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.8929,
+          "sources_total": 14
+        },
+        "text": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.6042,
+          "sources_total": 16
+        }
+      }
+    },
+    "verdict": {
+      "verdict": "MOCK_SELF_CHECK_OK",
+      "targets": {
+        "four_sections": true,
+        "query_relevance": true,
+        "source_accessible": false,
+        "uncertainty_marked": true,
+        "no_fabricated_sources": true
+      },
+      "source_accessible_rate": 0.0,
+      "source_accessible_rates": {
+        "raw": 0.0,
+        "excluding_unverifiable": null,
+        "optimistic": 1.0
+      },
+      "source_accessible_target": 0.95,
+      "all_met": false,
+      "note": "按清单字面口径（2xx/3xx）判定；反爬/网络不可达的拆分见 source_check.failure_buckets 与 rates。"
+    }
+  },
+  "mock_fail": {
+    "summary": {
+      "images": 30,
+      "four_sections": {
+        "ok": 29,
+        "rate": 0.9667,
+        "target": 1.0
+      },
+      "query_relevance": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "source_authenticity": {
+        "ok": 30,
+        "rate": 1.0,
+        "fabricated_urls": 0,
+        "truncated_urls": 0,
+        "cited_urls_total": 58,
+        "target": 1.0
+      },
+      "uncertainty": {
+        "expected_images": 4,
+        "marked": 0,
+        "rate": 0.0,
+        "target": 1.0
+      },
+      "recognition_hit_mean": 0.5478,
+      "by_category": {
+        "chart": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.4813,
+          "sources_total": 16
+        },
+        "code": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.2143,
+          "sources_total": 14
+        },
+        "product": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.8929,
+          "sources_total": 14
+        },
+        "text": {
+          "images": 8,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.6042,
+          "sources_total": 14
+        }
+      }
+    },
+    "verdict": {
+      "verdict": "MOCK_SELF_CHECK_OK",
+      "targets": {
+        "four_sections": false,
+        "query_relevance": true,
+        "source_accessible": false,
+        "uncertainty_marked": false,
+        "no_fabricated_sources": true
+      },
+      "source_accessible_rate": 0.0,
+      "source_accessible_rates": {
+        "raw": 0.0,
+        "excluding_unverifiable": null,
+        "optimistic": 1.0
+      },
+      "source_accessible_target": 0.95,
+      "all_met": false,
+      "note": "按清单字面口径（2xx/3xx）判定；反爬/网络不可达的拆分见 source_check.failure_buckets 与 rates。"
+    }
+  },
+  "self_check_assertions": [
+    {
+      "name": "mock-pass 四段齐全 100%",
+      "ok": true,
+      "detail": "30/30"
+    },
+    {
+      "name": "mock-pass 检索词相关性 100%",
+      "ok": true,
+      "detail": "30/30"
+    },
+    {
+      "name": "mock-pass 不确定标注 100%（expect_uncertain 图）",
+      "ok": true,
+      "detail": "4/4"
+    },
+    {
+      "name": "mock-pass 来源真实性检查执行（0 条编造）",
+      "ok": true,
+      "detail": "编造=0 检查URL=60"
+    },
+    {
+      "name": "mock-fail 失败被检出（缺来源段 + 缺不确定标注）",
+      "ok": true,
+      "detail": "四段=0.9667 不确定=0.0"
+    }
+  ],
+  "self_check_ok": true
+}

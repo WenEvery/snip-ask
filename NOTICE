@@ -1,0 +1,66 @@
+框选 AI（Snip Ask）
+Copyright 2026 框选 AI (Snip Ask) contributors
+
+本产品以 Apache License 2.0 发布，完整许可文本见同目录 LICENSE。
+本文件用于声明本产品包含或依赖的第三方组件及其许可，供分发时随附。
+
+说明：
+- 版本以发布包内的 Cargo.lock / pnpm-lock.yaml 为准；下表为开发阶段的主要组件清单，
+  正式发布前必须由维护者按依赖树补齐完整清单、版权行与许可原文。
+- 「模型」类资源：**OCR 模型（det/rec/cls + 字典）在内置 OCR 模型版安装包中随包分发，在线安装版由用户首次使用时下载**；
+  本地翻译模型（GGUF）不随安装包分发，由用户在应用内按需下载。其许可与使用限制以模型卡
+  （model card）和官方许可原文为准，下载界面与本地模型管理页会展示对应许可。
+- **v1.0.0 起不含任何自动更新组件**（无 `tauri-plugin-updater`），升级方式为覆盖安装或源码构建；
+  **v1.0.1 起不收集任何用户信息**（无遥测、无崩溃上报、无使用统计）。
+
+一、运行时与框架（随包分发）
+- Tauri 2（tauri / tauri-build / tauri-runtime / tauri-utils） — MIT OR Apache-2.0
+- Tauri 插件：single-instance / global-shortcut / autostart / opener — MIT OR Apache-2.0
+- Microsoft Edge WebView2 Runtime — Microsoft 软件许可条款（由系统或安装器提供）
+- React / React DOM — MIT
+- tokio — MIT
+- serde / serde_json — MIT OR Apache-2.0
+- tracing / tracing-appender / tracing-subscriber — MIT
+- thiserror / anyhow — MIT OR Apache-2.0
+- chrono — MIT OR Apache-2.0
+- uuid — Apache-2.0 OR MIT
+- reqwest — MIT OR Apache-2.0
+- url — MIT OR Apache-2.0
+- keyring（Windows Credential Manager 封装） — MIT OR Apache-2.0
+- windows（Win32 API 绑定，BitBlt/捕获） — MIT OR Apache-2.0
+- rusqlite + SQLite（bundled） — MIT / Public Domain
+- png（PNG 编码） — MIT OR Apache-2.0
+- base64 / sha2 / hex / dirs / parking_lot / once_cell / async-trait — MIT OR Apache-2.0
+
+二、构建期工具（不随包分发）
+- Vite — MIT
+- TypeScript — Apache-2.0
+- pnpm — MIT
+- ESLint / Prettier 生态（若启用） — MIT
+
+三、本地 OCR（内置 OCR 模型版随包 / 在线安装版首次下载）
+- RapidOCR（推理封装与后处理） — Apache-2.0
+- ONNX Runtime 1.31.1（`onnxruntime.dll`，两个版本均随包） — MIT
+- PaddleOCR PP-OCRv4 检测/识别/方向分类模型（`ch_PP-OCRv4_det_infer.onnx` /
+  `ch_PP-OCRv4_rec_infer.onnx` / `ch_ppocr_mobile_v2.0_cls_infer.onnx`）与 `ppocr_keys_v1.txt` — Apache-2.0
+- 说明：OCR 模型来源、SHA256 与镜像记录在 `resources/models.manifest.json`；slim 版首次使用 OCR 时下载。
+
+四、本地推理与数据
+- llama.cpp（Vulkan/CUDA/CPU 后端组件，按需下载） — MIT
+- CTranslate2（预留，当前未接入） — MIT
+- SQLite（bundled） — Public Domain
+
+五、本地翻译模型（按需下载，不随包分发）
+- HY-MT1.5-1.8B（腾讯混元） — Tencent Hunyuan Community License
+- Qwen3 系列（阿里巴巴） — Apache-2.0
+- OPUS-MT / Helsinki-NLP — CC-BY-4.0
+- TranslateGemma（Google） — Gemma Terms of Use（如后续引入）
+- NLLB-200（如后续引入） — CC-BY-NC 4.0，仅限非商业用途，不作为默认模型
+- 以上模型的实际许可与商用条件以官方模型卡为准；应用内下载页必须展示许可名称与链接。
+
+六、云端服务（BYOK，不在本产品内分发）
+- DeepSeek API（含 Search / Fetch） — 用户自带密钥，遵守 DeepSeek 服务条款与计费规则
+- Qwen-MT（阿里云百炼） — 用户自带密钥，遵守阿里云服务条款
+- 其他 OpenAI 兼容服务（OpenAI / 通义 / GLM / Kimi / Ollama 等） — 由用户自行配置并遵守对应条款
+
+如发现许可声明遗漏或错误，请提交 Issue 或联系维护者更正。

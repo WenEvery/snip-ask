@@ -1,0 +1,1204 @@
+{
+  "meta": {
+    "script": "bench_image_search.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T00:55:28.854826+08:00",
+    "mode": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "prompt_file": "resources\\prompts\\image_search.md",
+    "prompt_sha256": "03a119edc880681f6612a049457f02eed39f6f4914e949b4de21593b643f3aad",
+    "thresholds_ms": {
+      "quick": 10000.0,
+      "deep": 25000.0
+    },
+    "labels": [
+      "PARTIAL：视觉识别与摘要为真实 DeepSeek 调用，Search 为 mock（20ms 假延时）；不得作为 S-06 验收结论，仅用于估算视觉腿时延。"
+    ]
+  },
+  "config": {
+    "base_url_masked": "https://api.deepseek.com:443",
+    "model": "deepseek-flash",
+    "search_provider": "mock",
+    "vision_extra_param_keys": [
+      "thinking"
+    ],
+    "lang": "zh-CN",
+    "modes": [
+      "quick",
+      "deep"
+    ],
+    "runs": 5,
+    "warmup": 1,
+    "timeout_sec": 60.0,
+    "image": {
+      "path": "docs\\images\\settings-ai.png",
+      "size_bytes": 80150,
+      "sha256": "b262ec151115171f3ea458bd5ef012189354d3d1bea75c449c323c73eb17528b",
+      "png_width": 980,
+      "png_height": 720,
+      "data_url_chars": 106890
+    },
+    "phases": "①视觉识别 ②生成检索词 ③Search ④摘要",
+    "prompt_derivation": "resources/prompts/image_search.md 正文按阶段拆分（阶段①识别+检索词；阶段④结论+来源）"
+  },
+  "modes": {
+    "quick": {
+      "threshold_ms": 10000.0,
+      "measured_runs": 5,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "total_ms": {
+        "count": 5,
+        "mean_ms": 4772.54,
+        "p50_ms": 4736.76,
+        "p95_ms": 5261.48,
+        "max_ms": 5376.97,
+        "min_ms": 4417.69
+      },
+      "stages_ms": {
+        "vision": {
+          "count": 5,
+          "mean_ms": 2693.37,
+          "p50_ms": 2740.44,
+          "p95_ms": 2856.96,
+          "max_ms": 2857.93,
+          "min_ms": 2337.54
+        },
+        "query_gen": {
+          "count": 5,
+          "mean_ms": 0.09,
+          "p50_ms": 0.08,
+          "p95_ms": 0.14,
+          "max_ms": 0.15,
+          "min_ms": 0.04
+        },
+        "search": {
+          "count": 5,
+          "mean_ms": 20.51,
+          "p50_ms": 20.54,
+          "p95_ms": 20.55,
+          "max_ms": 20.55,
+          "min_ms": 20.37
+        },
+        "summary": {
+          "count": 5,
+          "mean_ms": 2057.34,
+          "p50_ms": 2099.34,
+          "p95_ms": 2436.09,
+          "max_ms": 2502.04,
+          "min_ms": 1655.66
+        }
+      },
+      "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+      "records": [
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 227.08,
+              "total_ms": 2479.42,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 337,
+                "total_tokens": 1328,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 991
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.946,
+              "queries": [
+                "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 21.51,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 129.65,
+              "total_ms": 1994.38,
+              "usage": {
+                "prompt_tokens": 569,
+                "completion_tokens": 228,
+                "total_tokens": 797,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 569
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：DeepSeek、deepseek、未配置密钥、启用开关、收起、测试连接、删除\n- 表单字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 底部提示：本组设置已与后端一致；按钮：应用 AI 服务\n- 左下角状态：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏、中间设置分类列表、右侧 AI 服务配置表单。\n- 表单内包含供应商下拉选择、启用开关、测试连接与删除按钮。\n图表：\n- 无图表。\n\n检索词：\n框选 AI 设置 AI 服务 DeepSeek 供应商配置、OpenAI 兼容 Base",
+          "queries": [
+            "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 设置 AI 服务 DeepSeek 供应商配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/b98391c9"
+            }
+          ],
+          "summary_output": "结论：根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于“AI 服务”配置页，用于配置 OpenAI 兼容供应商。界面显示已存在一个名为 DeepSeek、供应商 ID 为 deepseek 的供应商条目，状态为“未配置密钥”，并带有启用开关、收起、测试连接、删除等操作；表单字段包括显示名称、供应商 ID、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）和 API Key 输入框。说明文字指出密钥不进入配置文件，只随“测试连接/应用”提交给后端凭据服务；底部提示本组设置已与后端一致，并提供“应用 AI 服务”按钮；左下角状态显示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可作为结论依据，故除界面识别内容外无可靠外部信息可补充；该应用的具体版本、发布信息及功能真实性不确定。\n\n来源：未检索到可靠来源",
+          "conclusion": "根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于“AI 服务”配置页，用于配置 OpenAI 兼容供应商。界面显示已存在一个名为 DeepSeek、供应商 ID 为 deepseek 的供应商条目，状态为“未配置密钥”，并带有启用开关、收起、测试连接、删除等操作；表单字段包括显示名称、供应商 ID、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）和 API Key 输入框。说明文字指出密钥不进入配置文件，只随“测试连接/应用”提交给后端凭据服务；底部提示本组设置已与后端一致，并提供“应用 AI 服务”按钮；左下角状态显示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可作为结论依据，故除界面识别内容外无可靠外部信息可补充；该应用的具体版本、",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4735.4,
+          "stage_sum_ms": 4496.26,
+          "warmup": true
+        },
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 264.56,
+              "total_ms": 2740.44,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 384,
+                "total_tokens": 1375,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.079,
+              "queries": [
+                "框选 AI 骨架模式 设置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.55,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 骨架模式 设置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 115.48,
+              "total_ms": 1655.66,
+              "usage": {
+                "prompt_tokens": 608,
+                "completion_tokens": 258,
+                "total_tokens": 866,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 608
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 面板底部：本组设置已与后端一致、应用 AI 服务按钮\n- 右上角：已同步、恢复默认\n- 左下角：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：桌面端应用设置窗口，左侧导航栏、中间设置分类列表、右侧 AI 服务",
+          "queries": [
+            "框选 AI 骨架模式 设置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 骨架模式 设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/276c38aa"
+            }
+          ],
+          "summary_output": "结论：根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于浏览器预览的骨架模式，右侧主面板为“AI 服务”配置页，用于配置 OpenAI 兼容供应商。页面包含供应商下拉框（当前为 DeepSeek）与“新增供应商”按钮，DeepSeek 供应商卡片显示供应商 ID 为 deepseek、Base URL 为 https://api.deepseek.com、模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关处于开启状态，并提供“测试连接”“删除”“收起”等操作。界面说明与卡片提示均指出 API Key 不写入配置文件，仅在点击“测试连接/应用”时随请求提交给后端凭据服务，骨架模式下存于内存。面板底部显示“本组设置已与后端一致”及“应用 AI 服务”按钮，右上角显示“已同步”与“恢复默认”，左下角提示脚手架阶段捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为标记为不可信的 mock 示例数据，无法用于佐证或补充任何具体事实（如版本号、发布时间等），相关内容不确定。来源：未检索到可靠来源",
+          "conclusion": "根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于浏览器预览的骨架模式，右侧主面板为“AI 服务”配置页，用于配置 OpenAI 兼容供应商。页面包含供应商下拉框（当前为 DeepSeek）与“新增供应商”按钮，DeepSeek 供应商卡片显示供应商 ID 为 deepseek、Base URL 为 https://api.deepseek.com、模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关处于开启状态，并提供“测试连接”“删除”“收起”等操作。界面说明与卡片提示均指出 API Key 不写入配置文件，仅在点击“测试连接/应用”时随请求提交给后端凭据服务，骨架模式下存于内存。面板底部显示“本组设置已与后端一致”及“应用 AI 服务”按钮，右上角显示“已同步”与“恢复默认”，左下角提示脚手架阶段捕获/OCR/模型均为骨架实现，命令与事件遵循 I",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4417.69,
+          "stage_sum_ms": 4416.73,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 188.03,
+              "total_ms": 2337.54,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 338,
+                "total_tokens": 1329,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.124,
+              "queries": [
+                "DeepSeek API 配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.54,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 118.0,
+              "total_ms": 2172.27,
+              "usage": {
+                "prompt_tokens": 560,
+                "completion_tokens": 225,
+                "total_tokens": 785,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 432
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 底部提示：本组设置已与后端一致；按钮「应用 AI 服务」\n- 左下角小字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：桌面端应用设置窗口，左侧导航栏、中间设置分类列表、右侧表单面板；包含下拉框、开关、按钮、输入框等控件。\n图表：无。\n\n检索词：DeepSeek API 配置、OpenAI 兼容 供应商 设置",
+          "queries": [
+            "DeepSeek API 配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f08cf691"
+            }
+          ],
+          "summary_output": "结论：界面显示为“框选 AI”桌面端应用的设置窗口，当前位于“AI 服务”面板，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片中显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 字段为空并提示“粘贴 API Key”，状态为“未配置密钥”，启用开关处于开启状态；卡片提供收起、测试连接、删除操作，另有“新增供应商”按钮和底部“应用 AI 服务”按钮。界面说明密钥不进入配置文件，只随“测试连接/应用”提交给后端凭据服务；底部提示本组设置已与后端一致。左下角小字表明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可信，无法据此补充 DeepSeek API 的实际配置要求、密钥格式或可用模型等具体信息，相关内容不确定。\n\n来源：未检索到可靠来源",
+          "conclusion": "界面显示为“框选 AI”桌面端应用的设置窗口，当前位于“AI 服务”面板，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片中显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 字段为空并提示“粘贴 API Key”，状态为“未配置密钥”，启用开关处于开启状态；卡片提供收起、测试连接、删除操作，另有“新增供应商”按钮和底部“应用 AI 服务”按钮。界面说明密钥不进入配置文件，只随“测试连接/应用”提交给后端凭据服务；底部提示本组设置已与后端一致。左下角小字表明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可信，无法据此补充 DeepSeek API 的实际配",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4531.75,
+          "stage_sum_ms": 4530.47,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 187.71,
+              "total_ms": 2857.93,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 404,
+                "total_tokens": 1395,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.042,
+              "queries": [
+                "框选 AI 骨架模式 AI 服务配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.55,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 骨架模式 AI 服务配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 117.88,
+              "total_ms": 1857.4,
+              "usage": {
+                "prompt_tokens": 625,
+                "completion_tokens": 256,
+                "total_tokens": 881,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 497
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 右下角按钮：应用 AI 服务\n- 左下角提示：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n- 右上角：已同步、恢复默认\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏 + 中间二级菜单 + 右侧表单面板的三栏布局\n",
+          "queries": [
+            "框选 AI 骨架模式 AI 服务配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 骨架模式 AI 服务配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4b9ee53b"
+            }
+          ],
+          "summary_output": "结论：根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于“骨架模式”（浏览器预览），采用左侧导航、中间二级菜单、右侧表单面板的三栏布局。右侧主面板为“AI 服务”配置页，用于配置 OpenAI 兼容供应商；界面说明称密钥不进入配置文件，仅在点击“测试连接/应用”时提交给后端凭据服务，骨架模式下凭据存于内存。当前供应商下拉框选中 DeepSeek，卡片处于展开编辑状态，显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 未配置，启用开关为开启，并提供“测试连接”“删除”“收起”等操作，另有“新增供应商”按钮和右下角“应用 AI 服务”按钮。左下角提示表明脚手架阶段捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1；右上角显示“已同步”与“恢复默认”。检索结果仅为 mock 示例数据，不可信，无法据此补充或验证任何具体事实（如版本号、发布信息等），相关内容标注为不确定。来源：未检索到可靠来源",
+          "conclusion": "根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口，当前处于“骨架模式”（浏览器预览），采用左侧导航、中间二级菜单、右侧表单面板的三栏布局。右侧主面板为“AI 服务”配置页，用于配置 OpenAI 兼容供应商；界面说明称密钥不进入配置文件，仅在点击“测试连接/应用”时提交给后端凭据服务，骨架模式下凭据存于内存。当前供应商下拉框选中 DeepSeek，卡片处于展开编辑状态，显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 未配置，启用开关为开启，并提供“测试连接”“删除”“收起”等操作，另有“新增供应商”按钮和右下角“应用 AI 服务”按钮。左下角提示表明脚手架阶段捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1；右上角显示“已同步”",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4736.76,
+          "stage_sum_ms": 4735.92,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 182.28,
+              "total_ms": 2853.08,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 406,
+                "total_tokens": 1397,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.068,
+              "queries": [
+                "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.54,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 104.22,
+              "total_ms": 2502.04,
+              "usage": {
+                "prompt_tokens": 638,
+                "completion_tokens": 214,
+                "total_tokens": 852,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 510
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 面板底部：本组设置已与后端一致、应用 AI 服务按钮\n- 左下角提示：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n- 右上角：已同步、恢复默认\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航 + 中间分类菜单 + 右",
+          "queries": [
+            "框选 AI 设置 AI 服务 DeepSeek 供应商配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 设置 AI 服务 DeepSeek 供应商配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/b98391c9"
+            }
+          ],
+          "summary_output": "结论：根据界面识别结果，该窗口为“框选 AI”的设置界面，当前位于“AI 服务”面板，用于配置 OpenAI 兼容供应商。界面显示已存在一个 DeepSeek 供应商卡片，处于展开编辑状态，字段包括显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）及 API Key 输入框，密钥状态为“未配置密钥”，启用开关为开启。界面说明密钥不写入配置文件，仅在“测试连接/应用”时提交给后端凭据服务，骨架模式下存于内存。面板底部显示“本组设置已与后端一致”，并提供“应用 AI 服务”按钮；左下角提示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可作为事实依据，故关于该配置的实际功能、版本或行为细节均不确定。来源：未检索到可靠来源",
+          "conclusion": "根据界面识别结果，该窗口为“框选 AI”的设置界面，当前位于“AI 服务”面板，用于配置 OpenAI 兼容供应商。界面显示已存在一个 DeepSeek 供应商卡片，处于展开编辑状态，字段包括显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）及 API Key 输入框，密钥状态为“未配置密钥”，启用开关为开启。界面说明密钥不写入配置文件，仅在“测试连接/应用”时提交给后端凭据服务，骨架模式下存于内存。面板底部显示“本组设置已与后端一致”，并提供“应用 AI 服务”按钮；左下角提示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果仅为 mock 示例数据，不可作为事实依据，故关于该配置的实际功能、版本或行为细节均不确定。来源：未",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 5376.97,
+          "stage_sum_ms": 5375.73,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 185.81,
+              "total_ms": 2677.84,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 396,
+                "total_tokens": 1387,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.146,
+              "queries": [
+                "框选 AI 骨架模式 AI 服务配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.37,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 骨架模式 AI 服务配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 112.31,
+              "total_ms": 2099.34,
+              "usage": {
+                "prompt_tokens": 617,
+                "completion_tokens": 212,
+                "total_tokens": 829,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 617
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主区域标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 右下角按钮：应用 AI 服务\n- 左下角提示：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n- 右上角：已同步、恢复默认\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏 + 中间设置分类 + 右侧 AI 服务配置面板",
+          "queries": [
+            "框选 AI 骨架模式 AI 服务配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 骨架模式 AI 服务配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4b9ee53b"
+            }
+          ],
+          "summary_output": "结论：根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口（浏览器预览·骨架模式），当前位于“AI 服务”配置页，用于配置 OpenAI 兼容供应商。页面说明密钥不进入配置文件，仅在“测试连接/应用”时提交给后端凭据服务；供应商列表当前选中 DeepSeek，卡片显示供应商 ID 为 deepseek、Base URL 为 https://api.deepseek.com、模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关为开启，并提供测试连接、删除、收起等操作，右下角有“应用 AI 服务”按钮。左下角提示处于脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1；右上角显示“已同步”与“恢复默认”。检索结果仅为 mock 示例数据，不可信，无法据此补充或验证任何具体事实（如版本号、价格、发布信息等），相关内容不确定。来源：未检索到可靠来源",
+          "conclusion": "根据识别结果，该界面为“框选 AI”桌面端应用的设置窗口（浏览器预览·骨架模式），当前位于“AI 服务”配置页，用于配置 OpenAI 兼容供应商。页面说明密钥不进入配置文件，仅在“测试连接/应用”时提交给后端凭据服务；供应商列表当前选中 DeepSeek，卡片显示供应商 ID 为 deepseek、Base URL 为 https://api.deepseek.com、模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关为开启，并提供测试连接、删除、收起等操作，右下角有“应用 AI 服务”按钮。左下角提示处于脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1；右上角显示“已同步”与“恢复默认”。检索结果仅为 mock 示例数据，不可信，无法据此补充或验证任何具体事实（如版本号、价格、发布信息等），相关内容不确定。来源：未检索到可靠来源",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4799.51,
+          "stage_sum_ms": 4797.7,
+          "warmup": false
+        }
+      ]
+    },
+    "deep": {
+      "threshold_ms": 25000.0,
+      "measured_runs": 5,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "total_ms": {
+        "count": 5,
+        "mean_ms": 5229.86,
+        "p50_ms": 5153.08,
+        "p95_ms": 5682.9,
+        "max_ms": 5753.02,
+        "min_ms": 4761.11
+      },
+      "stages_ms": {
+        "vision": {
+          "count": 5,
+          "mean_ms": 2773.55,
+          "p50_ms": 2712.48,
+          "p95_ms": 3018.56,
+          "max_ms": 3057.31,
+          "min_ms": 2572.68
+        },
+        "query_gen": {
+          "count": 5,
+          "mean_ms": 0.04,
+          "p50_ms": 0.04,
+          "p95_ms": 0.07,
+          "max_ms": 0.07,
+          "min_ms": 0.03
+        },
+        "search": {
+          "count": 5,
+          "mean_ms": 61.22,
+          "p50_ms": 61.15,
+          "p95_ms": 61.55,
+          "max_ms": 61.58,
+          "min_ms": 60.88
+        },
+        "summary": {
+          "count": 5,
+          "mean_ms": 2394.1,
+          "p50_ms": 2444.65,
+          "p95_ms": 2787.16,
+          "max_ms": 2827.09,
+          "min_ms": 2033.5
+        }
+      },
+      "verdict": "PARTIAL_REAL_VISION_MOCK_SEARCH",
+      "records": [
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 184.79,
+              "total_ms": 2652.7,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 347,
+                "total_tokens": 1338,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 991
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.058,
+              "queries": [
+                "DeepSeek API 配置",
+                "OpenAI 兼容接口 Base URL",
+                "deepseek-flash 模型"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 61.59,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "OpenAI 兼容接口 Base URL"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "deepseek-flash 模型"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 110.15,
+              "total_ms": 1771.36,
+              "usage": {
+                "prompt_tokens": 715,
+                "completion_tokens": 200,
+                "total_tokens": 915,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 587
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 底部提示：本组设置已与后端一致；按钮「应用 AI 服务」\n- 左下角小字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：\n- 桌面端应用设置界面，左侧导航栏、中间分类菜单、右侧表单面板三栏布局。\n- 表单包含下拉选择、开关、输入框、按钮等控件。\n图表：\n- 无图表。\n\n检索词：\nDeepSeek API 配置",
+          "queries": [
+            "DeepSeek API 配置",
+            "OpenAI 兼容接口 Base URL",
+            "deepseek-flash 模型"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f08cf691"
+            },
+            {
+              "title": "[MOCK] 关于「OpenAI 兼容接口 Base URL」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/92889ddc"
+            },
+            {
+              "title": "[MOCK] 关于「deepseek-flash 模型」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/33a7b7a2"
+            }
+          ],
+          "summary_output": "结论：界面为桌面端应用的三栏设置页，当前位于「AI 服务」面板，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片显示显示名称 DeepSeek、供应商 ID deepseek、Base URL https://api.deepseek.com、模型名 deepseek-flash，API Key 为待粘贴状态，密钥未配置，启用开关为开启。面板说明密钥不写入配置文件，仅在「测试连接/应用」时提交给后端凭据服务；底部提示本组设置已与后端一致，并提供「应用 AI 服务」按钮。左下角标注脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为 mock 示例数据，不可作为事实依据，因此 Base URL 与模型名是否与官方实际接口一致、deepseek-flash 是否为有效模型名均不确定，需以官方文档核实。来源：未检索到可靠来源",
+          "conclusion": "界面为桌面端应用的三栏设置页，当前位于「AI 服务」面板，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片显示显示名称 DeepSeek、供应商 ID deepseek、Base URL https://api.deepseek.com、模型名 deepseek-flash，API Key 为待粘贴状态，密钥未配置，启用开关为开启。面板说明密钥不写入配置文件，仅在「测试连接/应用」时提交给后端凭据服务；底部提示本组设置已与后端一致，并提供「应用 AI 服务」按钮。左下角标注脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为 mock 示例数据，不可作为事实依据，因此 Base URL 与模型名是否与官方实际接口一致、deepseek-flash 是否为有效模型名均不确定，需以官方文档核实。来源：未检索到可靠来源",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4486.98,
+          "stage_sum_ms": 4485.71,
+          "warmup": true
+        },
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 184.75,
+              "total_ms": 2572.68,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 356,
+                "total_tokens": 1347,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.041,
+              "queries": [
+                "框选 AI 设置 AI 服务",
+                "DeepSeek OpenAI 兼容供应商配置",
+                "deepseek-flash 模型 API 接入"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 61.06,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "框选 AI 设置 AI 服务"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek OpenAI 兼容供应商配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "deepseek-flash 模型 API 接入"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 125.48,
+              "total_ms": 2444.65,
+              "usage": {
+                "prompt_tokens": 731,
+                "completion_tokens": 362,
+                "total_tokens": 1093,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 603
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 底部提示：本组设置已与后端一致；按钮「应用 AI 服务」\n- 左下角小字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：\n- 桌面端应用设置界面，左侧导航栏 + 中间分类菜单 + 右侧表单面板的三栏布局。\n- 表单包含下拉选择、文本输入框、开关控件、操作按钮。\n图表：\n- 无图表。\n\n检索词：\n框选 AI 设",
+          "queries": [
+            "框选 AI 设置 AI 服务",
+            "DeepSeek OpenAI 兼容供应商配置",
+            "deepseek-flash 模型 API 接入"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「框选 AI 设置 AI 服务」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/cc62b8f1"
+            },
+            {
+              "title": "[MOCK] 关于「DeepSeek OpenAI 兼容供应商配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/1a618bb4"
+            },
+            {
+              "title": "[MOCK] 关于「deepseek-flash 模型 API 接入」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/a3e51761"
+            }
+          ],
+          "summary_output": "结论：识别结果显示，这是一个桌面端应用的设置界面，采用左侧导航、中间分类菜单、右侧表单面板的三栏布局，当前位于「AI 服务」配置页。该页用于配置 OpenAI 兼容供应商，说明文字称密钥不写入配置文件，仅在「测试连接/应用」时提交给后端凭据服务。供应商列表下拉框当前选中 DeepSeek，卡片中显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 字段为「粘贴 API Key」占位，状态为「未配置密钥」，启用开关处于开启状态，并提供测试连接、删除、收起等操作；底部提示本组设置已与后端一致，并有「应用 AI 服务」按钮。左下角小字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为 mock 示例数据，标注不可信、不得作为结论依据，因此无法据此核实 DeepSeek 供应商配置或 deepseek-flash 模型接入的具体事实（如模型可用性、接口规范、价格等），相关内容不确定。\n\n来源：\n[MOCK] 关于「框选 AI 设置 AI 服务」的示例结果（不可信） - https://example.invalid/mock-search/cc62b8f1\n[MOCK] 关于「DeepSeek OpenAI ",
+          "conclusion": "识别结果显示，这是一个桌面端应用的设置界面，采用左侧导航、中间分类菜单、右侧表单面板的三栏布局，当前位于「AI 服务」配置页。该页用于配置 OpenAI 兼容供应商，说明文字称密钥不写入配置文件，仅在「测试连接/应用」时提交给后端凭据服务。供应商列表下拉框当前选中 DeepSeek，卡片中显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash，API Key 字段为「粘贴 API Key」占位，状态为「未配置密钥」，启用开关处于开启状态，并提供测试连接、删除、收起等操作；底部提示本组设置已与后端一致，并有「应用 AI 服务」按钮。左下角小字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为 mock 示例数据，标注不可信、不得",
+          "sources": [
+            "[MOCK] 关于「框选 AI 设置 AI 服务」的示例结果（不可信） - https://example.invalid/mock-search/cc62b8f1",
+            "[MOCK] 关于「DeepSeek OpenAI 兼容供应商配置」的示例结果（不可信） - https://example.invalid/mock-search/1a618bb4",
+            "[MOCK] 关于「deepseek-flash 模型 API 接入」的示例结果（不可信） - https://example.invalid/mock-search/a3e51761"
+          ],
+          "total_ms": 5079.67,
+          "stage_sum_ms": 5078.43,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 191.15,
+              "total_ms": 2712.48,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 353,
+                "total_tokens": 1344,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.074,
+              "queries": [
+                "DeepSeek API 配置",
+                "OpenAI 兼容 供应商 设置",
+                "API Key 本地保存 安全"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 61.15,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "OpenAI 兼容 供应商 设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 本地保存 安全"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 102.71,
+              "total_ms": 2627.44,
+              "usage": {
+                "prompt_tokens": 721,
+                "completion_tokens": 376,
+                "total_tokens": 1097,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 721
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字“配置 OpenAI 兼容供应商。密钥不写入配置文件，只随「测试连接/应用」提交给后端凭据服务。”\n- 供应商列表区域：下拉框显示“DeepSeek”，按钮“新增供应商”\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 底部提示：本组设置已与后端一致；按钮“应用 AI 服务”\n- 左下角小字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏 + 中间分类菜单 + 右侧表单面板的三栏布局。\n- 表单包含下拉选择、文本输入框、开关控件、操作按钮。\n\n图表：\n- 无图表。\n\n检索词：\nDee",
+          "queries": [
+            "DeepSeek API 配置",
+            "OpenAI 兼容 供应商 设置",
+            "API Key 本地保存 安全"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f08cf691"
+            },
+            {
+              "title": "[MOCK] 关于「OpenAI 兼容 供应商 设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/48fc6831"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 本地保存 安全」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/39b575b7"
+            }
+          ],
+          "summary_output": "结论：根据识别结果，该界面为桌面端应用的“AI 服务”设置页，采用左侧导航、中间分类菜单、右侧表单的三栏布局；当前选中“AI 服务”分类，说明文字称可配置 OpenAI 兼容供应商，密钥不写入配置文件，只随“测试连接/应用”提交给后端凭据服务。供应商下拉框当前为“DeepSeek”，并提供“新增供应商”按钮；DeepSeek 供应商卡片显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash、API Key 输入框（占位“粘贴 API Key”），状态为“未配置密钥”，启用开关处于开启状态，卡片提供收起、测试连接、删除操作。底部提示“本组设置已与后端一致”，并有“应用 AI 服务”按钮；左下角小字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为标记为不可信的 mock 示例数据，未提供可用于验证 DeepSeek API 配置、OpenAI 兼容供应商设置或 API Key 本地保存安全性的可靠信息，相关具体事实（如密钥实际存储方式、接口可用性）不确定。\n\n来源：\n[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信） - https://example.invalid/mock_search/f08",
+          "conclusion": "根据识别结果，该界面为桌面端应用的“AI 服务”设置页，采用左侧导航、中间分类菜单、右侧表单的三栏布局；当前选中“AI 服务”分类，说明文字称可配置 OpenAI 兼容供应商，密钥不写入配置文件，只随“测试连接/应用”提交给后端凭据服务。供应商下拉框当前为“DeepSeek”，并提供“新增供应商”按钮；DeepSeek 供应商卡片显示名称 DeepSeek、供应商 ID deepseek、Base URL 为 https://api.deepseek.com、模型名 deepseek-flash、API Key 输入框（占位“粘贴 API Key”），状态为“未配置密钥”，启用开关处于开启状态，卡片提供收起、测试连接、删除操作。底部提示“本组设置已与后端一致”，并有“应用 AI 服务”按钮；左下角小字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。",
+          "sources": [
+            "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信） - https://example.invalid/mock_search/f08cf691",
+            "[MOCK] 关于「OpenAI 兼容 供应商 设置」的示例结果（不可信） - https://example.invalid/mock_search/48fc6831",
+            "[MOCK] 关于「API Key 本地保存 安全」的示例结果（不可信） - https://example.invalid/mock_search/39b575b7"
+          ],
+          "total_ms": 5402.41,
+          "stage_sum_ms": 5401.14,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 179.8,
+              "total_ms": 2863.55,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 397,
+                "total_tokens": 1388,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.041,
+              "queries": [
+                "DeepSeek API 配置",
+                "OpenAI 兼容 供应商 设置",
+                "API Key 凭据 存储 安全"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 61.41,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "OpenAI 兼容 供应商 设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 凭据 存储 安全"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 137.78,
+              "total_ms": 2827.09,
+              "usage": {
+                "prompt_tokens": 767,
+                "completion_tokens": 402,
+                "total_tokens": 1169,
+                "prompt_tokens_details": {
+                  "cached_tokens": 0
+                },
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 767
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字“配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。”\n- 供应商列表区域：下拉框显示“DeepSeek”，按钮“新增供应商”\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 右下角按钮：应用 AI 服务\n- 左下角状态文字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n- 右上角：已同步、恢复默认\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏 + 中间二级菜单 + 右侧表单面板的三",
+          "queries": [
+            "DeepSeek API 配置",
+            "OpenAI 兼容 供应商 设置",
+            "API Key 凭据 存储 安全"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f08cf691"
+            },
+            {
+              "title": "[MOCK] 关于「OpenAI 兼容 供应商 设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/48fc6831"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 凭据 存储 安全」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/fa6c4270"
+            }
+          ],
+          "summary_output": "结论：界面为桌面端应用的三栏设置窗口，当前位于「AI 服务」页，用于配置 OpenAI 兼容供应商。可见信息包括：供应商下拉框当前为 DeepSeek，可「新增供应商」；DeepSeek 卡片处于展开编辑状态，字段含显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key 输入框，并带启用开关（已开启）、收起、测试连接、删除等操作；卡片提示密钥不写入配置文件，仅在点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存），页面说明亦强调密钥只随「测试连接/应用」提交给后端凭据服务；右下角有「应用 AI 服务」按钮，右上角显示「已同步」与「恢复默认」，左下角状态文字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果均为 mock 示例数据，标注不可信、不得作为结论依据，因此关于 DeepSeek API 配置规范、OpenAI 兼容供应商通用设置及 API Key 凭据存储安全的具体事实无法确认，不确定。模型名「deepseek-flash」是否为有效模型标识不确定；Base URL 与密钥存储方式是否符合官方要求亦不确定。\n\n来源：\n[MOCK] 关于「DeepSeek API 配置」的示例结果（",
+          "conclusion": "界面为桌面端应用的三栏设置窗口，当前位于「AI 服务」页，用于配置 OpenAI 兼容供应商。可见信息包括：供应商下拉框当前为 DeepSeek，可「新增供应商」；DeepSeek 卡片处于展开编辑状态，字段含显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key 输入框，并带启用开关（已开启）、收起、测试连接、删除等操作；卡片提示密钥不写入配置文件，仅在点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存），页面说明亦强调密钥只随「测试连接/应用」提交给后端凭据服务；右下角有「应用 AI 服务」按钮，右上角显示「已同步」与「恢复默认」，左下角状态文字说明当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结",
+          "sources": [
+            "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信） - https://example.invalid/mock-search/f08cf691",
+            "[MOCK] 关于「OpenAI 兼容 供应商 设置」的示例结果（不可信） - https://example.invalid/mock-search/48fc6831",
+            "[MOCK] 关于「API Key 凭据 存储 安全」的示例结果（不可信） - https://example.invalid/mock-search/fa6c4270"
+          ],
+          "total_ms": 5753.02,
+          "stage_sum_ms": 5752.09,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 203.96,
+              "total_ms": 3057.31,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 398,
+                "total_tokens": 1389,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.034,
+              "queries": [
+                "DeepSeek API 配置",
+                "OpenAI 兼容 供应商 设置",
+                "API Key 不写入配置文件 凭据服务"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 61.58,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "OpenAI 兼容 供应商 设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 不写入配置文件 凭据服务"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 168.21,
+              "total_ms": 2033.5,
+              "usage": {
+                "prompt_tokens": 767,
+                "completion_tokens": 211,
+                "total_tokens": 978,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 639
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字“配置 OpenAI 兼容供应商。密钥不写入配置文件，只随「测试连接/应用」提交给后端凭据服务。”\n- 供应商列表区域：下拉框显示“DeepSeek”，按钮“新增供应商”\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 右下角按钮：应用 AI 服务\n- 左下角状态文字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n- 右上角：已同步、恢复默认\n\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏 + 中间分类菜单 + 右侧表单面板的三",
+          "queries": [
+            "DeepSeek API 配置",
+            "OpenAI 兼容 供应商 设置",
+            "API Key 不写入配置文件 凭据服务"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f08cf691"
+            },
+            {
+              "title": "[MOCK] 关于「OpenAI 兼容 供应商 设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/48fc6831"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 不写入配置文件 凭据服务」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/e53cf915"
+            }
+          ],
+          "summary_output": "结论：界面为桌面端应用的三栏设置窗口，当前位于「AI 服务」页，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片处于展开编辑状态，字段包括显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key 输入框，启用开关为开启，并提供「测试连接」「删除」「收起」操作，右下角有「应用 AI 服务」按钮。界面说明与卡片提示均声明密钥不写入配置文件，仅在点击「测试连接/应用」时随请求提交给后端凭据服务，骨架模式存于内存；左下角状态显示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果为 mock 示例数据，不可作为事实依据，故关于 DeepSeek API 的具体配置要求、凭据服务实现细节等均不确定。来源：未检索到可靠来源",
+          "conclusion": "界面为桌面端应用的三栏设置窗口，当前位于「AI 服务」页，用于配置 OpenAI 兼容供应商。供应商下拉框选中 DeepSeek，卡片处于展开编辑状态，字段包括显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key 输入框，启用开关为开启，并提供「测试连接」「删除」「收起」操作，右下角有「应用 AI 服务」按钮。界面说明与卡片提示均声明密钥不写入配置文件，仅在点击「测试连接/应用」时随请求提交给后端凭据服务，骨架模式存于内存；左下角状态显示当前为脚手架阶段，捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。检索结果为 mock 示例数据，不可作为事实依据，故关于 DeepSeek API 的具体配置要求、凭据服务实现细节等均不确定。来源：未",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 5153.08,
+          "stage_sum_ms": 5152.42,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": false,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "first_byte_ms": 173.36,
+              "total_ms": 2661.71,
+              "usage": {
+                "prompt_tokens": 991,
+                "completion_tokens": 373,
+                "total_tokens": 1364,
+                "prompt_tokens_details": {
+                  "cached_tokens": 768
+                },
+                "prompt_cache_hit_tokens": 768,
+                "prompt_cache_miss_tokens": 223
+              }
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.034,
+              "queries": [
+                "DeepSeek API 兼容 OpenAI 配置",
+                "deepseek-flash 模型",
+                "API Key 本地凭据存储"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 60.88,
+              "provider": "mock",
+              "queries": 3,
+              "results": 3,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "DeepSeek API 兼容 OpenAI 配置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "deepseek-flash 模型"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 本地凭据存储"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "first_byte_ms": 119.13,
+              "total_ms": 2037.83,
+              "usage": {
+                "prompt_tokens": 747,
+                "completion_tokens": 251,
+                "total_tokens": 998,
+                "prompt_tokens_details": {
+                  "cached_tokens": 128
+                },
+                "prompt_cache_hit_tokens": 128,
+                "prompt_cache_miss_tokens": 619
+              }
+            }
+          },
+          "vision_output": "识别结果：\n文字：\n- 窗口标题栏：框选 AI（浏览器预览·骨架模式）\n- 左侧导航：设置、首启引导\n- 中间设置菜单：核心（语言/启动/历史）、外观（主题/字号/结果窗）、AI 服务（供应商与连接测试）、翻译（云端/本地/术语表）、动作与热键（菜单/热键/搜索）、高级（预算/代理/运行信息）\n- 右侧主面板标题：AI 服务；说明文字：配置 OpenAI 兼容供应商。密钥不进入配置文件，只随「测试连接/应用」提交给后端凭据服务。\n- 供应商列表区域：下拉框显示 DeepSeek，按钮「新增供应商」\n- 供应商卡片：DeepSeek、deepseek、未配置密钥、启用开关（开启）、收起、测试连接、删除\n- 卡片内字段：显示名称（DeepSeek）、供应商 ID（deepseek）、Base URL（https://api.deepseek.com）、模型名（deepseek-flash）、API Key（粘贴 API Key）\n- 卡片底部提示：不写入配置文件，点击「测试连接」时随请求提交，由后端凭据服务保存（骨架模式存内存）\n- 右下角按钮：应用 AI 服务\n- 左下角状态文字：脚手架阶段：捕获/OCR/模型均为骨架实现，命令与事件遵循 IPC 契约 v1。\n物体/界面：\n- 桌面端应用设置窗口，左侧导航栏、中间分类菜单、右侧表单面板三栏布局。\n- 表单包含下拉选择、开关、输入框、",
+          "queries": [
+            "DeepSeek API 兼容 OpenAI 配置",
+            "deepseek-flash 模型",
+            "API Key 本地凭据存储"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「DeepSeek API 兼容 OpenAI 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/61e0ea4f"
+            },
+            {
+              "title": "[MOCK] 关于「deepseek-flash 模型」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/33a7b7a2"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 本地凭据存储」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/f84b2769"
+            }
+          ],
+          "summary_output": "结论：界面显示该应用处于“骨架模式/脚手架阶段”，捕获、OCR、模型均为骨架实现，命令与事件遵循 IPC 契约 v1。AI 服务页用于配置 OpenAI 兼容供应商，当前供应商为 DeepSeek（ID：deepseek），Base URL 为 https://api.deepseek.com，模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关已开启。按界面说明，API Key 不写入配置文件，仅在点击“测试连接/应用”时随请求提交给后端凭据服务，骨架模式下存于内存；卡片底部提示与主面板说明一致。界面提供“新增供应商”“测试连接”“删除”“收起”“应用 AI 服务”等操作，左侧导航含“设置”“首启引导”，中间菜单涵盖核心、外观、AI 服务、翻译、动作与热键、高级等分类。检索结果均为 mock 示例数据，明确不可信、不得作为结论依据，因此关于 DeepSeek 的 OpenAI 兼容性细节、deepseek-flash 模型的具体能力与版本、以及凭据存储的实际实现方式，均无法从可靠来源确认，标注为不确定。来源：未检索到可靠来源",
+          "conclusion": "界面显示该应用处于“骨架模式/脚手架阶段”，捕获、OCR、模型均为骨架实现，命令与事件遵循 IPC 契约 v1。AI 服务页用于配置 OpenAI 兼容供应商，当前供应商为 DeepSeek（ID：deepseek），Base URL 为 https://api.deepseek.com，模型名为 deepseek-flash，密钥状态为“未配置密钥”，启用开关已开启。按界面说明，API Key 不写入配置文件，仅在点击“测试连接/应用”时随请求提交给后端凭据服务，骨架模式下存于内存；卡片底部提示与主面板说明一致。界面提供“新增供应商”“测试连接”“删除”“收起”“应用 AI 服务”等操作，左侧导航含“设置”“首启引导”，中间菜单涵盖核心、外观、AI 服务、翻译、动作与热键、高级等分类。检索结果均为 mock 示例数据，明确不可信、不得作为结论依据，因此关于 DeepSeek 的 Open",
+          "sources": [
+            "未检索到可靠来源"
+          ],
+          "total_ms": 4761.11,
+          "stage_sum_ms": 4760.45,
+          "warmup": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,84 @@
+/* app 层：渲染异常兜底、未知窗口提示 */
+
+.sa-fatal,
+.sa-unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--sa-space-6);
+  background: var(--sa-color-bg);
+  color: var(--sa-color-text);
+}
+
+.sa-fatal__card,
+.sa-unknown__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-3);
+  width: min(520px, 100%);
+  padding: var(--sa-space-6);
+  background: var(--sa-color-surface);
+  border: 1px solid var(--sa-color-border);
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-lg);
+}
+
+.sa-fatal__title,
+.sa-unknown__title {
+  font-size: var(--sa-text-xl);
+  font-weight: 600;
+}
+
+.sa-fatal__code {
+  font-family: var(--sa-font-mono);
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-danger);
+}
+
+.sa-fatal__desc,
+.sa-unknown__desc,
+.sa-unknown__current {
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-fatal__detail {
+  max-height: 180px;
+  overflow: auto;
+  margin: 0;
+  padding: var(--sa-space-3);
+  background: var(--sa-color-surface-2);
+  border: 1px solid var(--sa-color-border);
+  border-radius: var(--sa-radius-sm);
+  font-size: var(--sa-text-xs);
+  color: var(--sa-color-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sa-fatal__actions {
+  display: flex;
+  gap: var(--sa-space-2);
+}
+
+.sa-unknown__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-1);
+  padding: var(--sa-space-3);
+  background: var(--sa-color-surface-2);
+  border-radius: var(--sa-radius-sm);
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-unknown__list code,
+.sa-unknown__current code {
+  font-family: var(--sa-font-mono);
+  color: var(--sa-color-accent);
+}
+
+.sa-unknown__current {
+  word-break: break-all;
+}

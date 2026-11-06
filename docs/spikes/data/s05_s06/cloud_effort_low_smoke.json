@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "script": "bench_translate.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T00:51:21.282380+08:00",
+    "mode": "REAL",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "prompt_file": "resources\\prompts\\translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "sample_len_chars": 200,
+    "threshold_ms": 1500.0,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86"
+  },
+  "config": {
+    "base_url_masked": "https://api.deepseek.com:443/chat/completions",
+    "model": "deepseek-flash",
+    "stream": true,
+    "runs": 2,
+    "warmup": 1,
+    "timeout_sec": 60.0,
+    "target_lang": "en",
+    "source_lang": "zh-CHS",
+    "temperature": 0.0,
+    "prompt_chars": 762,
+    "extra_params": [
+      "reasoning_effort"
+    ],
+    "api_key_provided": true,
+    "calibers": {
+      "ttft_threshold_ms": 1500.0,
+      "total_threshold_ms": 1500.0,
+      "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。"
+    }
+  },
+  "records": [
+    {
+      "run": "warmup-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 203.27,
+      "send_ms": 0.7,
+      "first_byte_ms": 113.21,
+      "total_ms": 3900.27,
+      "first_token_ms": 3352.29,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 633,
+        "total_tokens": 1125,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 485
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 492
+      },
+      "output_chars": 723,
+      "output_sample": "框选 AI is a screen text capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "88ffe1e1d6a0adf35b80c19bed44b56ada140eb74e1dab627e020f5f1744cb5d",
+      "warmup": true
+    },
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 85.21,
+      "send_ms": 0.55,
+      "first_byte_ms": 116.94,
+      "total_ms": 4062.25,
+      "first_token_ms": 3438.11,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 658,
+        "total_tokens": 1150,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 512
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 724,
+      "output_sample": "框选 AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or im",
+      "output_sha256": "7b59d41fa5b2908399ed90d1c4b382c9fa1343a8411f843ec2b12424af2ee6f2",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 96.32,
+      "send_ms": 0.31,
+      "first_byte_ms": 128.11,
+      "total_ms": 3688.71,
+      "first_token_ms": 2938.5,
+      "usage": {
+        "prompt_tokens": 492,
+        "completion_tokens": 456,
+        "total_tokens": 948,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 309
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 236
+      },
+      "output_chars": 719,
+      "output_sample": "Box AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or i",
+      "output_sha256": "25238dc51e94b54261a79d7f31755f210fc9ce20198d64c4c30f8f98f16e6ae8",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 2,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "http_status_distribution": {
+      "200": 3
+    },
+    "total_ms": {
+      "count": 2,
+      "mean_ms": 3875.48,
+      "p50_ms": 3875.48,
+      "p95_ms": 4043.57,
+      "max_ms": 4062.25,
+      "min_ms": 3688.71
+    },
+    "first_byte_ms": {
+      "count": 2,
+      "mean_ms": 122.53,
+      "p50_ms": 122.53,
+      "p95_ms": 127.55,
+      "max_ms": 128.11,
+      "min_ms": 116.94
+    },
+    "first_token_ms": {
+      "count": 2,
+      "mean_ms": 3188.31,
+      "p50_ms": 3188.31,
+      "p95_ms": 3413.13,
+      "max_ms": 3438.11,
+      "min_ms": 2938.5
+    },
+    "verdicts": {
+      "ttft": "FAILED",
+      "total": "FAILED"
+    },
+    "usage_total_tokens_all_runs": 2098,
+    "first_failure": null
+  }
+}

@@ -1,0 +1,72 @@
+{
+    "spike":  "S-18",
+    "timestamp":  "2026-11-05T19:00:46.2692603+08:00",
+    "note":  "「含模型」体积估算：S-18 清单阈值为「含模型 ≤60MB」，但「模型」口径未定义。本文件按两种口径分别给出事实数据与结论，不实际打包模型。",
+    "setupExe":  {
+                     "bytes":  2693865,
+                     "mib":  2.569
+                 },
+    "releaseExe":  {
+                       "bytes":  7162880,
+                       "mib":  6.831
+                   },
+    "ocrModels":  {
+                      "source":  ".verify/venv-ocr/Lib/site-packages/rapidocr_onnxruntime/models/（RapidOCR PP-OCRv4 ONNX，S-02/S-03 实际基准使用）",
+                      "files":  [
+                                    {
+                                        "name":  "ch_PP-OCRv4_det_infer.onnx",
+                                        "bytes":  4745517,
+                                        "mib":  4.526
+                                    },
+                                    {
+                                        "name":  "ch_PP-OCRv4_rec_infer.onnx",
+                                        "bytes":  10857958,
+                                        "mib":  10.355
+                                    },
+                                    {
+                                        "name":  "ch_ppocr_mobile_v2.0_cls_infer.onnx",
+                                        "bytes":  585532,
+                                        "mib":  0.558
+                                    }
+                                ],
+                      "totalBytes":  16189007,
+                      "totalMib":  15.439,
+                      "setupWithOcrEstimateMib":  {
+                                                      "lowerBound":  11.83,
+                                                      "upperBound":  18.01,
+                                                      "method":  "下界按 ONNX 经 NSIS LZMA 压缩约 0.6 比例估算、上界按不压缩（保守）估算；未真实打包验证"
+                                                  },
+                      "thresholdMb":  60,
+                      "conclusion":  "成立：含 OCR 模型安装包估算约 11.7–18.0 MiB（1 MiB=1.048576MB），远小于 60MB；即使按不压缩上界 18.01 MiB 也小于 25 MiB。"
+                  },
+    "localLlmModels":  {
+                           "source":  "resources/models.manifest.json（S-08 核验的 sizeBytes 与真实 GGUF 文件）",
+                           "models":  [
+                                          {
+                                              "id":  "hy-mt-1.8b-q4",
+                                              "file":  "HY-MT1.5-1.8B-Q4_K_M.gguf",
+                                              "bytes":  1133080512
+                                          },
+                                          {
+                                              "id":  "qwen3-4b-q4",
+                                              "file":  "Qwen3-4B-Q4_K_M.gguf",
+                                              "bytes":  2497280256
+                                          },
+                                          {
+                                              "id":  "opus-mt-zh-en",
+                                              "file":  "(ct2-int8, 无产物)",
+                                              "bytes":  314572800
+                                          },
+                                          {
+                                              "id":  "qwen2.5-0.5b-instruct-q4",
+                                              "file":  "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+                                              "bytes":  491400032
+                                          }
+                                      ],
+                           "totalBytes":  4436333600,
+                           "totalMib":  4230.817,
+                           "totalGiB":  4.132,
+                           "thresholdMb":  60,
+                           "conclusion":  "不成立：本地 LLM 模型合计约 4.13 GiB（单个最小 GGUF 也有 468.64 MiB），远超 60MB。当前产品设计为模型按需下载（S-08），不随安装包分发；若未来要求「含 LLM 模型」门禁，60MB 阈值不可达，需改为按需下载 + 安装包体积门禁分开验收。"
+                       }
+}

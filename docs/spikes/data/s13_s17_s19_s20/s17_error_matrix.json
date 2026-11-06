@@ -1,0 +1,549 @@
+{
+  "kind": "real-app-ipc + local-mock-http",
+  "date": "2026-11-05T10:54:14.778Z",
+  "commit": "3f1b263d2281bb1335a33be4dcd20d6b31915259",
+  "env": {
+    "os": "Windows 11 26200",
+    "cpu": "i7-12650H (10C16T)",
+    "ramGiB": 15.78,
+    "screens": "2560x1440@150% (0,0) + 1080x1920@100% (-1080,-470)",
+    "app": "src-tauri/target/debug/snip-ask.exe（applab 便携副本）",
+    "mock": "http://127.0.0.1:39117（Node http，脚本 mock_provider.mjs）",
+    "fakeKeyNote": "假 Key 仅用于 draft.apiKey；本构建 CredentialStore=InMemoryCredentialStore，不落 OS 凭据管理器"
+  },
+  "total": 20,
+  "passed": 20,
+  "rows": [
+    {
+      "name": "err_no_key",
+      "expect": "ok=false/SA-3002（不发网络请求）",
+      "threw": false,
+      "ok": false,
+      "status": null,
+      "latencyMs": null,
+      "model": null,
+      "wallMs": 5,
+      "code": "SA-3002",
+      "retryable": false,
+      "fallback": [
+        "open_settings"
+      ],
+      "message": "尚未填写 API Key：请先输入 Key 再测试连接",
+      "detail": "draft.apiKey 与凭据存储中均无该供应商 Key",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_empty_model",
+      "expect": "IPC 拒绝 SA-5001（model 非空）",
+      "threw": true,
+      "ok": null,
+      "status": null,
+      "latencyMs": null,
+      "model": null,
+      "wallMs": 3,
+      "code": "SA-5001",
+      "retryable": false,
+      "fallback": [
+        "reset_group"
+      ],
+      "message": "配置非法：model",
+      "detail": "字段 model：模型名不能为空",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_non_https_rejected",
+      "expect": "IPC 拒绝 SA-5001（baseUrl 白名单）",
+      "threw": true,
+      "ok": null,
+      "status": null,
+      "latencyMs": null,
+      "model": null,
+      "wallMs": 3,
+      "code": "SA-5001",
+      "retryable": false,
+      "fallback": [
+        "reset_group"
+      ],
+      "message": "配置非法：providers[0].baseUrl",
+      "detail": "字段 providers[0].baseUrl：http 仅允许 127.0.0.1",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "success_200",
+      "expect": "ok=true/status=200/model=mock-model-a",
+      "threw": false,
+      "ok": true,
+      "status": 200,
+      "latencyMs": 12,
+      "model": "mock-model-a",
+      "wallMs": 21,
+      "code": null,
+      "retryable": null,
+      "fallback": null,
+      "message": null,
+      "detail": null,
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "success_200_slow_3s",
+      "expect": "ok=true/status=200/latency>=3000ms",
+      "threw": false,
+      "ok": true,
+      "status": 200,
+      "latencyMs": 3012,
+      "model": "slow-model",
+      "wallMs": 3020,
+      "code": null,
+      "retryable": null,
+      "fallback": null,
+      "message": null,
+      "detail": null,
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "success_200_non_json_body",
+      "expect": "ok=true/status=200/model 回退配置值",
+      "threw": false,
+      "ok": true,
+      "status": 200,
+      "latencyMs": 13,
+      "model": "deepseek-flash",
+      "wallMs": 21,
+      "code": null,
+      "retryable": null,
+      "fallback": null,
+      "message": null,
+      "detail": null,
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "success_200_empty_models",
+      "expect": "ok=true/status=200/model 回退配置值",
+      "threw": false,
+      "ok": true,
+      "status": 200,
+      "latencyMs": 2,
+      "model": "deepseek-flash",
+      "wallMs": 10,
+      "code": null,
+      "retryable": null,
+      "fallback": null,
+      "message": null,
+      "detail": null,
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "success_trailing_slash",
+      "expect": "规范化到 /c/200/models → ok=true",
+      "threw": false,
+      "ok": true,
+      "status": 200,
+      "latencyMs": 2,
+      "model": "mock-model-a",
+      "wallMs": 9,
+      "code": null,
+      "retryable": null,
+      "fallback": null,
+      "message": null,
+      "detail": null,
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_401",
+      "expect": "SA-3002/retryable=false/open_settings",
+      "threw": false,
+      "ok": false,
+      "status": 401,
+      "latencyMs": 1,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-3002",
+      "retryable": false,
+      "fallback": [
+        "open_settings"
+      ],
+      "message": "API Key 无效或没有权限（HTTP 401）：请检查 Key 是否完整、与所选供应商匹配",
+      "detail": "GET http://127.0.0.1:39117/c/401/models 返回 HTTP 401（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_403",
+      "expect": "SA-3002/retryable=false/open_settings",
+      "threw": false,
+      "ok": false,
+      "status": 403,
+      "latencyMs": 1,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-3002",
+      "retryable": false,
+      "fallback": [
+        "open_settings"
+      ],
+      "message": "API Key 无效或没有权限（HTTP 403）：请检查 Key 是否完整、与所选供应商匹配",
+      "detail": "GET http://127.0.0.1:39117/c/403/models 返回 HTTP 403（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_402",
+      "expect": "SA-3003/retryable=false/open_settings",
+      "threw": false,
+      "ok": false,
+      "status": 402,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 7,
+      "code": "SA-3003",
+      "retryable": false,
+      "fallback": [
+        "open_settings"
+      ],
+      "message": "账户额度不足（HTTP 402）：请充值，或先换用其他供应商",
+      "detail": "GET http://127.0.0.1:39117/c/402/models 返回 HTTP 402（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_429",
+      "expect": "SA-3004/retryable=true/retry",
+      "threw": false,
+      "ok": false,
+      "status": 429,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-3004",
+      "retryable": true,
+      "fallback": [
+        "retry"
+      ],
+      "message": "请求被限流（HTTP 429）：请稍后重试，或降低调用频率",
+      "detail": "GET http://127.0.0.1:39117/c/429/models 返回 HTTP 429（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_500",
+      "expect": "SA-3001/retryable=true/retry",
+      "threw": false,
+      "ok": false,
+      "status": 500,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-3001",
+      "retryable": true,
+      "fallback": [
+        "retry"
+      ],
+      "message": "供应商服务端错误（HTTP 500）：可稍后重试",
+      "detail": "GET http://127.0.0.1:39117/c/500/models 返回 HTTP 500（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_503",
+      "expect": "SA-3001/retryable=true/retry",
+      "threw": false,
+      "ok": false,
+      "status": 503,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-3001",
+      "retryable": true,
+      "fallback": [
+        "retry"
+      ],
+      "message": "供应商服务端错误（HTTP 503）：可稍后重试",
+      "detail": "GET http://127.0.0.1:39117/c/503/models 返回 HTTP 503（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_404",
+      "expect": "SA-5001/retryable=false/reset_group",
+      "threw": false,
+      "ok": false,
+      "status": 404,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-5001",
+      "retryable": false,
+      "fallback": [
+        "reset_group"
+      ],
+      "message": "供应商接口返回 HTTP 404：请检查 Base URL 是否正确（应为 OpenAI 兼容地址）",
+      "detail": "GET http://127.0.0.1:39117/c/404/models 返回 HTTP 404（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_400",
+      "expect": "SA-5001/retryable=false/reset_group",
+      "threw": false,
+      "ok": false,
+      "status": 400,
+      "latencyMs": 1,
+      "model": null,
+      "wallMs": 5,
+      "code": "SA-5001",
+      "retryable": false,
+      "fallback": [
+        "reset_group"
+      ],
+      "message": "供应商接口返回 HTTP 400：请检查 Base URL 是否正确（应为 OpenAI 兼容地址）",
+      "detail": "GET http://127.0.0.1:39117/c/400/models 返回 HTTP 400（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_408",
+      "expect": "SA-5001/retryable=false/reset_group",
+      "threw": false,
+      "ok": false,
+      "status": 408,
+      "latencyMs": 2,
+      "model": null,
+      "wallMs": 6,
+      "code": "SA-5001",
+      "retryable": false,
+      "fallback": [
+        "reset_group"
+      ],
+      "message": "供应商接口返回 HTTP 408：请检查 Base URL 是否正确（应为 OpenAI 兼容地址）",
+      "detail": "GET http://127.0.0.1:39117/c/408/models 返回 HTTP 408（host=127.0.0.1）",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_timeout_hang",
+      "expect": "SA-3005/retryable=true/retry+browser_search（约 15s）",
+      "threw": false,
+      "ok": false,
+      "status": null,
+      "latencyMs": 15010,
+      "model": null,
+      "wallMs": 15014,
+      "code": "SA-3005",
+      "retryable": true,
+      "fallback": [
+        "retry",
+        "browser_search"
+      ],
+      "message": "连接超时：检查网络 / 代理，并确认 Base URL 是否正确",
+      "detail": "请求 http://127.0.0.1:39117/c/hang/models 失败：error sending request for url (http://127.0.0.1:39117/c/hang/models)",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_dns_failure",
+      "expect": "SA-3001/retryable=true/browser_search+local_translate",
+      "threw": false,
+      "ok": false,
+      "status": null,
+      "latencyMs": 80,
+      "model": null,
+      "wallMs": 84,
+      "code": "SA-3001",
+      "retryable": true,
+      "fallback": [
+        "browser_search",
+        "local_translate"
+      ],
+      "message": "网络不可用：无法连接供应商，请检查网络 / 代理 / Base URL",
+      "detail": "请求 https://nonexistent.invalid/models 失败：error sending request for url (https://nonexistent.invalid/models)",
+      "actionableHint": null,
+      "pass": true
+    },
+    {
+      "name": "err_connection_refused",
+      "expect": "SA-3001/retryable=true/browser_search+local_translate",
+      "threw": false,
+      "ok": false,
+      "status": null,
+      "latencyMs": 2037,
+      "model": null,
+      "wallMs": 2040,
+      "code": "SA-3001",
+      "retryable": true,
+      "fallback": [
+        "browser_search",
+        "local_translate"
+      ],
+      "message": "网络不可用：无法连接供应商，请检查网络 / 代理 / Base URL",
+      "detail": "请求 http://127.0.0.1:39199/models 失败：error sending request for url (http://127.0.0.1:39199/models)",
+      "actionableHint": null,
+      "pass": true
+    }
+  ],
+  "degradationMenu": {
+    "error": null,
+    "items": [
+      {
+        "label": "搜索",
+        "disabled": false,
+        "disabledReason": null,
+        "mode": "快速"
+      },
+      {
+        "label": "翻译",
+        "disabled": true,
+        "disabledReason": "本地模型未下载：请到设置 → 模型库下载",
+        "mode": "快速"
+      },
+      {
+        "label": "解答",
+        "disabled": true,
+        "disabledReason": "未配置 API Key：请到设置 → AI 服务填写，或下载本地模型",
+        "mode": "快速"
+      },
+      {
+        "label": "复制文字",
+        "disabled": false,
+        "disabledReason": null,
+        "mode": "快速"
+      }
+    ],
+    "payloadCount": 1,
+    "session": "39084551-8791-4edc-b41f-68c1f4984169"
+  },
+  "uiError": {
+    "visible": null,
+    "text": "连接失败\nSA-3001 · 网络不可用：无法连接供应商，请检查网络 / 代理 / Base URL\n可尝试：browser_search、local_translate",
+    "nav": "连接失败\nSA-3001 · 网络不可用：无法连接供应商，请检查网络 / 代理 / Base URL\n可尝试：browser_search、local_translate"
+  },
+  "uncaught": {
+    "errors": [],
+    "rejections": []
+  },
+  "appAlive": {
+    "alive": true,
+    "skeletonMode": false,
+    "providerCount": 1
+  },
+  "rustLogIssues": [],
+  "mockRequests": {
+    "total": 15,
+    "modelsRequests": 15,
+    "scenarios": [
+      "200",
+      "slow",
+      "200badjson",
+      "empty",
+      "401",
+      "403",
+      "402",
+      "429",
+      "500",
+      "503",
+      "404",
+      "400",
+      "408",
+      "hang"
+    ],
+    "authorizationPresentAll": true,
+    "authorizationScheme": [
+      "Bearer"
+    ],
+    "userAgentSample": "snip-ask/0.1.0",
+    "acceptSample": "application/json",
+    "sample": [
+      {
+        "ts": "2026-11-05T10:54:42.600Z",
+        "method": "GET",
+        "path": "/c/200/models",
+        "scenario": "200",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "200"
+      },
+      {
+        "ts": "2026-11-05T10:54:42.615Z",
+        "method": "GET",
+        "path": "/c/slow/models",
+        "scenario": "slow",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "slow"
+      },
+      {
+        "ts": "2026-11-05T10:54:45.635Z",
+        "method": "GET",
+        "path": "/c/200badjson/models",
+        "scenario": "200badjson",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "200badjson"
+      },
+      {
+        "ts": "2026-11-05T10:54:45.656Z",
+        "method": "GET",
+        "path": "/c/empty/models",
+        "scenario": "empty",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "empty"
+      },
+      {
+        "ts": "2026-11-05T10:54:45.665Z",
+        "method": "GET",
+        "path": "/c/200/models",
+        "scenario": "200",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "200"
+      },
+      {
+        "ts": "2026-11-05T10:54:45.673Z",
+        "method": "GET",
+        "path": "/c/401/models",
+        "scenario": "401",
+        "headers": {
+          "authorizationPresent": true,
+          "authorizationScheme": "Bearer",
+          "authorizationLength": 31,
+          "userAgent": "snip-ask/0.1.0",
+          "accept": "application/json"
+        },
+        "handled": "401"
+      }
+    ]
+  }
+}

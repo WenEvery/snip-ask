@@ -1,0 +1,632 @@
+{
+  "meta": {
+    "script": "bench_translate.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T00:52:56.994079+08:00",
+    "mode": "REAL",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "prompt_file": "resources\\prompts\\translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "sample_len_chars": 200,
+    "threshold_ms": 1500.0,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86"
+  },
+  "config": {
+    "base_url_masked": "https://api.deepseek.com:443/chat/completions",
+    "model": "deepseek-flash",
+    "stream": true,
+    "runs": 20,
+    "warmup": 2,
+    "timeout_sec": 60.0,
+    "target_lang": "en",
+    "source_lang": "zh-CHS",
+    "temperature": 0.0,
+    "prompt_chars": 762,
+    "extra_params": [
+      "thinking"
+    ],
+    "api_key_provided": true,
+    "calibers": {
+      "ttft_threshold_ms": 1500.0,
+      "total_threshold_ms": 1500.0,
+      "note": "快速模式验收口径为「首 token ≤1.5s」；总耗时口径同时记录以供对照。"
+    }
+  },
+  "records": [
+    {
+      "run": "warmup-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 52.74,
+      "send_ms": 0.11,
+      "first_byte_ms": 72.79,
+      "total_ms": 1639.36,
+      "first_token_ms": 759.9,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": true
+    },
+    {
+      "run": "warmup-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 25.0,
+      "send_ms": 0.16,
+      "first_byte_ms": 83.5,
+      "total_ms": 1565.47,
+      "first_token_ms": 779.22,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 152,
+        "total_tokens": 618,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 727,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "90ab6159494e90226b206aa85cb6530b623d9fecac41d40d47d0155cec99fde0",
+      "warmup": true
+    },
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 45.11,
+      "send_ms": 0.09,
+      "first_byte_ms": 99.53,
+      "total_ms": 1641.93,
+      "first_token_ms": 798.15,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 149,
+        "total_tokens": 615,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 729,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "c8b5ddfa272280dfc6cbdd05cdd004e531eec67ffa1bfb7552db8a7e5e19a66d",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 47.43,
+      "send_ms": 0.09,
+      "first_byte_ms": 80.09,
+      "total_ms": 1502.45,
+      "first_token_ms": 667.71,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 37.52,
+      "send_ms": 0.09,
+      "first_byte_ms": 99.34,
+      "total_ms": 1357.22,
+      "first_token_ms": 499.5,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 149,
+        "total_tokens": 615,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 729,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "c8b5ddfa272280dfc6cbdd05cdd004e531eec67ffa1bfb7552db8a7e5e19a66d",
+      "warmup": false
+    },
+    {
+      "run": "run-4",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 23.79,
+      "send_ms": 0.1,
+      "first_byte_ms": 70.22,
+      "total_ms": 1191.72,
+      "first_token_ms": 346.1,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 147,
+        "total_tokens": 613,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 728,
+      "output_sample": "Boxed AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "2bb9a32d1decddcd975a3db65cda31fdbd13e63bba19fd580e194784da782c92",
+      "warmup": false
+    },
+    {
+      "run": "run-5",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 25.0,
+      "send_ms": 0.18,
+      "first_byte_ms": 90.94,
+      "total_ms": 1568.26,
+      "first_token_ms": 570.82,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    },
+    {
+      "run": "run-6",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 24.35,
+      "send_ms": 0.1,
+      "first_byte_ms": 143.7,
+      "total_ms": 1228.55,
+      "first_token_ms": 378.39,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 727,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "54d81013c8767d84094d685b09ee98d00cf1b380c4368ad5ec29145eb06a954b",
+      "warmup": false
+    },
+    {
+      "run": "run-7",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 43.18,
+      "send_ms": 0.19,
+      "first_byte_ms": 73.09,
+      "total_ms": 1381.5,
+      "first_token_ms": 501.78,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 154,
+        "total_tokens": 620,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 746,
+      "output_sample": "Box Select AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the te",
+      "output_sha256": "eacb41504ca35ee6881a400d62bc079b41c1aa01a9f7ba5024ef2895d5b96884",
+      "warmup": false
+    },
+    {
+      "run": "run-8",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 55.73,
+      "send_ms": 0.21,
+      "first_byte_ms": 79.37,
+      "total_ms": 1734.31,
+      "first_token_ms": 855.19,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    },
+    {
+      "run": "run-9",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 41.25,
+      "send_ms": 0.28,
+      "first_byte_ms": 71.92,
+      "total_ms": 1291.13,
+      "first_token_ms": 431.32,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 150,
+        "total_tokens": 616,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 728,
+      "output_sample": "Box Select AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text",
+      "output_sha256": "e45df7bf500456ffe2d5215d0da9c468b774bb63310c06e65742696dad0a3628",
+      "warmup": false
+    },
+    {
+      "run": "run-10",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 23.1,
+      "send_ms": 0.11,
+      "first_byte_ms": 88.73,
+      "total_ms": 1728.5,
+      "first_token_ms": 864.41,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    },
+    {
+      "run": "run-11",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 40.45,
+      "send_ms": 0.1,
+      "first_byte_ms": 61.41,
+      "total_ms": 1346.92,
+      "first_token_ms": 480.24,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 726,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f5833e36e6f8654cf458adc87925b717c69719e951359731fa2e34efe5fec3e1",
+      "warmup": false
+    },
+    {
+      "run": "run-12",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 42.32,
+      "send_ms": 0.1,
+      "first_byte_ms": 77.27,
+      "total_ms": 1282.25,
+      "first_token_ms": 442.28,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 147,
+        "total_tokens": 613,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 728,
+      "output_sample": "Boxed AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "2bb9a32d1decddcd975a3db65cda31fdbd13e63bba19fd580e194784da782c92",
+      "warmup": false
+    },
+    {
+      "run": "run-13",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 42.51,
+      "send_ms": 0.09,
+      "first_byte_ms": 67.54,
+      "total_ms": 1548.58,
+      "first_token_ms": 624.64,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 729,
+      "output_sample": "Box Select AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text",
+      "output_sha256": "b96cc051d55cc1b28d2d4bb543269e06ef6995e356fca0ed633f65e3a8b159de",
+      "warmup": false
+    },
+    {
+      "run": "run-14",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 42.57,
+      "send_ms": 0.12,
+      "first_byte_ms": 103.79,
+      "total_ms": 1576.21,
+      "first_token_ms": 677.18,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 153,
+        "total_tokens": 619,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 731,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "d566f7c1be4bcd64a7cc06cac3677f6639c345fe451288a8a309d76ca9e9a528",
+      "warmup": false
+    },
+    {
+      "run": "run-15",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 35.88,
+      "send_ms": 0.09,
+      "first_byte_ms": 63.26,
+      "total_ms": 1568.87,
+      "first_token_ms": 684.55,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 147,
+        "total_tokens": 613,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 728,
+      "output_sample": "Boxed AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "2bb9a32d1decddcd975a3db65cda31fdbd13e63bba19fd580e194784da782c92",
+      "warmup": false
+    },
+    {
+      "run": "run-16",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 22.62,
+      "send_ms": 0.11,
+      "first_byte_ms": 64.34,
+      "total_ms": 1478.56,
+      "first_token_ms": 602.68,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 152,
+        "total_tokens": 618,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 735,
+      "output_sample": "Box Select AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text",
+      "output_sha256": "82600aa087c89de5a5585d9e406624f3aa9a175aaee74f60d42e88eedb4ed4a9",
+      "warmup": false
+    },
+    {
+      "run": "run-17",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 40.43,
+      "send_ms": 0.08,
+      "first_byte_ms": 73.57,
+      "total_ms": 1522.83,
+      "first_token_ms": 687.82,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 148,
+        "total_tokens": 614,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 732,
+      "output_sample": "Boxed AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "6d5544fb21b86604bec7df563a5b81fc76f813a9b41272c2ee005ee9af845ab2",
+      "warmup": false
+    },
+    {
+      "run": "run-18",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 46.16,
+      "send_ms": 0.09,
+      "first_byte_ms": 80.34,
+      "total_ms": 1494.84,
+      "first_token_ms": 591.81,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 147,
+        "total_tokens": 613,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 728,
+      "output_sample": "Boxed AI is a screen word capture and screenshot Q&A tool: press Ctrl+Q to bring up the selection box, frame the text or",
+      "output_sha256": "2bb9a32d1decddcd975a3db65cda31fdbd13e63bba19fd580e194784da782c92",
+      "warmup": false
+    },
+    {
+      "run": "run-19",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 39.23,
+      "send_ms": 0.09,
+      "first_byte_ms": 113.9,
+      "total_ms": 1752.58,
+      "first_token_ms": 826.6,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    },
+    {
+      "run": "run-20",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 24.08,
+      "send_ms": 0.09,
+      "first_byte_ms": 72.52,
+      "total_ms": 1781.67,
+      "first_token_ms": 876.17,
+      "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 151,
+        "total_tokens": 617,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 210
+      },
+      "output_chars": 724,
+      "output_sample": "Boxed AI is a screen word-capture and screenshot Q&A tool: press Ctrl+Q to bring up a selection box, frame the text or i",
+      "output_sha256": "f3235ba7aded33d6582981a59a876c08ab123ace4b2105bfbe2b93713e59583e",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 20,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "http_status_distribution": {
+      "200": 22
+    },
+    "total_ms": {
+      "count": 20,
+      "mean_ms": 1498.94,
+      "p50_ms": 1512.64,
+      "p95_ms": 1754.03,
+      "max_ms": 1781.67,
+      "min_ms": 1191.72
+    },
+    "first_byte_ms": {
+      "count": 20,
+      "mean_ms": 83.74,
+      "p50_ms": 78.32,
+      "p95_ms": 115.39,
+      "max_ms": 143.7,
+      "min_ms": 61.41
+    },
+    "first_token_ms": {
+      "count": 20,
+      "mean_ms": 620.37,
+      "p50_ms": 613.66,
+      "p95_ms": 865.0,
+      "max_ms": 876.17,
+      "min_ms": 346.1
+    },
+    "verdicts": {
+      "ttft": "DONE",
+      "total": "FAILED"
+    },
+    "usage_total_tokens_all_runs": 12322,
+    "first_failure": null
+  }
+}

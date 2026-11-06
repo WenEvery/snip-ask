@@ -1,0 +1,963 @@
+{
+  "generated_at": "2026-11-05T19:24:49.128148+08:00",
+  "sources": {
+    "s14_real": ".verify/spikes/S-12-S-14/raw/translate_consistency_20261105-191954.json",
+    "s14_v3fix": ".verify/spikes/S-12-S-14/raw/translate_consistency_v3fix_20261105.json",
+    "s14_mock": ".verify/spikes/S-12-S-14/raw/translate_consistency_mock_20261105-192442.json",
+    "s12_real": ".verify/spikes/S-12-S-14/raw/image_search_trust_20261105-190507_rescored.json",
+    "s12_mock": ".verify/spikes/S-12-S-14/raw/image_search_trust_mock_20261105-192443.json",
+    "corpus": ".verify/spikes/S-12-S-14/corpus/corpus.json"
+  },
+  "s14": {
+    "mode": "REAL",
+    "generated_at": "2026-11-05T19:14:40.399264+08:00",
+    "cases": {
+      "count": 24,
+      "zh_to_en": 12,
+      "en_to_zh": 12,
+      "with_glossary": 9,
+      "format_checks_total": 47,
+      "required_terms_total": 15
+    },
+    "thresholds": {
+      "term_hit_rate": 1.0,
+      "format_pass_rate": 1.0
+    },
+    "api_key_provided": true,
+    "api_key_source": "file:.verify/p1/key.txt",
+    "runs": [
+      {
+        "arm": "cloud:deepseek-flash/translate.md",
+        "kind": "cloud",
+        "status": "REAL",
+        "verdict": "DONE",
+        "term_hit_rate": 1.0,
+        "format_pass_rate": 1.0,
+        "translation_effective_rate": 0.9583,
+        "case_pass": 23,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 16,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 2,
+            "total": 2
+          }
+        },
+        "failures_count": 1,
+        "model": "deepseek-flash",
+        "prompt_key": "translate",
+        "health_ready_ms": null,
+        "shutdown_clean": null
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal.md",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.2667,
+        "format_pass_rate": 0.766,
+        "translation_effective_rate": 0.2917,
+        "case_pass": 5,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 10,
+            "total": 16
+          },
+          "contains": {
+            "pass": 21,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "failures_count": 19,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal",
+        "health_ready_ms": 844.42,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal+lang-names",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.4667,
+        "format_pass_rate": 0.766,
+        "translation_effective_rate": 0.6667,
+        "case_pass": 9,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 11,
+            "total": 16
+          },
+          "contains": {
+            "pass": 20,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 1,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "failures_count": 15,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal(lang-name)",
+        "health_ready_ms": 854.46,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate.md",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.0,
+        "format_pass_rate": 0.7872,
+        "translation_effective_rate": 0.2083,
+        "case_pass": 2,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 11,
+            "total": 16
+          },
+          "contains": {
+            "pass": 21,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 0,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 2,
+            "total": 2
+          }
+        },
+        "failures_count": 22,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate",
+        "health_ready_ms": 827.2,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal+format",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED（存在请求失败）",
+        "term_hit_rate": 1.0,
+        "format_pass_rate": 0.6,
+        "translation_effective_rate": 0.5714,
+        "case_pass": 1,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 2,
+            "total": 6
+          },
+          "contains": {
+            "pass": 4,
+            "total": 6
+          },
+          "bullets_min": {
+            "pass": 1,
+            "total": 1
+          },
+          "numbered_min": {
+            "pass": 1,
+            "total": 1
+          },
+          "code_fences_exact": {
+            "pass": 1,
+            "total": 1
+          }
+        },
+        "failures_count": 23,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal+format_guard",
+        "health_ready_ms": 875.89,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-1.5b-instruct-q4/translate_minimal.md",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 1.0,
+        "format_pass_rate": 0.6809,
+        "translation_effective_rate": 1.0,
+        "case_pass": 10,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 2,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 1,
+            "total": 2
+          }
+        },
+        "failures_count": 14,
+        "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal",
+        "health_ready_ms": 1618.75,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v2",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.2667,
+        "format_pass_rate": 0.7447,
+        "translation_effective_rate": 0.2917,
+        "case_pass": 4,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 11,
+            "total": 16
+          },
+          "contains": {
+            "pass": 21,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 0,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "failures_count": 20,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal_v2(candidate)",
+        "health_ready_ms": 819.89,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v2",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.6,
+        "format_pass_rate": 0.8936,
+        "translation_effective_rate": 0.7917,
+        "case_pass": 10,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 13,
+            "total": 16
+          },
+          "contains": {
+            "pass": 22,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 2,
+            "total": 2
+          }
+        },
+        "failures_count": 14,
+        "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal_v2(candidate)",
+        "health_ready_ms": 1552.15,
+        "shutdown_clean": true
+      }
+    ],
+    "aggregate": {
+      "real_arms": 8,
+      "blocked_arms": [],
+      "done_arms": [
+        "cloud:deepseek-flash/translate.md"
+      ],
+      "failed_arms": [
+        "local:qwen2.5-0.5b-instruct-q4/translate_minimal.md",
+        "local:qwen2.5-0.5b-instruct-q4/translate_minimal+lang-names",
+        "local:qwen2.5-0.5b-instruct-q4/translate.md",
+        "local:qwen2.5-0.5b-instruct-q4/translate_minimal+format",
+        "local:qwen2.5-1.5b-instruct-q4/translate_minimal.md",
+        "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v2",
+        "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v2"
+      ],
+      "targets_met": false
+    },
+    "verdicts": {
+      "cloud:deepseek-flash/translate.md": "DONE",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal.md": "FAILED",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal+lang-names": "FAILED",
+      "local:qwen2.5-0.5b-instruct-q4/translate.md": "FAILED",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal+format": "FAILED（存在请求失败）",
+      "local:qwen2.5-1.5b-instruct-q4/translate_minimal.md": "FAILED",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v2": "FAILED",
+      "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v2": "FAILED"
+    },
+    "self_check_ok": null,
+    "self_check_assertions": null
+  },
+  "s14_v3fix": {
+    "mode": "REAL",
+    "generated_at": "2026-11-05T19:20:33.304901+08:00",
+    "cases": {
+      "count": 24,
+      "zh_to_en": 12,
+      "en_to_zh": 12,
+      "with_glossary": 9,
+      "format_checks_total": 47,
+      "required_terms_total": 15
+    },
+    "thresholds": {
+      "term_hit_rate": 1.0,
+      "format_pass_rate": 1.0
+    },
+    "api_key_provided": true,
+    "api_key_source": "file:.verify/p1/key.txt",
+    "runs": [
+      {
+        "arm": "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.8,
+        "format_pass_rate": 0.8723,
+        "translation_effective_rate": 0.9167,
+        "case_pass": 16,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 12,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 1,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 1,
+            "total": 2
+          }
+        },
+        "failures_count": 8,
+        "model": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal_v3(candidate)",
+        "health_ready_ms": 1663.19,
+        "shutdown_clean": true
+      },
+      {
+        "arm": "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3",
+        "kind": "local",
+        "status": "REAL",
+        "verdict": "FAILED",
+        "term_hit_rate": 0.2667,
+        "format_pass_rate": 0.6596,
+        "translation_effective_rate": 0.25,
+        "case_pass": 3,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 10,
+            "total": 16
+          },
+          "contains": {
+            "pass": 15,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "failures_count": 21,
+        "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "prompt_key": "translate_minimal_v3(candidate)",
+        "health_ready_ms": 866.73,
+        "shutdown_clean": true
+      }
+    ],
+    "aggregate": {
+      "real_arms": 2,
+      "blocked_arms": [],
+      "done_arms": [],
+      "failed_arms": [
+        "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3",
+        "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3"
+      ],
+      "targets_met": false
+    },
+    "verdicts": {
+      "local:qwen2.5-1.5b-instruct-q4/translate_minimal_v3": "FAILED",
+      "local:qwen2.5-0.5b-instruct-q4/translate_minimal_v3": "FAILED"
+    },
+    "self_check_ok": null,
+    "self_check_assertions": null
+  },
+  "s14_mock_self_check": {
+    "mode": "MOCK_SELF_TEST",
+    "generated_at": "2026-11-05T19:24:42.909275+08:00",
+    "cases": null,
+    "thresholds": null,
+    "api_key_provided": null,
+    "api_key_source": null,
+    "runs": [
+      {
+        "arm": "MOCK:mock-model/translate.md",
+        "kind": "mock",
+        "status": "MOCK_SELF_TEST",
+        "verdict": "MOCK_SELF_CHECK_OK",
+        "term_hit_rate": 1.0,
+        "format_pass_rate": 1.0,
+        "translation_effective_rate": 1.0,
+        "case_pass": 24,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 16,
+            "total": 16
+          },
+          "contains": {
+            "pass": 23,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 2,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 2,
+            "total": 2
+          }
+        },
+        "failures_count": 0,
+        "model": null,
+        "prompt_key": null,
+        "health_ready_ms": null,
+        "shutdown_clean": null
+      },
+      {
+        "arm": "MOCK:mock-model/translate.md（故意失败臂）",
+        "kind": "mock",
+        "status": "MOCK_SELF_TEST",
+        "verdict": "MOCK_SELF_CHECK_OK",
+        "term_hit_rate": 0.0,
+        "format_pass_rate": 0.0851,
+        "translation_effective_rate": 0.7083,
+        "case_pass": 0,
+        "cases": 24,
+        "format_by_kind": {
+          "lines_exact": {
+            "pass": 0,
+            "total": 16
+          },
+          "contains": {
+            "pass": 2,
+            "total": 23
+          },
+          "bullets_min": {
+            "pass": 0,
+            "total": 2
+          },
+          "numbered_min": {
+            "pass": 0,
+            "total": 2
+          },
+          "code_fences_exact": {
+            "pass": 2,
+            "total": 2
+          },
+          "blank_lines_min": {
+            "pass": 0,
+            "total": 2
+          }
+        },
+        "failures_count": 24,
+        "model": null,
+        "prompt_key": null,
+        "health_ready_ms": null,
+        "shutdown_clean": null
+      }
+    ],
+    "aggregate": null,
+    "verdicts": {
+      "MOCK:mock-model/translate.md": "MOCK_SELF_CHECK_OK",
+      "MOCK:mock-model/translate.md（故意失败臂）": "MOCK_SELF_CHECK_OK"
+    },
+    "self_check_ok": true,
+    "self_check_assertions": [
+      {
+        "name": "mock-pass 全通过",
+        "ok": true,
+        "detail": "case_pass=24/24 term=1.0 format=1.0"
+      },
+      {
+        "name": "mock-fail 失败被检出（术语 + 格式）",
+        "ok": true,
+        "detail": "term=0.0 format=0.0851 failures=24"
+      }
+    ]
+  },
+  "s12": {
+    "mode": "REAL_RESCORED",
+    "generated_at": "2026-11-05T19:05:07.227847+08:00",
+    "corpus": {
+      "path": ".verify/spikes/S-12-S-14/corpus/corpus.json",
+      "images": 30,
+      "categories": {
+        "chart": 8,
+        "code": 7,
+        "product": 7,
+        "text": 8
+      },
+      "expect_uncertain": 4
+    },
+    "model": {
+      "vision": "deepseek-flash",
+      "summary": "deepseek-flash",
+      "thinking": "disabled",
+      "temperature": 0.0,
+      "base_url_masked": "https://api.deepseek.com",
+      "api_key_provided": true,
+      "api_key_source": "file:.verify/p1/key.txt"
+    },
+    "search": {
+      "endpoint": "https://api.deepseek.com/v1/tools/search",
+      "count": 5,
+      "provider": "deepseek"
+    },
+    "thresholds": {
+      "four_sections_rate": 1.0,
+      "query_relevance_rate": 1.0,
+      "source_accessible_rate": 0.95,
+      "uncertainty_marked_rate": 1.0
+    },
+    "four_sections": {
+      "ok": 30,
+      "rate": 1.0,
+      "target": 1.0
+    },
+    "query_relevance": {
+      "ok": 27,
+      "rate": 0.9,
+      "target": 1.0
+    },
+    "source_authenticity": {
+      "ok": 29,
+      "rate": 0.9667,
+      "fabricated_urls": 1,
+      "truncated_urls": 2,
+      "cited_urls_total": 136,
+      "target": 1.0
+    },
+    "uncertainty": {
+      "expected_images": 4,
+      "marked": 4,
+      "rate": 1.0,
+      "target": 1.0
+    },
+    "recognition_hit_mean": 0.9444,
+    "by_category": {
+      "chart": {
+        "images": 8,
+        "four_sections_ok": 8,
+        "query_relevance_ok": 7,
+        "source_authenticity_ok": 8,
+        "recognition_hit_mean": 1.0,
+        "sources_total": 37
+      },
+      "code": {
+        "images": 7,
+        "four_sections_ok": 7,
+        "query_relevance_ok": 6,
+        "source_authenticity_ok": 7,
+        "recognition_hit_mean": 0.9286,
+        "sources_total": 31
+      },
+      "product": {
+        "images": 7,
+        "four_sections_ok": 7,
+        "query_relevance_ok": 7,
+        "source_authenticity_ok": 6,
+        "recognition_hit_mean": 0.9286,
+        "sources_total": 28
+      },
+      "text": {
+        "images": 8,
+        "four_sections_ok": 8,
+        "query_relevance_ok": 7,
+        "source_authenticity_ok": 8,
+        "recognition_hit_mean": 0.9167,
+        "sources_total": 40
+      }
+    },
+    "source_check": {
+      "checked": 136,
+      "accessible": 81,
+      "accessible_rate": 0.5956,
+      "rates": {
+        "raw": 0.5956,
+        "excluding_unverifiable": 0.9101,
+        "optimistic": 0.9412
+      },
+      "failure_buckets": {
+        "dead_http": 8,
+        "antibot": 26,
+        "network": 21
+      }
+    },
+    "verdict": {
+      "verdict": "FAILED",
+      "targets": {
+        "four_sections": true,
+        "query_relevance": false,
+        "source_accessible": false,
+        "uncertainty_marked": true,
+        "no_fabricated_sources": false
+      },
+      "source_accessible_rate": 0.5956,
+      "source_accessible_rates": {
+        "raw": 0.5956,
+        "excluding_unverifiable": 0.9101,
+        "optimistic": 0.9412
+      },
+      "source_accessible_target": 0.95,
+      "all_met": false,
+      "note": "按清单字面口径（2xx/3xx）判定；反爬/网络不可达的拆分见 source_check.failure_buckets 与 rates。"
+    },
+    "failures": [
+      {
+        "id": "text-05-table",
+        "category": "text",
+        "name": "本地模型对比表格",
+        "reasons": [
+          "检索词相关性不足：命中 [] / 期望 ['Qwen2.5', 'HY-MT1.5', 'P95 时延']（非复述=True）"
+        ]
+      },
+      {
+        "id": "chart-08-stacked",
+        "category": "chart",
+        "name": "请求构成堆叠柱状图",
+        "reasons": [
+          "检索词相关性不足：命中 [] / 期望 ['请求构成', '云端', '浏览器']（非复述=True）"
+        ]
+      },
+      {
+        "id": "product-01-headphones",
+        "category": "product",
+        "name": "无线降噪耳机商品卡",
+        "reasons": [
+          "来源不在检索结果中（疑似编造）：1 条",
+          "来源 URL 疑似截断：1 条"
+        ]
+      },
+      {
+        "id": "code-07-minified",
+        "category": "code",
+        "name": "压缩混淆 JS（无上下文）",
+        "reasons": [
+          "检索词相关性不足：命中 [] / 期望 ['minified', 'JavaScript', 'webpack']（非复述=True）"
+        ]
+      }
+    ],
+    "client_stats": {
+      "chat_calls": 60,
+      "chat_failures": 0,
+      "search_calls": 30,
+      "search_failures": 0
+    }
+  },
+  "s12_mock_self_check": {
+    "mode": "MOCK_SELF_TEST",
+    "generated_at": "2026-11-05T19:24:43.426235+08:00",
+    "mock_pass": {
+      "images": 30,
+      "four_sections": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "query_relevance": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "source_authenticity": {
+        "ok": 30,
+        "rate": 1.0,
+        "fabricated_urls": 0,
+        "truncated_urls": 0,
+        "cited_urls_total": 60,
+        "target": 1.0
+      },
+      "uncertainty": {
+        "expected_images": 4,
+        "marked": 4,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "recognition_hit_mean": 0.5478,
+      "by_category": {
+        "chart": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.4813,
+          "sources_total": 16
+        },
+        "code": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.2143,
+          "sources_total": 14
+        },
+        "product": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.8929,
+          "sources_total": 14
+        },
+        "text": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.6042,
+          "sources_total": 16
+        }
+      }
+    },
+    "mock_fail": {
+      "images": 30,
+      "four_sections": {
+        "ok": 29,
+        "rate": 0.9667,
+        "target": 1.0
+      },
+      "query_relevance": {
+        "ok": 30,
+        "rate": 1.0,
+        "target": 1.0
+      },
+      "source_authenticity": {
+        "ok": 30,
+        "rate": 1.0,
+        "fabricated_urls": 0,
+        "truncated_urls": 0,
+        "cited_urls_total": 58,
+        "target": 1.0
+      },
+      "uncertainty": {
+        "expected_images": 4,
+        "marked": 0,
+        "rate": 0.0,
+        "target": 1.0
+      },
+      "recognition_hit_mean": 0.5478,
+      "by_category": {
+        "chart": {
+          "images": 8,
+          "four_sections_ok": 8,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.4813,
+          "sources_total": 16
+        },
+        "code": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.2143,
+          "sources_total": 14
+        },
+        "product": {
+          "images": 7,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 7,
+          "source_authenticity_ok": 7,
+          "recognition_hit_mean": 0.8929,
+          "sources_total": 14
+        },
+        "text": {
+          "images": 8,
+          "four_sections_ok": 7,
+          "query_relevance_ok": 8,
+          "source_authenticity_ok": 8,
+          "recognition_hit_mean": 0.6042,
+          "sources_total": 14
+        }
+      }
+    },
+    "self_check_ok": true,
+    "self_check_assertions": [
+      {
+        "name": "mock-pass 四段齐全 100%",
+        "ok": true,
+        "detail": "30/30"
+      },
+      {
+        "name": "mock-pass 检索词相关性 100%",
+        "ok": true,
+        "detail": "30/30"
+      },
+      {
+        "name": "mock-pass 不确定标注 100%（expect_uncertain 图）",
+        "ok": true,
+        "detail": "4/4"
+      },
+      {
+        "name": "mock-pass 来源真实性检查执行（0 条编造）",
+        "ok": true,
+        "detail": "编造=0 检查URL=60"
+      },
+      {
+        "name": "mock-fail 失败被检出（缺来源段 + 缺不确定标注）",
+        "ok": true,
+        "detail": "四段=0.9667 不确定=0.0"
+      }
+    ]
+  },
+  "files": [
+    "README.md",
+    "summary_s12_s14.json",
+    "s14_translate_consistency_real.json",
+    "s14_translate_consistency_v3fix.json",
+    "s14_translate_consistency_mock.json",
+    "s12_image_search_trust_real.json",
+    "s12_image_search_trust_mock.json",
+    "s12_corpus_manifest.json",
+    "s12_example_text.png",
+    "s12_example_chart.png",
+    "s12_example_product.png",
+    "s12_example_code.png"
+  ]
+}

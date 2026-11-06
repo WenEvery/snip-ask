@@ -1,0 +1,181 @@
+{
+  "meta": {
+    "script": "bench_local_translate.mjs",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-04T17:09:54.859Z",
+    "mode": "REAL_LOCAL_LLAMA_CPP",
+    "host": {
+      "os": "win32 10.0.26200",
+      "cpu_model": "12th Gen Intel(R) Core(TM) i7-12650H",
+      "logical_cpus": 16,
+      "total_mem_gb": null,
+      "free_mem_gb_before": 6.8,
+      "node": "v24.14.1"
+    },
+    "repo_commit": "798f87b0eb0cda1dc626eeb73bee227c5028a483",
+    "threshold_ms": 8000,
+    "sample_len_chars": 23,
+    "sample_text_sha256": "c0bb7ea4ef5cc0bb85d1071ac1ec364726e2451f12150ced6531cd2df8a812dc",
+    "prompt_variant": "minimal",
+    "prompt_file": "resources/prompts/translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "prompt_chars": 43,
+    "exe": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+    "exe_version": "version: 1 (fe2adf0) | built with MSVC 19.44.35228.0 for x64",
+    "model_path": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+    "model_size_bytes": 1117320736,
+    "server_args": {
+      "ctx": 4096,
+      "threads": 16,
+      "port": 39281,
+      "host": "127.0.0.1",
+      "gpu_layers": 0,
+      "max_tokens": 1024
+    },
+    "sampling": {
+      "temperature": 0.2,
+      "top_p": 0.95,
+      "top_k": 0,
+      "repeat_penalty": 1,
+      "max_tokens": 1024,
+      "note": "product 默认 provider.temperature=0.2；本地引擎沿用该温度以保证可复现，基准按实际参数记录。"
+    },
+    "health_ready_ms": 1452.37,
+    "memory_after_load": {
+      "workingSet": 1798336512,
+      "privateMemory": 942452736,
+      "peakWorkingSet": 1798336512,
+      "cpuSeconds": 4.703125
+    },
+    "memory_after_runs": {
+      "workingSet": 1809174528,
+      "privateMemory": 944955392,
+      "peakWorkingSet": 1809174528,
+      "cpuSeconds": 36.34375
+    },
+    "idle_unload": {
+      "testable": false,
+      "reason": "idleUnloadSec=600 是 SnipAsk 应用层策略；llama-server 本身没有空闲卸载机制，本机未运行应用，无法观测「600s 空闲后卸载」行为，仅记录模型常驻内存与进程未退出。"
+    },
+    "server_log_tail": "0.00.003.961 W srv  llama_server: CORS is set to allow all origins ('*') and no API key is set\n0.00.003.962 W srv  llama_server: this can be a security risk (cross-origin attacks)\n0.00.003.962 W srv  llama_server: more info: https://github.com/ggml-org/llama.cpp/pull/25655\n0.00.003.962 W srv  llama_server: -----------------\n0.00.009.993 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-1.5b-instruct-q4_k_m.gguf'\n0.00.528.896 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden\n0.01.320.774 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'\n0.01.331.695 I srv  llama_server: model loaded\n0.01.331.704 I srv  llama_server: listening on http://127.0.0.1:39281\n0.01.827.010 I slot get_availabl: id  3 | task -1 | selected slot by LRU, t_last = -1\n0.01.827.058 I slot launch_slot_: id  3 | task 0 | processing task, is_child = 0\n0.02.582.633 I slot print_timing: id  3 | task 0 | prompt eval time =     214.64 ms /    57 tokens (    3.77 ms per token,   265.56 tokens per second)\n0.02.582.644 I slot print_timing: id  3 | task 0 |        eval time =     540.89 ms /    15 tokens (   36.06 ms per token,    27.73 tokens per second)\n0.02.582.645 I slot print_timing: id  3 | task 0 |       total time =     755.54 ms /    72 tokens\n0.02.582.646 I slot print_timing: id  3 | task 0 |    graphs reused =         14\n0.02.582.696 I slot      release: id  3 | task 0 | stop processing: n_tokens = 71, truncated = 0\n0.02.592.087 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.803\n0.02.592.357 I slot launch_slot_: id  3 | task 16 | processing task, is_child = 0\n0.03.301.739 I slot print_timing: id  3 | task 16 | prompt eval time =     214.61 ms /    57 tokens (    3.77 ms per token,   265.60 tokens per second)\n0.03.301.748 I slot print_timing: id  3 | task 16 |        eval time =     494.74 ms /    14 tokens (   35.34 ms per token,    28.30 tokens per second)\n0.03.301.750 I slot print_timing: id  3 | task 16 |       total time =     709.34 ms /    71 tokens\n0.03.301.754 I slot print_timing: id  3 | task 16 |    graphs reused =         26\n0.03.301.781 I slot      release: id  3 | task 16 | stop processing: n_tokens = 70, truncated = 0\n0.03.310.750 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.814\n0.03.310.929 I slot launch_slot_: id  3 | task 31 | processing task, is_child = 0\n0.04.029.372 I slot print_timing: id  3 | task 31 | prompt eval time =     220.00 ms /    57 tokens (    3.86 ms per token,   259.09 tokens per second)\n0.04.029.380 I slot print_timing: id  3 | task 31 |        eval time =     498.40 ms /    14 tokens (   35.60 ms per token,    28.09 tokens per second)\n0.04.029.382 I slot print_timing: id  3 | task 31 |       total time =     718.40 ms /    71 tokens\n0.04.029.382 I slot print_timing: id  3 | task 31 |    graphs reused =         38\n0.04.029.411 I slot      release: id  3 | task 31 | stop processing: n_tokens = 70, truncated = 0",
+    "shutdown": {
+      "alreadyExited": false,
+      "exit": {
+        "code": null,
+        "sig": "SIGTERM"
+      }
+    }
+  },
+  "records": [
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "total_ms": 764.82,
+      "ttfb_ms": 764.58,
+      "server_prompt_ms": 214.642,
+      "server_predicted_ms": 540.895,
+      "tok_per_sec": 27.73181486240398,
+      "prompt_tokens": 57,
+      "completion_tokens": 15,
+      "output_chars": 66,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "Please send this report to all attendees by Friday, and thank you.",
+      "output_sha256": "fbd5448543a90e7a1b4a99a4586b2b9529f5f61f79bb835fb0439e48e3e4609f",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "total_ms": 718.42,
+      "ttfb_ms": 718.25,
+      "server_prompt_ms": 214.608,
+      "server_predicted_ms": 494.735,
+      "tok_per_sec": 28.297977705236136,
+      "prompt_tokens": 57,
+      "completion_tokens": 14,
+      "output_chars": 66,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "Please send this report to all attendees before Friday. Thank you.",
+      "output_sha256": "39be531a98e7e5534e032b48f8e1795c8c00262dc973ee4a7c31b11b250af068",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "total_ms": 727.51,
+      "ttfb_ms": 727.39,
+      "server_prompt_ms": 219.999,
+      "server_predicted_ms": 498.402,
+      "tok_per_sec": 28.089774920646388,
+      "prompt_tokens": 57,
+      "completion_tokens": 14,
+      "output_chars": 66,
+      "output_cjk_ratio": 0,
+      "looks_translated": true,
+      "output_sample": "Please send this report to all attendees before Friday. Thank you.",
+      "output_sha256": "39be531a98e7e5534e032b48f8e1795c8c00262dc973ee4a7c31b11b250af068",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 3,
+    "failures": 0,
+    "failure_rate": 0,
+    "total_ms": {
+      "count": 3,
+      "mean_ms": 736.92,
+      "p50_ms": 727.51,
+      "p95_ms": 761.09,
+      "max_ms": 764.82,
+      "min_ms": 718.42
+    },
+    "ttfb_ms": {
+      "count": 3,
+      "mean_ms": 736.74,
+      "p50_ms": 727.39,
+      "p95_ms": 760.86,
+      "max_ms": 764.58,
+      "min_ms": 718.25
+    },
+    "server_prompt_ms": {
+      "count": 3,
+      "mean_ms": 216.42,
+      "p50_ms": 214.64,
+      "p95_ms": 219.46,
+      "max_ms": 220,
+      "min_ms": 214.61
+    },
+    "server_predicted_ms": {
+      "count": 3,
+      "mean_ms": 511.34,
+      "p50_ms": 498.4,
+      "p95_ms": 536.65,
+      "max_ms": 540.9,
+      "min_ms": 494.74
+    },
+    "tok_per_sec": {
+      "count": 3,
+      "mean_ms": 28.04,
+      "p50_ms": 28.09,
+      "p95_ms": 28.28,
+      "max_ms": 28.3,
+      "min_ms": 27.73
+    },
+    "completion_tokens": {
+      "count": 3,
+      "mean_ms": 14.33,
+      "p50_ms": 14,
+      "p95_ms": 14.9,
+      "max_ms": 15,
+      "min_ms": 14
+    },
+    "first_failure": null
+  },
+  "verdict": "DONE"
+}

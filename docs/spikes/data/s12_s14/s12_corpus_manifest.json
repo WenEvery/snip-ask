@@ -1,0 +1,1065 @@
+{
+  "purpose": "S-12 图片搜索可信度评测语料（真实 headless Edge 渲染截图）",
+  "generated_at": "2026-11-05T18:57:41.602445+08:00",
+  "view": {
+    "width": 1000,
+    "height": 700,
+    "device_scale_factor": 1
+  },
+  "counts": {
+    "total": 30,
+    "text": 8,
+    "chart": 8,
+    "product": 7,
+    "code": 7,
+    "expect_uncertain": 4
+  },
+  "edge": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "items": [
+    {
+      "id": "text-01-article",
+      "category": "text",
+      "name": "新闻文章阅读页",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "AI",
+        "编程助手",
+        "本地"
+      ],
+      "recognizable_content": [
+        "国产 AI 编程助手",
+        "本地优先",
+        "2026"
+      ],
+      "ground_truth": "一篇科技新闻：国产 AI 编程助手进入本地优先阶段，含 Q3 使用量同比增长 210%、代码补全占比 46%。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-01-article.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-01-article.png",
+      "png_bytes": 37927,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1796.8,
+        "bytes": 37927,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-02-chat",
+      "category": "text",
+      "name": "项目群聊天记录",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "SA-1001",
+        "截图失败",
+        "错误码"
+      ],
+      "recognizable_content": [
+        "接口文档",
+        "SA-1001",
+        "可重试",
+        "李工"
+      ],
+      "ground_truth": "群聊记录：讨论周五前发接口文档，并确认 SA-1001 截图失败错误码可重试。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-02-chat.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-02-chat.png",
+      "png_bytes": 22734,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1185.8,
+        "bytes": 22734,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-03-settings",
+      "category": "text",
+      "name": "设置面板",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "设置",
+        "deepseek-flash",
+        "Qwen2.5"
+      ],
+      "recognizable_content": [
+        "AI 服务",
+        "deepseek-flash",
+        "Qwen2.5-0.5B",
+        "Ctrl+Q"
+      ],
+      "ground_truth": "设置页：AI 服务 DeepSeek/deepseek-flash 已连接，本地模型 Qwen2.5-0.5B 已下载，快捷键 Ctrl+Q。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-03-settings.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-03-settings.png",
+      "png_bytes": 20529,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1081.0,
+        "bytes": 20529,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-04-error-dialog",
+      "category": "text",
+      "name": "错误弹窗",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "SA-1001",
+        "截图失败",
+        "DRM"
+      ],
+      "recognizable_content": [
+        "截图失败",
+        "SA-1001",
+        "DRM",
+        "重试"
+      ],
+      "ground_truth": "错误弹窗：截图失败（SA-1001），可能因 DRM 或全屏独占，可重试或使用窗口模式。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-04-error-dialog.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-04-error-dialog.png",
+      "png_bytes": 20760,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1148.5,
+        "bytes": 20760,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-05-table",
+      "category": "text",
+      "name": "本地模型对比表格",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "Qwen2.5",
+        "HY-MT1.5",
+        "P95 时延"
+      ],
+      "recognizable_content": [
+        "Qwen2.5-0.5B",
+        "0.55 GiB",
+        "3.21 s",
+        "HY-MT1.5"
+      ],
+      "ground_truth": "表格对比 4 个模型的参数量、常驻内存、P95 时延与适用场景。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-05-table.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-05-table.png",
+      "png_bytes": 22024,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1099.1,
+        "bytes": 22024,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-06-bilingual",
+      "category": "text",
+      "name": "中英混排更新说明",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "Release Notes",
+        "v1.2.3",
+        "thinking"
+      ],
+      "recognizable_content": [
+        "Release Notes v1.2.3",
+        "Qwen2.5-0.5B",
+        "thinking",
+        "Ctrl+Q"
+      ],
+      "ground_truth": "Release Notes v1.2.3：新增本地极小模型、修复热键冲突、默认关闭 thinking，4K/200% 未验证。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-06-bilingual.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-06-bilingual.png",
+      "png_bytes": 23728,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1069.4,
+        "bytes": 23728,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-07-blurry",
+      "category": "text",
+      "name": "低对比度小字会议纪要",
+      "difficulty": "hard",
+      "expect_uncertain": true,
+      "expected_query_terms": [
+        "OCR",
+        "像素预算",
+        "混合 DPI",
+        "降档"
+      ],
+      "recognizable_content": [
+        "像素预算",
+        "混合 DPI",
+        "降档策略"
+      ],
+      "ground_truth": "低对比度 9px 灰色小字会议纪要：讨论 OCR 像素预算、混合 DPI 坐标、本地模型降档，文字模糊应标注识别不确定。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-07-blurry.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-07-blurry.png",
+      "png_bytes": 13573,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1034.3,
+        "bytes": 13573,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "text-08-faq",
+      "category": "text",
+      "name": "常见问题列表",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "Ctrl+Q",
+        "快捷键",
+        "断点续传",
+        "黑屏"
+      ],
+      "recognizable_content": [
+        "Ctrl+Q 没有反应",
+        "断点续传",
+        "黑屏",
+        "DRM"
+      ],
+      "ground_truth": "FAQ：Ctrl+Q 无反应、本地模型下载慢、翻译格式乱、截图黑屏四个问题与解答。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/text-08-faq.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/text-08-faq.png",
+      "png_bytes": 30248,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1035.4,
+        "bytes": 30248,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-01-bar",
+      "category": "chart",
+      "name": "季度销售额柱状图",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "销售额",
+        "季度",
+        "柱状图"
+      ],
+      "recognizable_content": [
+        "2025 年各季度销售额",
+        "Q1",
+        "1580"
+      ],
+      "ground_truth": "柱状图：2025 年 Q1-Q4 销售额 820/1060/1340/1580 万元，逐季上升。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-01-bar.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-01-bar.png",
+      "png_bytes": 11962,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 989.2,
+        "bytes": 11962,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-02-line",
+      "category": "chart",
+      "name": "月度活跃用户折线图",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "活跃用户",
+        "月度",
+        "折线图"
+      ],
+      "recognizable_content": [
+        "月度活跃用户",
+        "国内",
+        "海外",
+        "11月"
+      ],
+      "ground_truth": "双折线：国内活跃用户 6-11 月 120→226 万，海外 40→92 万，国内增速更高。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-02-line.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-02-line.png",
+      "png_bytes": 17030,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1243.9,
+        "bytes": 17030,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-03-pie",
+      "category": "chart",
+      "name": "设备类型饼图",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "设备类型",
+        "占比",
+        "Windows"
+      ],
+      "recognizable_content": [
+        "用户设备类型占比",
+        "Windows",
+        "58%"
+      ],
+      "ground_truth": "饼图：Windows 58%、macOS 22%、Linux 12%、其他 8%。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-03-pie.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-03-pie.png",
+      "png_bytes": 19293,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1085.9,
+        "bytes": 19293,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-04-scatter",
+      "category": "chart",
+      "name": "满意度散点图",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "满意度",
+        "使用时长",
+        "散点图"
+      ],
+      "recognizable_content": [
+        "用户满意度与使用时长",
+        "满意度",
+        "小时"
+      ],
+      "ground_truth": "散点图：满意度随使用时长上升的正相关趋势。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-04-scatter.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-04-scatter.png",
+      "png_bytes": 10683,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1072.7,
+        "bytes": 10683,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-05-dashboard",
+      "category": "chart",
+      "name": "运维 KPI 仪表盘",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "任务数",
+        "平均时延",
+        "失败率"
+      ],
+      "recognizable_content": [
+        "今日任务数",
+        "12,846",
+        "平均时延",
+        "6.01 s",
+        "失败率"
+      ],
+      "ground_truth": "KPI 仪表盘 4 卡片：今日任务 12,846（+8.2%）、平均时延 6.01s（-12.4%）、失败率 0.42%、Token 8.6M。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-05-dashboard.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-05-dashboard.png",
+      "png_bytes": 17098,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1047.3,
+        "bytes": 17098,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-06-area",
+      "category": "chart",
+      "name": "请求量面积图",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "请求量",
+        "云端",
+        "本地",
+        "面积图"
+      ],
+      "recognizable_content": [
+        "云端与本地请求量对比",
+        "周一",
+        "周日"
+      ],
+      "ground_truth": "面积图：云端请求量高于本地，周末两边都上升。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-06-area.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-06-area.png",
+      "png_bytes": 14915,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1287.5,
+        "bytes": 14915,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-07-heatmap",
+      "category": "chart",
+      "name": "错误分布热力图（小图例）",
+      "difficulty": "hard",
+      "expect_uncertain": true,
+      "expected_query_terms": [
+        "错误分布",
+        "热力图",
+        "时段"
+      ],
+      "recognizable_content": [
+        "每小时错误分布",
+        "12",
+        "20"
+      ],
+      "ground_truth": "热力图：近 7 天按小时错误分布，12/16 点错误最多；图例与坐标字号很小，应标注不确定。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-07-heatmap.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-07-heatmap.png",
+      "png_bytes": 17645,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1172.5,
+        "bytes": 17645,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "chart-08-stacked",
+      "category": "chart",
+      "name": "请求构成堆叠柱状图",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "请求构成",
+        "云端",
+        "浏览器"
+      ],
+      "recognizable_content": [
+        "各端请求构成",
+        "云端",
+        "本地",
+        "浏览器"
+      ],
+      "ground_truth": "堆叠柱状图：周一至周五云端/本地/浏览器请求构成，云端占比最高。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/chart-08-stacked.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/chart-08-stacked.png",
+      "png_bytes": 10192,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1051.4,
+        "bytes": 10192,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-01-headphones",
+      "category": "product",
+      "name": "无线降噪耳机商品卡",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "降噪耳机",
+        "无线",
+        "价格"
+      ],
+      "recognizable_content": [
+        "无线降噪耳机 Pro",
+        "¥1,299",
+        "降噪",
+        "蓝牙"
+      ],
+      "ground_truth": "商品卡：无线降噪耳机 Pro，¥1299，主动降噪/40 小时续航/蓝牙 5.4，评分 4.8。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-01-headphones.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-01-headphones.png",
+      "png_bytes": 31383,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1083.7,
+        "bytes": 31383,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-02-keyboard",
+      "category": "product",
+      "name": "机械键盘商品卡",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "机械键盘",
+        "87 键",
+        "热插拔"
+      ],
+      "recognizable_content": [
+        "机械键盘 K8",
+        "¥499",
+        "热插拔",
+        "PBT"
+      ],
+      "ground_truth": "商品卡：机械键盘 K8 87 键，¥499，热插拔轴体/三模/PBT 键帽。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-02-keyboard.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-02-keyboard.png",
+      "png_bytes": 36921,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1128.9,
+        "bytes": 36921,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-03-band",
+      "category": "product",
+      "name": "智能手环商品卡",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "智能手环",
+        "血氧",
+        "续航"
+      ],
+      "recognizable_content": [
+        "智能手环 5",
+        "¥269",
+        "血氧",
+        "防水"
+      ],
+      "ground_truth": "商品卡：智能手环 5，¥269，血氧监测/14 天续航/50 米防水。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-03-band.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-03-band.png",
+      "png_bytes": 35735,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1039.4,
+        "bytes": 35735,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-04-coffee",
+      "category": "product",
+      "name": "便携咖啡机商品卡",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "便携咖啡机",
+        "胶囊",
+        "USB-C"
+      ],
+      "recognizable_content": [
+        "便携咖啡机 Mini",
+        "¥389",
+        "胶囊",
+        "USB-C"
+      ],
+      "ground_truth": "商品卡：便携咖啡机 Mini，¥389，兼容胶囊与咖啡粉、USB-C 供电。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-04-coffee.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-04-coffee.png",
+      "png_bytes": 35690,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1165.6,
+        "bytes": 35690,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-05-airfryer",
+      "category": "product",
+      "name": "空气炸锅商品卡",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "空气炸锅",
+        "4L",
+        "预设"
+      ],
+      "recognizable_content": [
+        "空气炸锅 4L",
+        "¥359",
+        "可视窗口",
+        "8 种预设"
+      ],
+      "ground_truth": "商品卡：空气炸锅 4L 家用，¥359，可视窗口/8 种预设/不粘涂层。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-05-airfryer.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-05-airfryer.png",
+      "png_bytes": 35915,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1069.7,
+        "bytes": 35915,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-06-lamp",
+      "category": "product",
+      "name": "护眼台灯商品卡",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "护眼台灯",
+        "无频闪",
+        "色温"
+      ],
+      "recognizable_content": [
+        "学习护眼台灯",
+        "¥199",
+        "无频闪",
+        "国 AA 级"
+      ],
+      "ground_truth": "商品卡：学习护眼台灯，¥199，无频闪/国 AA 照度/三档色温。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-06-lamp.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-06-lamp.png",
+      "png_bytes": 35452,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1044.1,
+        "bytes": 35452,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "product-07-fictional",
+      "category": "product",
+      "name": "虚构产品 Nebula X9（工程样机）",
+      "difficulty": "hard",
+      "expect_uncertain": true,
+      "expected_query_terms": [
+        "Nebula X9",
+        "智能音箱",
+        "工程样机"
+      ],
+      "recognizable_content": [
+        "Nebula X9",
+        "工程样机",
+        "NX9-2601",
+        "参数未公开"
+      ],
+      "ground_truth": "虚构产品卡：Nebula X9 智能音箱工程样机，价格待定、参数未公开；检索很可能无可靠来源，模型不应编造参数，应标注不确定。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/product-07-fictional.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/product-07-fictional.png",
+      "png_bytes": 43871,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1048.9,
+        "bytes": 43871,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-01-python",
+      "category": "code",
+      "name": "Python 二分查找代码",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "Python",
+        "二分查找",
+        "binary_search"
+      ],
+      "recognizable_content": [
+        "binary_search",
+        "def binary_search",
+        "while lo <= hi",
+        "print"
+      ],
+      "ground_truth": "Python 代码：二分查找实现，含 docstring、while 循环与 print 调用。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-01-python.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-01-python.png",
+      "png_bytes": 17618,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1043.6,
+        "bytes": 17618,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-02-javascript",
+      "category": "code",
+      "name": "JS 防抖函数代码",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "JavaScript",
+        "debounce",
+        "防抖"
+      ],
+      "recognizable_content": [
+        "const debounce",
+        "setTimeout",
+        "addEventListener"
+      ],
+      "ground_truth": "JavaScript 代码：debounce 防抖函数与 scroll 事件监听。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-02-javascript.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-02-javascript.png",
+      "png_bytes": 17665,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1101.6,
+        "bytes": 17665,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-03-terminal",
+      "category": "code",
+      "name": "终端测试输出",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "cargo test",
+        "测试通过",
+        "148 tests"
+      ],
+      "recognizable_content": [
+        "cargo test",
+        "148 tests",
+        "pnpm test",
+        "96 passed"
+      ],
+      "ground_truth": "终端输出：cargo test 148 项通过、pnpm test 96 项通过。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-03-terminal.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-03-terminal.png",
+      "png_bytes": 21213,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1048.4,
+        "bytes": 21213,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-04-json",
+      "category": "code",
+      "name": "JSON 配置片段",
+      "difficulty": "easy",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "JSON",
+        "config",
+        "maxTokens"
+      ],
+      "recognizable_content": [
+        "config.json",
+        "deepseek-flash",
+        "maxTokens",
+        "v1.2.3"
+      ],
+      "ground_truth": "JSON 配置：模型 translate/vision、limits、features 与版本 v1.2.3。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-04-json.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-04-json.png",
+      "png_bytes": 15018,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1073.2,
+        "bytes": 15018,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-05-diff",
+      "category": "code",
+      "name": "git diff 片段",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "git diff",
+        "Rust",
+        "translator"
+      ],
+      "recognizable_content": [
+        "git diff",
+        "translator.rs",
+        "TranslateRequest",
+        "prompt_engine"
+      ],
+      "ground_truth": "git diff：translator.rs 将占位实现替换为真实 translate 调用。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-05-diff.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-05-diff.png",
+      "png_bytes": 17174,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1241.3,
+        "bytes": 17174,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-06-sql",
+      "category": "code",
+      "name": "SQL 统计查询",
+      "difficulty": "medium",
+      "expect_uncertain": false,
+      "expected_query_terms": [
+        "SQL",
+        "GROUP BY",
+        "任务统计"
+      ],
+      "recognizable_content": [
+        "SELECT",
+        "COUNT(*)",
+        "GROUP BY",
+        "history.db"
+      ],
+      "ground_truth": "SQL：按 action 统计任务总数、平均耗时与失败数，近 7 天。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-06-sql.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-06-sql.png",
+      "png_bytes": 17825,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1384.5,
+        "bytes": 17825,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    },
+    {
+      "id": "code-07-minified",
+      "category": "code",
+      "name": "压缩混淆 JS（无上下文）",
+      "difficulty": "hard",
+      "expect_uncertain": true,
+      "expected_query_terms": [
+        "minified",
+        "JavaScript",
+        "webpack"
+      ],
+      "recognizable_content": [
+        "bundle.min.js",
+        "exports",
+        "define.amd"
+      ],
+      "ground_truth": "压缩混淆的 webpack UMD 打包代码，11px 小字；无上下文，识别与检索都应标注不确定。",
+      "html": ".verify/spikes/S-12-S-14/corpus/html/code-07-minified.html",
+      "png": ".verify/spikes/S-12-S-14/corpus/shots/code-07-minified.png",
+      "png_bytes": 28468,
+      "png_size": [
+        1000,
+        700
+      ],
+      "shot": {
+        "ok": true,
+        "elapsed_ms": 1193.4,
+        "bytes": 28468,
+        "png_size": [
+          1000,
+          700
+        ]
+      }
+    }
+  ]
+}

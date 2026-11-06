@@ -1,0 +1,520 @@
+{
+  "meta": {
+    "script": "bench_image_search.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-04T23:52:42.838068+08:00",
+    "mode": "MOCK_SELF_CHECK",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "a9b352ed45855cd872b72223b914f57bc711781e",
+    "prompt_file": "resources\\prompts\\image_search.md",
+    "prompt_sha256": "03a119edc880681f6612a049457f02eed39f6f4914e949b4de21593b643f3aad",
+    "thresholds_ms": {
+      "quick": 10000.0,
+      "deep": 25000.0
+    },
+    "labels": [
+      "MOCK_SELF_CHECK：数字来自本地 mock，仅验证框架，不得作为 S-06 DONE/FAILED 依据。"
+    ]
+  },
+  "config": {
+    "base_url_masked": "http://127.0.0.1:1/v1",
+    "model": "mock-vision",
+    "search_provider": "mock",
+    "lang": "zh-CN",
+    "modes": [
+      "quick",
+      "deep"
+    ],
+    "runs": 3,
+    "warmup": 0,
+    "timeout_sec": 60.0,
+    "image": {
+      "path": "docs\\images\\settings-ai.png",
+      "size_bytes": 80150,
+      "sha256": "b262ec151115171f3ea458bd5ef012189354d3d1bea75c449c323c73eb17528b",
+      "png_width": 980,
+      "png_height": 720,
+      "data_url_chars": 106890
+    },
+    "phases": "①视觉识别 ②生成检索词 ③Search ④摘要",
+    "prompt_derivation": "resources/prompts/image_search.md 正文按阶段拆分（阶段①识别+检索词；阶段④结论+来源）"
+  },
+  "modes": {
+    "quick": {
+      "threshold_ms": 10000.0,
+      "measured_runs": 3,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "total_ms": {
+        "count": 3,
+        "mean_ms": 124.54,
+        "p50_ms": 124.34,
+        "p95_ms": 127.28,
+        "max_ms": 127.61,
+        "min_ms": 121.66
+      },
+      "stages_ms": {
+        "vision": {
+          "count": 3,
+          "mean_ms": 50.0,
+          "p50_ms": 50.0,
+          "p95_ms": 50.0,
+          "max_ms": 50.0,
+          "min_ms": 50.0
+        },
+        "query_gen": {
+          "count": 3,
+          "mean_ms": 0.27,
+          "p50_ms": 0.12,
+          "p95_ms": 0.59,
+          "max_ms": 0.64,
+          "min_ms": 0.06
+        },
+        "search": {
+          "count": 3,
+          "mean_ms": 21.21,
+          "p50_ms": 21.54,
+          "p95_ms": 21.58,
+          "max_ms": 21.58,
+          "min_ms": 20.52
+        },
+        "summary": {
+          "count": 3,
+          "mean_ms": 50.0,
+          "p50_ms": 50.0,
+          "p95_ms": 50.0,
+          "max_ms": 50.0,
+          "min_ms": 50.0
+        }
+      },
+      "verdict": "DONE",
+      "records": [
+        {
+          "mode": "quick",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.643,
+              "queries": [
+                "截图问答工具 AI 服务设置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 21.58,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 124.34,
+          "stage_sum_ms": 122.22,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.055,
+              "queries": [
+                "截图问答工具 AI 服务设置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 20.52,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 121.66,
+          "stage_sum_ms": 120.58,
+          "warmup": false
+        },
+        {
+          "mode": "quick",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.115,
+              "queries": [
+                "截图问答工具 AI 服务设置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 21.54,
+              "provider": "mock",
+              "queries": 1,
+              "results": 1,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 127.61,
+          "stage_sum_ms": 121.66,
+          "warmup": false
+        }
+      ]
+    },
+    "deep": {
+      "threshold_ms": 25000.0,
+      "measured_runs": 3,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "total_ms": {
+        "count": 3,
+        "mean_ms": 144.91,
+        "p50_ms": 144.41,
+        "p95_ms": 146.25,
+        "max_ms": 146.46,
+        "min_ms": 143.87
+      },
+      "stages_ms": {
+        "vision": {
+          "count": 3,
+          "mean_ms": 50.0,
+          "p50_ms": 50.0,
+          "p95_ms": 50.0,
+          "max_ms": 50.0,
+          "min_ms": 50.0
+        },
+        "query_gen": {
+          "count": 3,
+          "mean_ms": 0.15,
+          "p50_ms": 0.18,
+          "p95_ms": 0.19,
+          "max_ms": 0.19,
+          "min_ms": 0.07
+        },
+        "search": {
+          "count": 3,
+          "mean_ms": 41.71,
+          "p50_ms": 41.74,
+          "p95_ms": 42.36,
+          "max_ms": 42.43,
+          "min_ms": 40.95
+        },
+        "summary": {
+          "count": 3,
+          "mean_ms": 50.0,
+          "p50_ms": 50.0,
+          "p95_ms": 50.0,
+          "max_ms": 50.0,
+          "min_ms": 50.0
+        }
+      },
+      "verdict": "DONE",
+      "records": [
+        {
+          "mode": "deep",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.073,
+              "queries": [
+                "截图问答工具 AI 服务设置",
+                "API Key 配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 40.95,
+              "provider": "mock",
+              "queries": 2,
+              "results": 2,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置",
+            "API Key 配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/5391acfc"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 143.87,
+          "stage_sum_ms": 141.02,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.189,
+              "queries": [
+                "截图问答工具 AI 服务设置",
+                "API Key 配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 41.74,
+              "provider": "mock",
+              "queries": 2,
+              "results": 2,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置",
+            "API Key 配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/5391acfc"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 144.41,
+          "stage_sum_ms": 141.93,
+          "warmup": false
+        },
+        {
+          "mode": "deep",
+          "mock": true,
+          "ok": true,
+          "stages": {
+            "vision": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            },
+            "query_gen": {
+              "ok": true,
+              "total_ms": 0.177,
+              "queries": [
+                "截图问答工具 AI 服务设置",
+                "API Key 配置"
+              ]
+            },
+            "search": {
+              "ok": true,
+              "total_ms": 42.43,
+              "provider": "mock",
+              "queries": 2,
+              "results": 2,
+              "detail": [
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "截图问答工具 AI 服务设置"
+                },
+                {
+                  "provider": "mock",
+                  "mock": true,
+                  "query": "API Key 配置"
+                }
+              ]
+            },
+            "summary": {
+              "ok": true,
+              "total_ms": 50.0,
+              "mock": true
+            }
+          },
+          "vision_output": "识别结果：\n- 文字：[MOCK] 设置页，含「AI 服务」「API Key」「模型」「语言」等字样。\n- 物体/界面：[MOCK] 应用设置窗口，左侧导航与右侧表单。\n- 图表：无。\n检索词：[MOCK] 截图问答工具 AI 服务设置、API Key 配置",
+          "queries": [
+            "截图问答工具 AI 服务设置",
+            "API Key 配置"
+          ],
+          "search_results": [
+            {
+              "title": "[MOCK] 关于「截图问答工具 AI 服务设置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/4841bf3c"
+            },
+            {
+              "title": "[MOCK] 关于「API Key 配置」的示例结果（不可信）",
+              "url": "https://example.invalid/mock-search/5391acfc"
+            }
+          ],
+          "summary_output": "结论：[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。\n来源：未检索到可靠来源（MOCK）",
+          "conclusion": "[MOCK] 这是基准确认用的假结论，不代表任何真实检索结果；真实测量需配置视觉模型与检索 Key。",
+          "sources": [
+            "未检索到可靠来源（MOCK）"
+          ],
+          "total_ms": 146.46,
+          "stage_sum_ms": 142.61,
+          "warmup": false
+        }
+      ]
+    }
+  }
+}

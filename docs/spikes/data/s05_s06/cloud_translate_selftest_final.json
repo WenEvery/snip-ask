@@ -1,0 +1,186 @@
+{
+  "meta": {
+    "script": "bench_translate.py",
+    "script_version": "1.0.0",
+    "generated_at": "2026-11-05T00:03:25.504536+08:00",
+    "mode": "MOCK_SELF_TEST",
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "cpu_count": 16,
+      "python": "3.11.3",
+      "hostname": "cake"
+    },
+    "repo_commit": "a9b352ed45855cd872b72223b914f57bc711781e",
+    "prompt_file": "resources\\prompts\\translate.md",
+    "prompt_sha256": "442e0582a5e39f33e4ad6d288e29d8b787bec67558a722f2f9f303c9b04f4f71",
+    "sample_len_chars": 200,
+    "threshold_ms": 1500.0,
+    "sample_text_sha256": "562b82965c08757a37c093fe64874ae082cf9748d4610f2295879f4ec6d76c86"
+  },
+  "config": {
+    "base_url_masked": "http://127.0.0.1:36234/v1/chat/completions",
+    "model": "mock-translate",
+    "stream": false,
+    "runs": 5,
+    "warmup": 1,
+    "timeout_sec": 60.0,
+    "target_lang": "en",
+    "source_lang": "zh-CHS",
+    "temperature": 0.0,
+    "prompt_chars": 762,
+    "extra_params": [],
+    "api_key_provided": true
+  },
+  "records": [
+    {
+      "run": "warmup-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 15.1,
+      "send_ms": 1.63,
+      "first_byte_ms": 72.52,
+      "total_ms": 72.6,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": true
+    },
+    {
+      "run": "run-1",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 0.34,
+      "send_ms": 0.21,
+      "first_byte_ms": 71.21,
+      "total_ms": 71.35,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": false
+    },
+    {
+      "run": "run-2",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 0.36,
+      "send_ms": 0.24,
+      "first_byte_ms": 71.4,
+      "total_ms": 71.5,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": false
+    },
+    {
+      "run": "run-3",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 12.86,
+      "send_ms": 0.53,
+      "first_byte_ms": 71.56,
+      "total_ms": 71.68,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": false
+    },
+    {
+      "run": "run-4",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 23.29,
+      "send_ms": 0.64,
+      "first_byte_ms": 71.13,
+      "total_ms": 71.29,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": false
+    },
+    {
+      "run": "run-5",
+      "ok": true,
+      "status": 200,
+      "reused_connection": false,
+      "connect_ms": 20.36,
+      "send_ms": 0.45,
+      "first_byte_ms": 70.89,
+      "total_ms": 71.38,
+      "first_token_ms": null,
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 80,
+        "total_tokens": 380
+      },
+      "output_chars": 56,
+      "output_sample": "MOCK TRANSLATION OUTPUT (NOT A REAL MODEL). 框选 AI 是一款屏幕取",
+      "output_sha256": "09c8aedfc1f10d21bfb30c09eba67ba65a2f44d4a9b7bac98218cf85297b3ab5",
+      "warmup": false
+    }
+  ],
+  "summary": {
+    "measured_runs": 5,
+    "failures": 0,
+    "failure_rate": 0.0,
+    "http_status_distribution": {
+      "200": 6
+    },
+    "total_ms": {
+      "count": 5,
+      "mean_ms": 71.44,
+      "p50_ms": 71.38,
+      "p95_ms": 71.64,
+      "max_ms": 71.68,
+      "min_ms": 71.29
+    },
+    "first_byte_ms": {
+      "count": 5,
+      "mean_ms": 71.24,
+      "p50_ms": 71.21,
+      "p95_ms": 71.53,
+      "max_ms": 71.56,
+      "min_ms": 70.89
+    },
+    "usage_total_tokens_all_runs": 1900,
+    "first_failure": null
+  },
+  "labels": [
+    "MOCK_SELF_TEST：以上数字来自脚本内置 mock 服务，仅证明基准框架可跑通，不得作为 S-05 DONE/FAILED 依据。"
+  ]
+}

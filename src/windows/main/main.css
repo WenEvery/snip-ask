@@ -1,0 +1,230 @@
+/* main 窗口壳：自绘顶栏 + 左侧导航 + 右侧内容 */
+
+.main-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--sa-color-bg);
+  color: var(--sa-color-text);
+  overflow: hidden;
+}
+
+/* ───────── 顶栏 ───────── */
+
+.main-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sa-space-3);
+  height: 44px;
+  padding: 0 var(--sa-space-2) 0 var(--sa-space-4);
+  flex: none;
+  background: var(--sa-color-surface);
+  border-bottom: 1px solid var(--sa-color-border);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.main-titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-2);
+  min-width: 0;
+}
+
+.main-titlebar__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--sa-radius-xs);
+  background: var(--sa-color-accent);
+  color: var(--sa-color-accent-contrast);
+  font-size: var(--sa-text-sm);
+  font-weight: 700;
+}
+
+.main-titlebar__title {
+  font-size: var(--sa-text-md);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.main-titlebar__badge {
+  padding: 1px 8px;
+  border: 1px solid var(--sa-color-border);
+  border-radius: 999px;
+  font-size: var(--sa-text-xs);
+  color: var(--sa-color-text-muted);
+  white-space: nowrap;
+}
+
+.main-titlebar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-1);
+  flex: none;
+}
+
+/* ───────── 主体 ───────── */
+
+.main-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.main-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-1);
+  width: 176px;
+  flex: none;
+  padding: var(--sa-space-3) var(--sa-space-2);
+  background: var(--sa-color-surface);
+  border-right: 1px solid var(--sa-color-border);
+}
+
+.main-nav__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--sa-radius-sm);
+  background: transparent;
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-text-md);
+  text-align: left;
+  transition:
+    background-color var(--sa-duration-fast) ease,
+    color var(--sa-duration-fast) ease;
+}
+
+.main-nav__item:hover {
+  background: var(--sa-color-surface-2);
+  color: var(--sa-color-text);
+}
+
+.main-nav__item--active {
+  background: var(--sa-color-selection);
+  border-color: var(--sa-color-accent);
+  color: var(--sa-color-accent);
+  font-weight: 600;
+}
+
+.main-nav__note {
+  margin-top: auto;
+  padding: var(--sa-space-2) 6px 0;
+  font-size: var(--sa-text-xs);
+  line-height: 1.6;
+  color: var(--sa-color-text-muted);
+  opacity: 0.8;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sa-space-5);
+}
+
+.main-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sa-space-3);
+  min-height: 240px;
+  color: var(--sa-color-text-muted);
+}
+
+.main-state__error {
+  max-width: 480px;
+  text-align: center;
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-danger);
+}
+
+/* ───────── 自绘窗口：八向缩放手柄（无系统标题栏） ───────── */
+
+.window-resize {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.window-resize__handle {
+  position: fixed;
+  pointer-events: auto;
+}
+
+.window-resize__handle--n {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 5px;
+  cursor: n-resize;
+}
+
+.window-resize__handle--s {
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 5px;
+  cursor: s-resize;
+}
+
+.window-resize__handle--e {
+  right: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 5px;
+  cursor: e-resize;
+}
+
+.window-resize__handle--w {
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 5px;
+  cursor: w-resize;
+}
+
+.window-resize__handle--ne {
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.window-resize__handle--nw {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.window-resize__handle--se {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+.window-resize__handle--sw {
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
+}
+
+/* 最大化时内容铺满，避免圆角/外边距残留 */
+.main-window.is-maximized {
+  border-radius: 0;
+}

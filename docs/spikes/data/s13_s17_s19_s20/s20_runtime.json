@@ -1,0 +1,210 @@
+{
+  "kind": "real-app-runtime",
+  "date": "2026-11-05T11:25:31.938Z",
+  "env": {
+    "os": "Windows 11 26200",
+    "cpu": "i7-12650H (10C16T)",
+    "ramGiB": 15.78,
+    "screens": "2560x1440@150% (0,0) + 1080x1920@100% (-1080,-470)",
+    "app": "src-tauri/target/debug/snip-ask.exe（applab 便携副本）",
+    "powershell": "Windows PowerShell 5.1（本机无 pwsh）",
+    "single_instance_plugin": "tauri-plugin-single-instance（第二次启动唤起已有实例并广播 tray:action{id:singleInstance}）"
+  },
+  "singleInstance": {
+    "runs": 10,
+    "passed": 10,
+    "avgExitMs": 2053
+  },
+  "singleInstanceRuns": [
+    {
+      "index": 1,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2023,
+      "pass": true
+    },
+    {
+      "index": 2,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2024,
+      "pass": true
+    },
+    {
+      "index": 3,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2141,
+      "pass": true
+    },
+    {
+      "index": 4,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2040,
+      "pass": true
+    },
+    {
+      "index": 5,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2085,
+      "pass": true
+    },
+    {
+      "index": 6,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2016,
+      "pass": true
+    },
+    {
+      "index": 7,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2001,
+      "pass": true
+    },
+    {
+      "index": 8,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2037,
+      "pass": true
+    },
+    {
+      "index": 9,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2092,
+      "pass": true
+    },
+    {
+      "index": 10,
+      "pidCount": 1,
+      "invokedMainWindow": true,
+      "singleInstanceEvents": 1,
+      "secondExitedMs": 2068,
+      "pass": true
+    }
+  ],
+  "tray": {
+    "hostFound": true,
+    "iconRegistered": true,
+    "iconUid": 2,
+    "nativeMenuVisible": false,
+    "limitation": "Win11 溢出区/前台激活限制：托盘图标向 Shell 注册成功（Shell_NotifyIconGetRect hr=S_OK），但原生 TrackPopupMenu 的 #32768 菜单窗口未出现，键盘/鼠标选择无法进行",
+    "trayActionsEquivalent": {
+      "capture": {
+        "note": "MENU_CAPTURE → do_capture_freeze（与 IPC capture_freeze 同一函数）",
+        "session": "4600e6c7-9481-4054-b22d-8edca428e4af",
+        "overlayReady": true
+      },
+      "settings": {
+        "note": "MENU_SETTINGS → show_main + tray:action{id:openSettings}",
+        "windowShowVerified": true
+      },
+      "rerunOnboarding": {
+        "note": "MENU_RERUN_ONBOARDING → show_main + tray:action{id:rerunOnboarding}（前端路由由 tray:action 驱动）"
+      },
+      "togglePause": {
+        "note": "MENU_TOGGLE_PAUSE → hotkeys::toggle_pause（与 togglePause 热键同一函数），见 pauseResume"
+      },
+      "quit": {
+        "note": "MENU_QUIT → lifecycle::shutdown + app.exit(0)（与 app_quit 同一路径），见 quitRelease"
+      }
+    }
+  },
+  "pauseResume": {
+    "runs": 3,
+    "passed": 3
+  },
+  "pauseResumeRuns": [
+    {
+      "index": 1,
+      "pausedCtrlQRegistrable": true,
+      "resumedWin32": 1409,
+      "pass": true
+    },
+    {
+      "index": 2,
+      "pausedCtrlQRegistrable": true,
+      "resumedWin32": 1409,
+      "pass": true
+    },
+    {
+      "index": 3,
+      "pausedCtrlQRegistrable": true,
+      "resumedWin32": 1409,
+      "pass": true
+    }
+  ],
+  "quitRelease": {
+    "runs": 5,
+    "passed": 5
+  },
+  "quitReleaseRuns": [
+    {
+      "index": 1,
+      "occupiedBeforeWin32": 1409,
+      "exited": true,
+      "registrableAfter": true,
+      "pass": true
+    },
+    {
+      "index": 2,
+      "occupiedBeforeWin32": 1409,
+      "exited": true,
+      "registrableAfter": true,
+      "pass": true
+    },
+    {
+      "index": 3,
+      "occupiedBeforeWin32": 1409,
+      "exited": true,
+      "registrableAfter": true,
+      "pass": true
+    },
+    {
+      "index": 4,
+      "occupiedBeforeWin32": 1409,
+      "exited": true,
+      "registrableAfter": true,
+      "pass": true
+    },
+    {
+      "index": 5,
+      "occupiedBeforeWin32": 1409,
+      "exited": true,
+      "registrableAfter": true,
+      "pass": true
+    }
+  ],
+  "cleanup": {
+    "finalPids": [],
+    "finalProbeCtrlQ": {
+      "spec": "Ctrl+Q",
+      "registered": true,
+      "win32Error": 0,
+      "released": {
+        "pid": 8140,
+        "win32Error": 203,
+        "probeOnly": true,
+        "unregisterUs": 2722,
+        "spec": "Ctrl+Q",
+        "phase": "released",
+        "ts": "2026-11-05T11:27:10.0492491+00:00",
+        "unregistered": true
+      }
+    }
+  }
+}

@@ -1,0 +1,750 @@
+﻿{
+    "spike":  "S-10",
+    "part":  "coldstart",
+    "generatedAt":  "2026-11-05T20:18:40.1507439+08:00",
+    "definition":  "冷启动 = Process.StartTime(UTC) → 日志「框选 AI 初始化完成」行内时间戳（tray+hotkey+hidden windows 创建之后）；release 为验收口径，debug(Vite dev) 仅对照；稳态=播种已完成引导的 config/onboarding，首次启动=空数据目录。",
+    "releaseSteady":  {
+                          "label":  "release",
+                          "exePath":  "D:\\game\\项目：框选ai\\src-tauri\\target\\release\\snip-ask.exe",
+                          "exeBytes":  7162880,
+                          "exeSha256":  "2B1DF43C90C144EB4954457A64B08B135F3979B0199457E5104E3E0C3F46AEE3",
+                          "seed":  {
+                                       "from":  ".verify/applab/app/data",
+                                       "applied":  true,
+                                       "files":  [
+                                                     "config.json",
+                                                     "onboarding.json"
+                                                 ]
+                                   },
+                          "environment":  {
+                                              "host":  "CAKE",
+                                              "osCaption":  "Microsoft Windows 11 Pro",
+                                              "osBuild":  "26200",
+                                              "cpu":  "12th Gen Intel(R) Core(TM) i7-12650H",
+                                              "logicalProcessors":  16,
+                                              "ramGiB":  15.78,
+                                              "powerPlan":  null,
+                                              "systemBaseline":  {
+                                                                     "timestamp":  "2026-11-05T19:43:40.6187390+08:00",
+                                                                     "cpuPercentTotal":  11.14,
+                                                                     "availableMemoryMiB":  8164.4,
+                                                                     "logicalProcessors":  16
+                                                                 },
+                                              "ctrlQBaseline":  {
+                                                                    "registered":  true,
+                                                                    "ownedByOther":  false,
+                                                                    "win32Error":  0,
+                                                                    "note":  "Ctrl+Q 当前空闲（探测后已注销）"
+                                                                }
+                                          },
+                          "runs":  10,
+                          "validRuns":  10,
+                          "timeToReadyMs":  {
+                                                "p50":  787.2,
+                                                "p95":  858.3,
+                                                "max":  876.8,
+                                                "min":  763.5,
+                                                "all":  [
+                                                            763.5,
+                                                            769.1,
+                                                            770,
+                                                            774.4,
+                                                            780,
+                                                            794.4,
+                                                            805.6,
+                                                            823.7,
+                                                            835.7,
+                                                            876.8
+                                                        ]
+                                            },
+                          "thresholdMs":  1500,
+                          "pass":  true,
+                          "perRun":  [
+                                         {
+                                             "index":  1,
+                                             "pid":  16128,
+                                             "processStartUtc":  "2026-11-05T11:43:42.8099512Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:43:43.6867310Z",
+                                             "timeToReadyMs":  876.8,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.49,
+                                                                         "privateWorkingSet":  10.15,
+                                                                         "treeWorkingSet":  443.5,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  2,
+                                             "pid":  15312,
+                                             "processStartUtc":  "2026-11-05T11:43:47.4733157Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:43:48.2423850Z",
+                                             "timeToReadyMs":  769.1,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.49,
+                                                                         "privateWorkingSet":  10.18,
+                                                                         "treeWorkingSet":  444.9,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  3,
+                                             "pid":  23076,
+                                             "processStartUtc":  "2026-11-05T11:43:51.9204804Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:43:52.6948660Z",
+                                             "timeToReadyMs":  774.4,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  34.58,
+                                                                         "privateWorkingSet":  10.07,
+                                                                         "treeWorkingSet":  445.1,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  4,
+                                             "pid":  19260,
+                                             "processStartUtc":  "2026-11-05T11:43:56.3714961Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:43:57.2071880Z",
+                                             "timeToReadyMs":  835.7,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.57,
+                                                                         "privateWorkingSet":  10.25,
+                                                                         "treeWorkingSet":  442.6,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  5,
+                                             "pid":  15664,
+                                             "processStartUtc":  "2026-11-05T11:44:00.8534728Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:01.6590570Z",
+                                             "timeToReadyMs":  805.6,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.45,
+                                                                         "privateWorkingSet":  10.12,
+                                                                         "treeWorkingSet":  442.5,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  6,
+                                             "pid":  21568,
+                                             "processStartUtc":  "2026-11-05T11:44:05.3224661Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:06.1024710Z",
+                                             "timeToReadyMs":  780,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.57,
+                                                                         "privateWorkingSet":  10.13,
+                                                                         "treeWorkingSet":  447.4,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  7,
+                                             "pid":  11196,
+                                             "processStartUtc":  "2026-11-05T11:44:09.7477869Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:10.5112990Z",
+                                             "timeToReadyMs":  763.5,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.57,
+                                                                         "privateWorkingSet":  10.24,
+                                                                         "treeWorkingSet":  445,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  8,
+                                             "pid":  14884,
+                                             "processStartUtc":  "2026-11-05T11:44:14.1637150Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:14.9337260Z",
+                                             "timeToReadyMs":  770,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.59,
+                                                                         "privateWorkingSet":  10.16,
+                                                                         "treeWorkingSet":  445.3,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  9,
+                                             "pid":  22620,
+                                             "processStartUtc":  "2026-11-05T11:44:18.5800952Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:19.3744530Z",
+                                             "timeToReadyMs":  794.4,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  36.8,
+                                                                         "privateWorkingSet":  10.37,
+                                                                         "treeWorkingSet":  445.7,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  10,
+                                             "pid":  5220,
+                                             "processStartUtc":  "2026-11-05T11:44:23.0279750Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:44:23.8516280Z",
+                                             "timeToReadyMs":  823.7,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  34.68,
+                                                                         "privateWorkingSet":  10.28,
+                                                                         "treeWorkingSet":  441.5,
+                                                                         "childCount":  7
+                                                                     },
+                                             "stopped":  true
+                                         }
+                                     ]
+                      },
+    "releaseFirstRun":  {
+                            "label":  "release-fr",
+                            "exePath":  "D:\\game\\项目：框选ai\\src-tauri\\target\\release\\snip-ask.exe",
+                            "exeBytes":  7162880,
+                            "exeSha256":  "2B1DF43C90C144EB4954457A64B08B135F3979B0199457E5104E3E0C3F46AEE3",
+                            "seed":  {
+                                         "from":  "",
+                                         "applied":  false,
+                                         "files":  [
+
+                                                   ]
+                                     },
+                            "environment":  {
+                                                "host":  "CAKE",
+                                                "osCaption":  "Microsoft Windows 11 Pro",
+                                                "osBuild":  "26200",
+                                                "cpu":  "12th Gen Intel(R) Core(TM) i7-12650H",
+                                                "logicalProcessors":  16,
+                                                "ramGiB":  15.78,
+                                                "powerPlan":  null,
+                                                "systemBaseline":  {
+                                                                       "timestamp":  "2026-11-05T19:44:33.4355651+08:00",
+                                                                       "cpuPercentTotal":  12.47,
+                                                                       "availableMemoryMiB":  8177.2,
+                                                                       "logicalProcessors":  16
+                                                                   },
+                                                "ctrlQBaseline":  {
+                                                                      "registered":  true,
+                                                                      "ownedByOther":  false,
+                                                                      "win32Error":  0,
+                                                                      "note":  "Ctrl+Q 当前空闲（探测后已注销）"
+                                                                  }
+                                            },
+                            "runs":  3,
+                            "validRuns":  3,
+                            "timeToReadyMs":  {
+                                                  "p50":  808.8,
+                                                  "p95":  1106.2,
+                                                  "max":  1139.3,
+                                                  "min":  791.4,
+                                                  "all":  [
+                                                              791.4,
+                                                              808.8,
+                                                              1139.3
+                                                          ]
+                                              },
+                            "thresholdMs":  1500,
+                            "pass":  true,
+                            "perRun":  [
+                                           {
+                                               "index":  1,
+                                               "pid":  12992,
+                                               "processStartUtc":  "2026-11-05T11:44:35.5552543Z",
+                                               "readyDetected":  true,
+                                               "readyAtUtc":  "2026-11-05T11:44:36.6945720Z",
+                                               "timeToReadyMs":  1139.3,
+                                               "setupWarnings":  [
+
+                                                                 ],
+                                               "livePollDetected":  true,
+                                               "ctrlQOwnedByApp":  {
+                                                                       "registered":  false,
+                                                                       "ownedByOther":  true,
+                                                                       "win32Error":  1409,
+                                                                       "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                   },
+                                               "memoryAfterReadyMiB":  {
+                                                                           "workingSet":  40.63,
+                                                                           "privateWorkingSet":  10.31,
+                                                                           "treeWorkingSet":  446.1,
+                                                                           "childCount":  7
+                                                                       },
+                                               "stopped":  true
+                                           },
+                                           {
+                                               "index":  2,
+                                               "pid":  26164,
+                                               "processStartUtc":  "2026-11-05T11:44:40.4902754Z",
+                                               "readyDetected":  true,
+                                               "readyAtUtc":  "2026-11-05T11:44:41.2990840Z",
+                                               "timeToReadyMs":  808.8,
+                                               "setupWarnings":  [
+
+                                                                 ],
+                                               "livePollDetected":  true,
+                                               "ctrlQOwnedByApp":  {
+                                                                       "registered":  false,
+                                                                       "ownedByOther":  true,
+                                                                       "win32Error":  1409,
+                                                                       "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                   },
+                                               "memoryAfterReadyMiB":  {
+                                                                           "workingSet":  36.58,
+                                                                           "privateWorkingSet":  10.23,
+                                                                           "treeWorkingSet":  441.1,
+                                                                           "childCount":  7
+                                                                       },
+                                               "stopped":  true
+                                           },
+                                           {
+                                               "index":  3,
+                                               "pid":  3656,
+                                               "processStartUtc":  "2026-11-05T11:44:44.9404984Z",
+                                               "readyDetected":  true,
+                                               "readyAtUtc":  "2026-11-05T11:44:45.7318620Z",
+                                               "timeToReadyMs":  791.4,
+                                               "setupWarnings":  [
+
+                                                                 ],
+                                               "livePollDetected":  true,
+                                               "ctrlQOwnedByApp":  {
+                                                                       "registered":  false,
+                                                                       "ownedByOther":  true,
+                                                                       "win32Error":  1409,
+                                                                       "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                   },
+                                               "memoryAfterReadyMiB":  {
+                                                                           "workingSet":  36.57,
+                                                                           "privateWorkingSet":  10.22,
+                                                                           "treeWorkingSet":  439.1,
+                                                                           "childCount":  7
+                                                                       },
+                                               "stopped":  true
+                                           }
+                                       ]
+                        },
+    "debugContrast":  {
+                          "label":  "debug",
+                          "exePath":  "D:\\game\\项目：框选ai\\src-tauri\\target\\debug\\snip-ask.exe",
+                          "exeBytes":  25534976,
+                          "exeSha256":  "AD411CE5EF1FAEEDE08A75B30AED433E3549222ACDBBAA68E8DB6C9503DD132F",
+                          "seed":  {
+                                       "from":  ".verify/applab/app/data",
+                                       "applied":  true,
+                                       "files":  [
+                                                     "config.json",
+                                                     "onboarding.json"
+                                                 ]
+                                   },
+                          "environment":  {
+                                              "host":  "CAKE",
+                                              "osCaption":  "Microsoft Windows 11 Pro",
+                                              "osBuild":  "26200",
+                                              "cpu":  "12th Gen Intel(R) Core(TM) i7-12650H",
+                                              "logicalProcessors":  16,
+                                              "ramGiB":  15.78,
+                                              "powerPlan":  null,
+                                              "systemBaseline":  {
+                                                                     "timestamp":  "2026-11-05T19:45:06.1041153+08:00",
+                                                                     "cpuPercentTotal":  10.23,
+                                                                     "availableMemoryMiB":  8155.8,
+                                                                     "logicalProcessors":  16
+                                                                 },
+                                              "ctrlQBaseline":  {
+                                                                    "registered":  true,
+                                                                    "ownedByOther":  false,
+                                                                    "win32Error":  0,
+                                                                    "note":  "Ctrl+Q 当前空闲（探测后已注销）"
+                                                                }
+                                          },
+                          "runs":  10,
+                          "validRuns":  10,
+                          "timeToReadyMs":  {
+                                                "p50":  1081.3,
+                                                "p95":  1506,
+                                                "max":  1812,
+                                                "min":  1067.2,
+                                                "all":  [
+                                                            1067.2,
+                                                            1070.8,
+                                                            1076.3,
+                                                            1078.4,
+                                                            1079,
+                                                            1083.6,
+                                                            1085.1,
+                                                            1122.7,
+                                                            1132,
+                                                            1812
+                                                        ]
+                                            },
+                          "thresholdMs":  1500,
+                          "pass":  false,
+                          "perRun":  [
+                                         {
+                                             "index":  1,
+                                             "pid":  26416,
+                                             "processStartUtc":  "2026-11-05T11:45:09.0773173Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:10.8893310Z",
+                                             "timeToReadyMs":  1812,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  46,
+                                                                         "privateWorkingSet":  10.62,
+                                                                         "treeWorkingSet":  577.6,
+                                                                         "childCount":  12
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  2,
+                                             "pid":  22304,
+                                             "processStartUtc":  "2026-11-05T11:45:14.7766973Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:15.8993630Z",
+                                             "timeToReadyMs":  1122.7,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.2,
+                                                                         "privateWorkingSet":  10.49,
+                                                                         "treeWorkingSet":  506.6,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  3,
+                                             "pid":  18492,
+                                             "processStartUtc":  "2026-11-05T11:45:19.5858173Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:20.6529850Z",
+                                             "timeToReadyMs":  1067.2,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.45,
+                                                                         "privateWorkingSet":  10.62,
+                                                                         "treeWorkingSet":  505.8,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  4,
+                                             "pid":  6996,
+                                             "processStartUtc":  "2026-11-05T11:45:24.3035155Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:25.4354840Z",
+                                             "timeToReadyMs":  1132,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  43.16,
+                                                                         "privateWorkingSet":  10.34,
+                                                                         "treeWorkingSet":  504.8,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  5,
+                                             "pid":  26912,
+                                             "processStartUtc":  "2026-11-05T11:45:29.0864325Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:30.1654360Z",
+                                             "timeToReadyMs":  1079,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.17,
+                                                                         "privateWorkingSet":  10.43,
+                                                                         "treeWorkingSet":  509.3,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  6,
+                                             "pid":  15288,
+                                             "processStartUtc":  "2026-11-05T11:45:33.8076789Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:34.8912590Z",
+                                             "timeToReadyMs":  1083.6,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.35,
+                                                                         "privateWorkingSet":  10.54,
+                                                                         "treeWorkingSet":  507.9,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  7,
+                                             "pid":  27412,
+                                             "processStartUtc":  "2026-11-05T11:45:38.5681818Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:39.6444480Z",
+                                             "timeToReadyMs":  1076.3,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.42,
+                                                                         "privateWorkingSet":  10.59,
+                                                                         "treeWorkingSet":  510.4,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  8,
+                                             "pid":  12868,
+                                             "processStartUtc":  "2026-11-05T11:45:43.3157623Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:44.4008510Z",
+                                             "timeToReadyMs":  1085.1,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  43.32,
+                                                                         "privateWorkingSet":  10.45,
+                                                                         "treeWorkingSet":  508.8,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  9,
+                                             "pid":  18964,
+                                             "processStartUtc":  "2026-11-05T11:45:48.0990308Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:49.1774250Z",
+                                             "timeToReadyMs":  1078.4,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  45.33,
+                                                                         "privateWorkingSet":  10.52,
+                                                                         "treeWorkingSet":  508.6,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         },
+                                         {
+                                             "index":  10,
+                                             "pid":  2188,
+                                             "processStartUtc":  "2026-11-05T11:45:52.8708989Z",
+                                             "readyDetected":  true,
+                                             "readyAtUtc":  "2026-11-05T11:45:53.9416980Z",
+                                             "timeToReadyMs":  1070.8,
+                                             "setupWarnings":  [
+
+                                                               ],
+                                             "livePollDetected":  true,
+                                             "ctrlQOwnedByApp":  {
+                                                                     "registered":  false,
+                                                                     "ownedByOther":  true,
+                                                                     "win32Error":  1409,
+                                                                     "note":  "Ctrl+Q 已被占用（1409 = 已被注册，通常为被测应用）"
+                                                                 },
+                                             "memoryAfterReadyMiB":  {
+                                                                         "workingSet":  43.31,
+                                                                         "privateWorkingSet":  10.41,
+                                                                         "treeWorkingSet":  506.8,
+                                                                         "childCount":  8
+                                                                     },
+                                             "stopped":  true
+                                         }
+                                     ]
+                      }
+}

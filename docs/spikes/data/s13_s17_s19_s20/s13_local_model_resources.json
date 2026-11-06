@@ -1,0 +1,260 @@
+{
+  "kind": "local-model-resource-recheck + job-object-low-memory-simulation",
+  "date": "2026-11-05T11:12:44.657Z",
+  "env": {
+    "os": "Windows 11 26200",
+    "cpu": "i7-12650H (10C16T)",
+    "ram": {
+      "totalMB": 16160,
+      "freeMB": 9626,
+      "os": "Microsoft Windows 11 Pro",
+      "cs": "P15 24"
+    },
+    "gpu": "RTX 4060 Laptop（未使用：llama.cpp -ngl 0 纯 CPU）",
+    "llamaServer": {
+      "path": "C:\\Users\\zhang\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe",
+      "version": "LM Studio 内置 llama.cpp avx2 2.28.2（同 S-05）",
+      "args": "-c 4096 -t 16 --host 127.0.0.1 -ngl 0 --no-webui"
+    },
+    "modelsDir": "D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts"
+  },
+  "baseline": [
+    {
+      "tier": "极小档（Qwen2.5-0.5B Q4）",
+      "id": "qwen2.5-0.5b-instruct-q4",
+      "fileMB": 469,
+      "loadMs": 1958,
+      "workingSetMB": 520.8,
+      "privateMB": 224.6,
+      "peakWorkingSetMB": 520.8,
+      "loaded": true
+    },
+    {
+      "tier": "1.5B 候选（Qwen2.5-1.5B Q4）",
+      "id": "qwen2.5-1.5b-instruct-q4",
+      "fileMB": 1066,
+      "loadMs": 3393,
+      "workingSetMB": 1715.3,
+      "privateMB": 898,
+      "peakWorkingSetMB": 1715.3,
+      "loaded": true
+    },
+    {
+      "tier": "普通档（HY-MT1.5-1.8B Q4）",
+      "id": "hy-mt-1.8b-q4",
+      "fileMB": 1081,
+      "loadMs": 5684,
+      "workingSetMB": 2102.4,
+      "privateMB": 1134.6,
+      "peakWorkingSetMB": 2102.4,
+      "loaded": true
+    }
+  ],
+  "jobScenarios": [
+    {
+      "name": "1.8B + 6GB 上限（8GB 机型宽松场景）",
+      "limitMB": 6144,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 9853,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.037.819 W srv  llama_server: -----------------",
+        "0.00.074.269 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'",
+        "0.01.012.708 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect",
+        "0.05.249.100 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.05.264.852 I srv  llama_server: model loaded",
+        "0.05.264.872 I srv  llama_server: listening on http://127.0.0.1:39290"
+      ],
+      "pass": true
+    },
+    {
+      "name": "1.8B + 8GB 上限（16GB 机型下限场景）",
+      "limitMB": 8192,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 8063,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.014.555 W srv  llama_server: -----------------",
+        "0.00.030.010 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'",
+        "0.01.011.508 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect",
+        "0.03.821.041 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.03.830.081 I srv  llama_server: model loaded",
+        "0.03.830.101 I srv  llama_server: listening on http://127.0.0.1:39291"
+      ],
+      "pass": true
+    },
+    {
+      "name": "1.8B + 2.5GB 上限（8GB 机型被其它应用占用）",
+      "limitMB": 2560,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 18626,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.013.777 W srv  llama_server: -----------------",
+        "0.00.022.140 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'",
+        "0.01.169.240 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect",
+        "0.13.685.134 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.13.693.658 I srv  llama_server: model loaded",
+        "0.13.693.665 I srv  llama_server: listening on http://127.0.0.1:39292"
+      ],
+      "pass": true
+    },
+    {
+      "name": "1.8B + 1.5GB 上限（内存严重不足）",
+      "limitMB": 1536,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 12507,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.008.761 W srv  llama_server: -----------------",
+        "0.00.024.643 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'",
+        "0.01.137.867 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect",
+        "0.08.135.933 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.08.142.760 I srv  llama_server: model loaded",
+        "0.08.142.768 I srv  llama_server: listening on http://127.0.0.1:39293"
+      ],
+      "pass": false
+    },
+    {
+      "name": "1.8B + 1.0GB 上限（内存不足，必失败）",
+      "limitMB": 1024,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 9713,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.012.246 W srv  llama_server: -----------------",
+        "0.00.016.412 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\HY-MT1.5-1.8B-Q4_K_M.gguf'",
+        "0.00.941.158 W load: special_eos_id is not in special_eog_ids - the tokenizer config may be incorrect",
+        "0.05.671.713 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.05.677.975 I srv  llama_server: model loaded",
+        "0.05.677.983 I srv  llama_server: listening on http://127.0.0.1:39294"
+      ],
+      "pass": false
+    },
+    {
+      "name": "0.5B + 512MB 上限（极小档内存不足）",
+      "limitMB": 512,
+      "loaded": true,
+      "exitCode": null,
+      "wallMs": 4226,
+      "behavior": "区间内正常加载",
+      "stderrTail": [
+        "0.00.007.740 W srv  llama_server: -----------------",
+        "0.00.022.917 I srv    load_model: loading model 'D:\\game\\项目：框选ai\\.verify\\spikes\\S-05-S-06\\artifacts\\qwen2.5-0.5b-instruct-q4_k_m.gguf'",
+        "0.00.595.064 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden",
+        "0.00.906.052 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'true'",
+        "0.00.915.617 I srv  llama_server: model loaded",
+        "0.00.915.625 I srv  llama_server: listening on http://127.0.0.1:39295"
+      ],
+      "pass": false
+    }
+  ],
+  "downgradeTable": [
+    {
+      "machine": "8GB 机型（模拟）",
+      "totalMB": 8192,
+      "budgetMB": 4096,
+      "recommendations": [
+        {
+          "id": "hy-mt-1.8b-q4",
+          "minRamMB": 4096,
+          "allowed": true,
+          "action": "允许但提示内存偏紧"
+        },
+        {
+          "id": "qwen3-4b-q4",
+          "minRamMB": 8192,
+          "allowed": false,
+          "action": "降档/禁止"
+        },
+        {
+          "id": "qwen2.5-0.5b-instruct-q4",
+          "minRamMB": 1024,
+          "allowed": true,
+          "action": "允许"
+        }
+      ]
+    },
+    {
+      "machine": "16GB 机型（本机 15.78GiB）",
+      "totalMB": 16144,
+      "budgetMB": 8072,
+      "recommendations": [
+        {
+          "id": "hy-mt-1.8b-q4",
+          "minRamMB": 4096,
+          "allowed": true,
+          "action": "允许"
+        },
+        {
+          "id": "qwen3-4b-q4",
+          "minRamMB": 8192,
+          "allowed": false,
+          "action": "降档/禁止"
+        },
+        {
+          "id": "qwen2.5-0.5b-instruct-q4",
+          "minRamMB": 1024,
+          "allowed": true,
+          "action": "允许"
+        }
+      ]
+    }
+  ],
+  "frontend": {
+    "deviceMemoryRead": false,
+    "minRamCheckedInFrontend": true,
+    "downloadListShowsStaticMinRam": true,
+    "libraryShowsStaticMinRam": true,
+    "grepHits": [
+      {
+        "file": "src\\windows\\main\\settings\\components\\ModelLibrary.tsx",
+        "needle": "minRamMB"
+      },
+      {
+        "file": "src\\windows\\main\\onboarding\\components\\ModelDownloadList.tsx",
+        "needle": "minRamMB"
+      },
+      {
+        "file": "src\\shared\\ipc\\mockData.ts",
+        "needle": "minRamMB"
+      },
+      {
+        "file": "src\\shared\\contract\\types.ts",
+        "needle": "minRamMB"
+      }
+    ]
+  },
+  "leftovers": {
+    "llamaServer": 0,
+    "snipAsk": 0
+  },
+  "frontendEvidence": {
+    "deviceMemory": 8,
+    "note": "WebView2/Chromium navigator.deviceMemory 本机 16GB 报 8（上限 8；8GB 机型会报 4），前端未读取该信号",
+    "settingsModelRows": [
+      {
+        "title": "HY-MT1.5-1.8B（Q4_K_M）\nhy-mt-1.8b-q4\n排队中",
+        "meta": "1.1 GB · 需内存 4096 MB · 许可 Tencent Hunyuan Community License · gguf"
+      },
+      {
+        "title": "Qwen3-4B（Q4_K_M）\nqwen3-4b-q4\n排队中",
+        "meta": "2.3 GB · 需内存 8192 MB · 许可 Apache-2.0 · gguf"
+      },
+      {
+        "title": "Qwen2.5-0.5B-Instruct（Q4_K_M，极小模型）\nqwen2.5-0.5b-instruct-q4\n排队中",
+        "meta": "469 MB · 需内存 1024 MB · 许可 Apache-2.0 · gguf"
+      }
+    ],
+    "screenshots": [
+      "shots/s13/01-settings-translate-model-library.png",
+      "shots/s13/02-settings-model-library.png",
+      "shots/s19/step3-选择翻译方式.png"
+    ]
+  }
+}

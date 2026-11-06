@@ -1,0 +1,481 @@
+/*
+ * 基础 UI 组件样式（全部基于 tokens.css 的 CSS 变量，无第三方 UI 库）。
+ * 由 components/ui/index.ts 统一 import，组件使用方无需再引入。
+ */
+
+/* ───────── Button ───────── */
+
+.sa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--sa-radius-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition:
+    background-color var(--sa-duration-fast) ease,
+    border-color var(--sa-duration-fast) ease,
+    color var(--sa-duration-fast) ease;
+}
+
+.sa-btn--sm {
+  min-height: 26px;
+  padding: 3px 10px;
+  font-size: var(--sa-text-sm);
+}
+
+.sa-btn--md {
+  min-height: 32px;
+  padding: 6px 14px;
+  font-size: var(--sa-text-md);
+}
+
+.sa-btn--primary {
+  background: var(--sa-color-accent);
+  color: var(--sa-color-accent-contrast);
+}
+
+.sa-btn--primary:hover:not(:disabled) {
+  background: var(--sa-color-accent-hover);
+}
+
+.sa-btn--secondary {
+  background: var(--sa-color-surface-2);
+  border-color: var(--sa-color-border);
+  color: var(--sa-color-text);
+}
+
+.sa-btn--secondary:hover:not(:disabled) {
+  background: var(--sa-color-surface-3);
+}
+
+.sa-btn--ghost {
+  background: transparent;
+  color: var(--sa-color-text-muted);
+}
+
+.sa-btn--ghost:hover:not(:disabled) {
+  background: var(--sa-color-surface-2);
+  color: var(--sa-color-text);
+}
+
+.sa-btn--danger {
+  background: var(--sa-color-danger);
+  color: var(--sa-color-text-inverse);
+}
+
+.sa-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.sa-btn:disabled {
+  opacity: 0.5;
+}
+
+/* ───────── TextField / Select ───────── */
+
+.sa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sa-field__label {
+  font-size: var(--sa-text-sm);
+  font-weight: 500;
+  color: var(--sa-color-text-muted);
+}
+
+.sa-field__input,
+.sa-field__select {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  background: var(--sa-color-surface);
+  border: 1px solid var(--sa-color-border);
+  border-radius: var(--sa-radius-sm);
+  color: var(--sa-color-text);
+  transition:
+    border-color var(--sa-duration-fast) ease,
+    box-shadow var(--sa-duration-fast) ease;
+}
+
+.sa-field__input::placeholder {
+  color: var(--sa-color-text-muted);
+  opacity: 0.7;
+}
+
+.sa-field__input:hover:not(:disabled),
+.sa-field__select:hover:not(:disabled) {
+  border-color: var(--sa-color-border-strong);
+}
+
+.sa-field__input:focus,
+.sa-field__select:focus {
+  outline: none;
+  border-color: var(--sa-color-accent);
+  box-shadow: 0 0 0 2px var(--sa-color-selection);
+}
+
+.sa-field__input:disabled,
+.sa-field__select:disabled {
+  opacity: 0.55;
+  background: var(--sa-color-surface-2);
+}
+
+.sa-field__input--mono {
+  font-family: var(--sa-font-mono);
+  font-size: var(--sa-text-sm);
+}
+
+.sa-field__select {
+  appearance: none;
+  padding-right: 28px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--sa-color-text-muted) 50%),
+    linear-gradient(135deg, var(--sa-color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 15px) calc(50% + 1px),
+    calc(100% - 10px) calc(50% + 1px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+.sa-field--error .sa-field__input,
+.sa-field--error .sa-field__select {
+  border-color: var(--sa-color-danger);
+}
+
+.sa-field__hint {
+  font-size: var(--sa-text-xs);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-field__error {
+  font-size: var(--sa-text-xs);
+  color: var(--sa-color-danger);
+}
+
+/* ───────── Switch ───────── */
+
+.sa-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sa-switch__input {
+  flex: none;
+  appearance: none;
+  width: 38px;
+  height: 22px;
+  margin: 1px 0 0;
+  border: 1px solid var(--sa-color-border);
+  border-radius: 999px;
+  background: var(--sa-color-surface-3);
+  position: relative;
+  cursor: pointer;
+  transition:
+    background-color var(--sa-duration-fast) ease,
+    border-color var(--sa-duration-fast) ease;
+}
+
+.sa-switch__input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sa-color-surface);
+  box-shadow: var(--sa-shadow-sm);
+  transition: transform var(--sa-duration-fast) ease;
+}
+
+.sa-switch__input:checked {
+  background: var(--sa-color-accent);
+  border-color: var(--sa-color-accent);
+}
+
+.sa-switch__input:checked::after {
+  transform: translateX(16px);
+}
+
+.sa-switch__input:disabled {
+  opacity: 0.5;
+}
+
+.sa-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sa-switch__label {
+  font-size: var(--sa-text-md);
+  cursor: pointer;
+}
+
+.sa-switch__desc {
+  font-size: var(--sa-text-xs);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-switch--disabled .sa-switch__label {
+  cursor: not-allowed;
+}
+
+/* ───────── Card ───────── */
+
+.sa-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-3);
+  padding: var(--sa-space-4);
+  background: var(--sa-color-surface);
+  border: 1px solid var(--sa-color-border);
+  border-radius: var(--sa-radius-lg);
+  box-shadow: var(--sa-shadow-sm);
+}
+
+.sa-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sa-space-3);
+}
+
+.sa-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sa-card__title {
+  font-size: var(--sa-text-lg);
+  font-weight: 600;
+}
+
+.sa-card__description {
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sa-space-3);
+}
+
+.sa-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-2);
+  flex: none;
+}
+
+/* ───────── Tabs ───────── */
+
+.sa-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--sa-color-surface-2);
+  border-radius: var(--sa-radius-sm);
+}
+
+.sa-tabs__item {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: var(--sa-radius-xs);
+  font-size: var(--sa-text-sm);
+  color: var(--sa-color-text-muted);
+  transition:
+    background-color var(--sa-duration-fast) ease,
+    color var(--sa-duration-fast) ease;
+}
+
+.sa-tabs__item:hover {
+  color: var(--sa-color-text);
+}
+
+.sa-tabs__item--active {
+  background: var(--sa-color-surface);
+  color: var(--sa-color-text);
+  font-weight: 600;
+  box-shadow: var(--sa-shadow-sm);
+}
+
+/* ───────── Kbd ───────── */
+
+.sa-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 1px 5px;
+  font-size: var(--sa-text-xs);
+  line-height: 1.4;
+  color: var(--sa-color-text-muted);
+  background: var(--sa-color-surface-2);
+  border: 1px solid var(--sa-color-border);
+  border-bottom-width: 2px;
+  border-radius: var(--sa-radius-xs);
+  white-space: nowrap;
+}
+
+/* ───────── Spinner ───────── */
+
+.sa-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-text-sm);
+}
+
+.sa-spinner__ring {
+  border-radius: 50%;
+  border: 2px solid var(--sa-color-border);
+  border-top-color: var(--sa-color-accent);
+  animation: sa-spin 800ms linear infinite;
+}
+
+.sa-spinner--sm .sa-spinner__ring {
+  width: 14px;
+  height: 14px;
+}
+
+.sa-spinner--md .sa-spinner__ring {
+  width: 18px;
+  height: 18px;
+}
+
+.sa-spinner--lg .sa-spinner__ring {
+  width: 26px;
+  height: 26px;
+  border-width: 3px;
+}
+
+/* ───────── Badge ───────── */
+
+.sa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: var(--sa-text-xs);
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.sa-badge--neutral {
+  background: var(--sa-color-surface-2);
+  border-color: var(--sa-color-border);
+  color: var(--sa-color-text-muted);
+}
+
+.sa-badge--accent {
+  background: var(--sa-color-selection);
+  color: var(--sa-color-accent);
+}
+
+.sa-badge--success {
+  border-color: var(--sa-color-success);
+  color: var(--sa-color-success);
+}
+
+.sa-badge--warning {
+  border-color: var(--sa-color-warning);
+  color: var(--sa-color-warning);
+}
+
+.sa-badge--danger {
+  border-color: var(--sa-color-danger);
+  color: var(--sa-color-danger);
+}
+
+/* ───────── IconButton ───────── */
+
+.sa-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--sa-radius-sm);
+  background: transparent;
+  color: var(--sa-color-text-muted);
+  transition:
+    background-color var(--sa-duration-fast) ease,
+    color var(--sa-duration-fast) ease;
+}
+
+.sa-icon-btn:hover:not(:disabled) {
+  background: var(--sa-color-surface-2);
+  color: var(--sa-color-text);
+}
+
+.sa-icon-btn:disabled {
+  opacity: 0.45;
+}
+
+/* ───────── EmptyState ───────── */
+
+.sa-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sa-space-2);
+  padding: var(--sa-space-7) var(--sa-space-4);
+  text-align: center;
+  color: var(--sa-color-text-muted);
+}
+
+.sa-empty__icon {
+  font-size: 28px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.sa-empty__title {
+  font-size: var(--sa-text-md);
+  font-weight: 600;
+  color: var(--sa-color-text);
+}
+
+.sa-empty__desc {
+  max-width: 320px;
+  font-size: var(--sa-text-sm);
+}
+
+/* ───────── 通用工具类 ───────── */
+
+.sa-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

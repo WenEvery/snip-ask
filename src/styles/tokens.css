@@ -1,0 +1,179 @@
+/*
+ * 框选 AI · 主题 Token（契约 §14 的唯一 CSS 变量清单）
+ * 所有窗口共用；<html data-theme="light|dark"> 切换。
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* 背景与表面 */
+  --sa-color-bg: #f5f7fa;
+  --sa-color-surface: #ffffff;
+  --sa-color-surface-2: #f0f3f7;
+  --sa-color-surface-3: #e6eaf0;
+
+  /* 边框 */
+  --sa-color-border: #d8dee8;
+  --sa-color-border-strong: #b6bfcd;
+
+  /* 文本 */
+  --sa-color-text: #1b2430;
+  --sa-color-text-muted: #5b6778;
+  --sa-color-text-inverse: #ffffff;
+
+  /* 强调色（默认 blue，可由 data-accent 覆盖） */
+  --sa-color-accent: #2563eb;
+  --sa-color-accent-hover: #1d4ed8;
+  --sa-color-accent-contrast: #ffffff;
+
+  /* 语义色 */
+  --sa-color-danger: #dc2626;
+  --sa-color-warning: #d97706;
+  --sa-color-success: #16a34a;
+
+  /* 特殊表面 */
+  --sa-color-scrim: rgba(15, 20, 30, 0.45);
+  --sa-color-menu-bg: rgba(255, 255, 255, 0.98);
+  --sa-color-selection: rgba(37, 99, 235, 0.22);
+
+  /* 圆角 */
+  --sa-radius-xs: 4px;
+  --sa-radius-sm: 6px;
+  --sa-radius-md: 10px;
+  --sa-radius-lg: 14px;
+
+  /* 阴影 */
+  --sa-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.08);
+  --sa-shadow-md: 0 8px 24px rgba(16, 24, 40, 0.12);
+  --sa-shadow-lg: 0 20px 48px rgba(16, 24, 40, 0.18);
+
+  /* 字体 */
+  --sa-font-sans:
+    "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, "PingFang SC", sans-serif;
+  --sa-font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* 字号 */
+  --sa-text-xs: 11px;
+  --sa-text-sm: 12px;
+  --sa-text-md: 14px;
+  --sa-text-lg: 16px;
+  --sa-text-xl: 20px;
+
+  /* 间距 */
+  --sa-space-1: 4px;
+  --sa-space-2: 8px;
+  --sa-space-3: 12px;
+  --sa-space-4: 16px;
+  --sa-space-5: 20px;
+  --sa-space-6: 24px;
+  --sa-space-7: 32px;
+  --sa-space-8: 40px;
+
+  /* 动效 */
+  --sa-duration-fast: 120ms;
+  --sa-duration-normal: 200ms;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sa-color-bg: #14181f;
+  --sa-color-surface: #1b2029;
+  --sa-color-surface-2: #232a35;
+  --sa-color-surface-3: #2c3441;
+
+  --sa-color-border: #333d4c;
+  --sa-color-border-strong: #4a5668;
+
+  --sa-color-text: #e8edf5;
+  --sa-color-text-muted: #96a2b4;
+  --sa-color-text-inverse: #10151c;
+
+  --sa-color-accent: #3b82f6;
+  --sa-color-accent-hover: #60a5fa;
+  --sa-color-accent-contrast: #ffffff;
+
+  --sa-color-danger: #f87171;
+  --sa-color-warning: #fbbf24;
+  --sa-color-success: #34d399;
+
+  --sa-color-scrim: rgba(0, 0, 0, 0.55);
+  --sa-color-menu-bg: rgba(27, 32, 41, 0.98);
+  --sa-color-selection: rgba(59, 130, 246, 0.28);
+
+  --sa-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sa-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --sa-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ───────── 强调色覆盖（契约 §14：accent 用 data-accent 覆盖） ───────── */
+
+[data-accent="blue"] {
+  --sa-color-accent: #2563eb;
+  --sa-color-accent-hover: #1d4ed8;
+  --sa-color-accent-contrast: #ffffff;
+  --sa-color-selection: rgba(37, 99, 235, 0.22);
+}
+
+[data-accent="green"] {
+  --sa-color-accent: #16a34a;
+  --sa-color-accent-hover: #15803d;
+  --sa-color-accent-contrast: #ffffff;
+  --sa-color-selection: rgba(22, 163, 74, 0.22);
+}
+
+[data-accent="purple"] {
+  --sa-color-accent: #7c3aed;
+  --sa-color-accent-hover: #6d28d9;
+  --sa-color-accent-contrast: #ffffff;
+  --sa-color-selection: rgba(124, 58, 237, 0.22);
+}
+
+[data-accent="orange"] {
+  --sa-color-accent: #ea580c;
+  --sa-color-accent-hover: #c2410c;
+  --sa-color-accent-contrast: #ffffff;
+  --sa-color-selection: rgba(234, 88, 12, 0.22);
+}
+
+[data-theme="dark"][data-accent="blue"] {
+  --sa-color-accent: #3b82f6;
+  --sa-color-accent-hover: #60a5fa;
+  --sa-color-selection: rgba(59, 130, 246, 0.28);
+}
+
+[data-theme="dark"][data-accent="green"] {
+  --sa-color-accent: #34d399;
+  --sa-color-accent-hover: #6ee7b7;
+  --sa-color-accent-contrast: #06281b;
+  --sa-color-selection: rgba(52, 211, 153, 0.28);
+}
+
+[data-theme="dark"][data-accent="purple"] {
+  --sa-color-accent: #a78bfa;
+  --sa-color-accent-hover: #c4b5fd;
+  --sa-color-accent-contrast: #1b1030;
+  --sa-color-selection: rgba(167, 139, 250, 0.28);
+}
+
+[data-theme="dark"][data-accent="orange"] {
+  --sa-color-accent: #fb923c;
+  --sa-color-accent-hover: #fdba74;
+  --sa-color-accent-contrast: #2a1204;
+  --sa-color-selection: rgba(251, 146, 60, 0.28);
+}
+
+/* ───────── 字号档位（ui.fontSize） ───────── */
+
+[data-fontSize="sm"] {
+  --sa-text-md: 13px;
+  --sa-text-lg: 15px;
+  --sa-text-xl: 18px;
+}
+
+[data-fontSize="lg"] {
+  --sa-text-md: 15px;
+  --sa-text-lg: 17px;
+  --sa-text-xl: 22px;
+}

@@ -1,0 +1,33 @@
+# 编辑器统一配置：https://editorconfig.org
+root = true
+
+# 默认所有文件：UTF-8、LF、末尾换行、去行尾空白、2 空格缩进
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Rust：4 空格缩进，行宽 100（与 src-tauri/rustfmt.toml 保持一致）
+[*.rs]
+indent_size = 4
+max_line_length = 100
+
+# Python：4 空格缩进
+[*.py]
+indent_size = 4
+
+# Markdown：不改行尾空白（两个空格表示软换行），不限制行宽
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Windows 脚本：CRLF（与 .gitattributes 一致）
+[*.{ps1,psm1,bat,cmd}]
+end_of_line = crlf
+
+# 生成物 / 依赖目录不参与格式化检查
+[{node_modules,dist,src-tauri/target,src-tauri/gen}/**]
+insert_final_newline = false
