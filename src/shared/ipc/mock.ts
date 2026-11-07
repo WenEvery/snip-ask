@@ -46,6 +46,7 @@ import type {
   ModelInfo,
   OcrAssetStatus,
   OcrBox,
+  OcrLanguage,
   OcrStatus,
   OcrStatusPayload,
   OnboardingDraft,
@@ -281,6 +282,70 @@ function loadStoredOnboarding(): OnboardingState {
   }
 }
 
+/* ───────────── 识别语言 / 语言包（契约 v7 增量，与 `OcrLanguage` 对齐） ───────────── */
+
+/** 识别语言展示名（仅浏览器预览的提示文案用）。 */
+const MOCK_LANGUAGE_NAMES: Record<OcrLanguage, string> = {
+  zh: "中文（含英文）",
+  ru: "俄语",
+  ja: "日语",
+  ko: "韩语",
+};
+
+/** 语言包清单（契约 §0.3：大小 / SHA256 / 固定文件名与 `models.manifest.json` 一致）。 */
+const MOCK_LANGUAGE_PACKS: {
+  language: Exclude<OcrLanguage, "zh">;
+  name: string;
+  sizeBytes: number;
+  sha256: string;
+  fileName: string;
+}[] = [
+  {
+    language: "ru",
+    name: "OCR 识别语言包（俄语，cyrillic PP-OCRv5 rec）",
+    sizeBytes: 8_074_092,
+    sha256: "90f761b4bfcce0c8c561c0cb5c887b0971d3ec01c32164bdf7374a35b0982711",
+    fileName: "cyrillic_PP-OCRv5_rec_infer.onnx",
+  },
+  {
+    language: "ja",
+    name: "OCR 识别语言包（日语，japan PP-OCRv4 rec）",
+    sizeBytes: 9_753_335,
+    sha256: "e1075a67dba758ecfc7ebc78a10ae61c95ac8fb66a9c86fab5541e33f085cb7a",
+    fileName: "japan_PP-OCRv4_rec_infer.onnx",
+  },
+  {
+    language: "ko",
+    name: "OCR 识别语言包（韩语，korean PP-OCRv5 rec）",
+    sizeBytes: 13_488_748,
+    sha256: "cd6e2ea50f6943ca7271eb8c56a877a5a90720b7047fe9c41a2e541a25773c9b",
+    fileName: "korean_PP-OCRv5_rec_infer.onnx",
+  },
+];
+
+function mockLanguagePackId(language: OcrLanguage): string | null {
+  return language === "zh" ? null : `ocr-lang-${language}`;
+}
+
+/** 语言包条目（默认未安装；`models_download` / `models_remove` 与真实后端同形）。 */
+function createMockLanguagePackModels(): ModelInfo[] {
+  return MOCK_LANGUAGE_PACKS.map((pack) => ({
+    id: mockLanguagePackId(pack.language) ?? "",
+    name: pack.name,
+    kind: "onnx" as const,
+    sizeBytes: pack.sizeBytes,
+    sha256: pack.sha256,
+    license: "Apache-2.0",
+    minRamMB: 0,
+    vramMB: 0,
+    urls: [],
+    params: { role: "ocr", fileName: pack.fileName },
+    installed: false,
+    installedBytes: 0,
+    downloadState: "idle" as const,
+  }));
+}
+
 const state: MockState = {
   config: loadStoredConfig(),
   secrets: new Map<string, string>(),
@@ -293,7 +358,7 @@ const state: MockState = {
   tasks: new Map<TaskId, MockTask>(),
   taskIds: [],
   downloads: new Map<string, MockDownload>(),
-  models: createPlaceholderModels(),
+  models: [...createPlaceholderModels(), ...createMockLanguagePackModels()],
   startedAt: Date.now(),
   sessionTimers: [],
 };
@@ -861,8 +926,21 @@ function appStats(): Stats {
 }
 
 
-/** 浏览器预览的 OCR 状态（确定性 mock：视为已就绪，便于预览 UI）。 */
+/** 语言包在 mock 模型清单里的安装状态。 */
+function mockLanguageInstalled(language: OcrLanguage): boolean {
+  if (language === "zh") return true;
+  const id = mockLanguagePackId(language);
+  return state.models.some((model) => model.id === id && model.installed);
+}
+
+/** 浏览器预览的 OCR 状态（确定性 mock：基础资产视为已就绪，语言包按模型清单状态）。 */
 function mockOcrStatus(): OcrStatus {
+  const language = state.config.ocr.language;
+  const languages = (["zh", "ru", "ja", "ko"] as OcrLanguage[]).map((item) => ({
+    language: item,
+    installed: mockLanguageInstalled(item),
+  }));
+  const languageReady = languages.find((item) => item.language === language)?.installed ?? true;
   const assets: OcrAssetStatus[] = [
     {
       id: "ocr-det",
@@ -898,13 +976,17 @@ function mockOcrStatus(): OcrStatus {
     },
   ];
   return {
-    ready: true,
+    ready: languageReady,
     bundled: false,
     runtimeReady: true,
     runtimePath: "C:/mock/ocr/onnxruntime.dll",
     assets,
     missing: [],
-    message: null,
+    message: languageReady
+      ? null
+      : `缺少 ${MOCK_LANGUAGE_NAMES[language]} 识别模型：请在「设置 → 高级 → 文字识别」下载语言包。`,
+    language,
+    languages,
   };
 }
 

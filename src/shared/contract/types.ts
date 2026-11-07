@@ -176,11 +176,16 @@ export interface LocalPrefs {
   gpuLayers: number;
 }
 
+/** OCR 识别语言（契约 v7 增量）：中文（含英文）/ 俄语 / 日语 / 韩语。 */
+export type OcrLanguage = "zh" | "ru" | "ja" | "ko";
+
 export interface OcrPrefs {
   engine: "rapidocr";
   detMaxEdge: number;
   textThreshold: number;
   preserveBoxes: boolean;
+  /** 识别语言；非 `zh` 需要对应语言包（按需下载）。 */
+  language: OcrLanguage;
 }
 
 export interface PrivacyPrefs {
@@ -565,7 +570,14 @@ export interface OcrAssetStatus {
   sha256: string;
 }
 
-/** `ocr_status` 返回（契约 v5）。 */
+/** 一种识别语言的语言包安装状态（`ocr_status` 的 languages[] 元素）。 */
+export interface OcrLanguageStatus {
+  language: OcrLanguage;
+  /** 语言包文件是否存在（`zh` 恒为 true：使用基础 rec/dict 资产）。 */
+  installed: boolean;
+}
+
+/** `ocr_status` 返回（契约 v5；契约 v7 增量增加 `language` / `languages`）。 */
 export interface OcrStatus {
   ready: boolean;
   bundled: boolean;
@@ -574,6 +586,10 @@ export interface OcrStatus {
   assets: OcrAssetStatus[];
   missing: string[];
   message: string | null;
+  /** 当前识别语言。 */
+  language: OcrLanguage;
+  /** 各识别语言的语言包状态（固定 4 项，含 zh）。 */
+  languages: OcrLanguageStatus[];
 }
 
 /** 历史会话摘要（`history_list`）。 */

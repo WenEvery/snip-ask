@@ -6,8 +6,8 @@
 use std::collections::BTreeSet;
 
 use snip_ask_lib::contract::config::{
-    Cap, Config, ConfigView, FontSize, Language, LocalEngine, ProviderKind, ResultPosition,
-    SearchMode, Theme, TranslateBackend, CONFIG_SCHEMA_VERSION,
+    Cap, Config, ConfigView, FontSize, Language, LocalEngine, OcrLanguage, ProviderKind,
+    ResultPosition, SearchMode, Theme, TranslateBackend, CONFIG_SCHEMA_VERSION,
 };
 use snip_ask_lib::contract::errors::{AppError, ErrorCode};
 use snip_ask_lib::contract::events::{
@@ -22,9 +22,9 @@ use snip_ask_lib::contract::events::{
 use snip_ask_lib::contract::types::{
     ActionId, ActionItem, ActionTarget, DownloadState, EngineStatus, FrozenFrameMeta,
     HistorySession, HistoryThread, HistoryTurn, HotkeyStatus, Mode, ModelInfo, ModelKind,
-    OcrAssetStatus, OcrBox, OcrStatus, OnboardingState, ProviderDraft, RectPhys, RunActionOptions,
-    SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload, TaskId, TestResult,
-    TokenUsage, WindowLabel,
+    OcrAssetStatus, OcrBox, OcrLanguageStatus, OcrStatus, OnboardingState, ProviderDraft, RectPhys,
+    RunActionOptions, SelectionResult, SessionId, SourceRef, Stats, StreamKind, TaskDonePayload,
+    TaskId, TestResult, TokenUsage, WindowLabel,
 };
 
 /// 契约 §7 的 15 个事件名（顺序即契约表顺序；v5 移除 update:status）。
@@ -610,6 +610,17 @@ fn ocr_status_and_history_types_serialize() {
             size_bytes: 4_745_517,
             sha256: "d2a7".to_string(),
         }],
+        language: OcrLanguage::Ru,
+        languages: vec![
+            OcrLanguageStatus {
+                language: OcrLanguage::Zh,
+                installed: true,
+            },
+            OcrLanguageStatus {
+                language: OcrLanguage::Ru,
+                installed: false,
+            },
+        ],
         missing: Vec::new(),
         message: None,
     };
@@ -617,6 +628,9 @@ fn ocr_status_and_history_types_serialize() {
     assert_eq!(value["ready"].as_bool(), Some(true));
     assert_eq!(value["runtimeReady"].as_bool(), Some(true));
     assert_eq!(value["assets"][0]["id"], "ocr-det");
+    assert_eq!(value["language"], "ru");
+    assert_eq!(value["languages"][0]["language"], "zh");
+    assert_eq!(value["languages"][1]["installed"].as_bool(), Some(false));
     assert_eq!(value["missing"].as_array().unwrap().len(), 0);
 
     let session = HistorySession {

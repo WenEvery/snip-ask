@@ -1238,8 +1238,8 @@ mod tests {
         let manager = manager();
         let infos = manager.list();
         assert!(!infos.is_empty());
-        // 清单 8 条（phase 2 增补极小模型 4 条 + v1.0.0 增补 4 条 OCR 资产，顺序保持既有条目在前）。
-        assert_eq!(infos.len(), 8);
+        // 清单 11 条（含 v1.1.0 追加的 3 条 OCR 语言包）（phase 2 增补极小模型 4 条 + v1.0.0 增补 4 条 OCR 资产，顺序保持既有条目在前）。
+        assert_eq!(infos.len(), 11);
         assert_eq!(infos[0].id, "hy-mt-1.8b-q4");
         assert!(infos.iter().all(|info| !info.installed));
         assert_eq!(manager.installed_count(), 0);
@@ -1319,8 +1319,8 @@ mod tests {
     fn tiny_model_entry_metadata_matches_verified_manifest() {
         // task-9：极小模型条目是引导页三档选择依赖的数据契约，字段/顺序/URL 均需锁定。
         let manifest = parse_manifest(crate::resources::MODELS_MANIFEST).unwrap();
-        // 追加在末尾，保持既有顺序（models[0] 不变；v1.0.0 的 4 条 OCR 资产追加到最后）。
-        assert_eq!(manifest.models.len(), 8);
+        // 追加在末尾，保持既有顺序（models[0] 不变；v1.0.0 的 4 条 OCR 资产与 v1.1.0 的 3 条 OCR 语言包追加到最后）。
+        assert_eq!(manifest.models.len(), 11);
         assert_eq!(manifest.models[0].id, "hy-mt-1.8b-q4");
         assert_eq!(
             manifest

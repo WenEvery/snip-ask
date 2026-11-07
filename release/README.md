@@ -33,8 +33,8 @@
 
 | 文件 | 版本类型 | 大小 | SHA256 |
 | --- | --- | --- | --- |
-| [`SnipAsk_1.1.0_x64-setup.exe`](SnipAsk_1.1.0_x64-setup.exe) | **slim**（安装后下载版） | 7,817,998 B（7.46 MiB） | `ace7064152cdac0283fd3fe215d9295898187b7a3c5a9c20f6a713d1226282ca` |
-| [`SnipAsk_1.1.0_x64-full-setup.exe`](SnipAsk_1.1.0_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,607,475 B（21.56 MiB） | `deaeb408ca932ebfdcc164e4bc5e5262f787755c1dc89c8fbbcc1db994455e14` |
+| [`SnipAsk_1.1.0_x64-setup.exe`](SnipAsk_1.1.0_x64-setup.exe) | **slim**（安装后下载版） | 7,826,472 B（7.46 MiB） | `66df7fdb9b884a892e9fad00e75b940024d6b220204cb5da7b87411b4a11518a` |
+| [`SnipAsk_1.1.0_x64-full-setup.exe`](SnipAsk_1.1.0_x64-full-setup.exe) | **full**（内置 OCR 模型版） | 22,617,480 B（21.57 MiB） | `7ba5214408fbd7216e35d9b320cf640dc31cc0d89eb76630e8ce5d111a4689a5` |
 | [`SHA256SUMS.txt`](SHA256SUMS.txt) | — | — | 上述两个安装包的机器可读校验和 |
 
 - 产物类型：NSIS 安装包（Windows x64），`installMode=currentUser`（当前用户安装，不需要管理员权限、不写 HKLM）；
@@ -50,7 +50,7 @@
 | 应用本体 + 文档 | 内置 | 内置 |
 | ONNX Runtime 运行时 `ocr/onnxruntime.dll` | **内置** | **内置** |
 | OCR 模型（det / rec / cls + `ppocr_keys_v1.txt`） | **不内置**，首次使用 OCR 时下载（≈16 MB） | **内置**（离线开箱即用） |
-| 安装包体积（本次实测） | **7.45 MiB**（7,816,641 B） | **21.56 MiB**（22,606,726 B） |
+| 安装包体积（本次实测） | **7.46 MiB**（7,826,472 B） | **21.57 MiB**（22,617,480 B） |
 | 适用场景 | 体积敏感、首次 OCR 可联网 | 离线 / 内网 / 不想额外下载 |
 
 - slim 下载的模型落盘到 `%LOCALAPPDATA%\SnipAsk\models\ocr\`（文件名固定：`ch_PP-OCRv4_det_infer.onnx`、

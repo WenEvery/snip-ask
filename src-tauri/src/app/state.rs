@@ -112,6 +112,8 @@ impl AppState {
         // skeletonMode=false 时才走真实 HTTP Range 下载 + 校验）。
         let skeleton_mode = loaded.config.advanced.skeleton_mode;
         models.set_skeleton_mode(skeleton_mode);
+        // 识别语言需在 `loaded.config` 被移入 `RwLock` 之前取出（引擎构造用）。
+        let ocr_language = loaded.config.ocr.language;
 
         Ok(Self {
             config: RwLock::new(loaded.config),
@@ -129,6 +131,7 @@ impl AppState {
                 let assets = crate::services::ocr_onnx::OcrAssets::resolve(&paths.models_dir);
                 OcrPipeline::with_real(Box::new(crate::services::ocr_onnx::OnnxOcrEngine::new(
                     assets,
+                    ocr_language,
                 )))
             },
             models,

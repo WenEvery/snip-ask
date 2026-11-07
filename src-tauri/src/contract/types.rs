@@ -13,7 +13,8 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 use super::config::{
-    Cap, FontSize, GpuBackend, Language, LocalBackend, ResultPosition, Theme, TranslateBackend,
+    Cap, FontSize, GpuBackend, Language, LocalBackend, OcrLanguage, ResultPosition, Theme,
+    TranslateBackend,
 };
 use super::errors::AppError;
 
@@ -773,7 +774,17 @@ pub struct OcrAssetStatus {
     pub sha256: String,
 }
 
-/// `ocr_status` 返回（契约 v5）。
+/// 一种识别语言的语言包安装状态（契约 v7 增量，`ocr_status.languages`）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OcrLanguageStatus {
+    /// 识别语言（`zh` / `ru` / `ja` / `ko`）。
+    pub language: OcrLanguage,
+    /// 语言包是否已安装（`zh` = 基础 rec/dict 都存在；其它 = 语言包 ONNX 文件存在）。
+    pub installed: bool,
+}
+
+/// `ocr_status` 返回（契约 v5；v7 增加 `language` / `languages`）。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OcrStatus {
@@ -785,8 +796,12 @@ pub struct OcrStatus {
     pub runtime_ready: bool,
     /// 运行时 DLL 路径（诊断用）。
     pub runtime_path: Option<String>,
-    /// 各资产状态。
+    /// 各资产状态（固定 4 项：det/rec/cls/dict，语言包不在此列表）。
     pub assets: Vec<OcrAssetStatus>,
+    /// 当前识别语言。
+    pub language: OcrLanguage,
+    /// 各识别语言的语言包状态（固定 4 项，含 zh）。
+    pub languages: Vec<OcrLanguageStatus>,
     /// 缺失资产 id。
     pub missing: Vec<String>,
     /// 面向用户的可操作提示。

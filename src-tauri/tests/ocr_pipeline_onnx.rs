@@ -26,6 +26,7 @@ use std::time::Instant;
 use serde::Deserialize;
 use serde_json::json;
 
+use snip_ask_lib::contract::config::OcrLanguage;
 use snip_ask_lib::contract::types::RectPhys;
 use snip_ask_lib::platform::capture::FrozenFrame;
 use snip_ask_lib::services::ocr_onnx::{OcrAssets, OnnxOcrEngine};
@@ -194,7 +195,7 @@ async fn real_ocr_corpus_and_live_desktop_cases() {
     let assets = OcrAssets::resolve_from(None, &nonexistent_models, Some(&assets_dir));
     assert!(assets.is_ready(), "OCR 资产应齐全：{:?}", assets.missing());
 
-    let engine = OnnxOcrEngine::new(assets);
+    let engine = OnnxOcrEngine::new(assets, OcrLanguage::Zh);
     let load_started = Instant::now();
     engine.warmup().expect("加载 ONNX 会话失败");
     let load_ms = load_started.elapsed().as_millis() as u64;

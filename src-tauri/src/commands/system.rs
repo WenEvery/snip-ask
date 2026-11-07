@@ -65,12 +65,17 @@ pub async fn open_external(app: AppHandle, url: String) -> AppResult<()> {
     crate::services::search_gateway::open_external(Some(&app), &url).await
 }
 
-/// 计算 OCR 资产状态（契约 v5）。
+/// 计算 OCR 资产状态（契约 v5；v7 增加当前识别语言）。
 ///
 /// 委托 `services::ocr_onnx`（与真实引擎同一套资源解析），保证「下载完模型 → 状态立即变就绪」。
 pub fn ocr_status_snapshot(app: &AppHandle, state: &AppState) -> OcrStatus {
     let resource_dir = app.path().resource_dir().ok();
-    crate::services::ocr_onnx::ocr_status(resource_dir.as_deref(), &state.paths.models_dir)
+    let language = state.snapshot_config().ocr.language;
+    crate::services::ocr_onnx::ocr_status(
+        resource_dir.as_deref(),
+        &state.paths.models_dir,
+        language,
+    )
 }
 
 /// 命令：OCR 状态（契约 v5 第 40 条）。

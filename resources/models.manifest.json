@@ -176,6 +176,78 @@
         "verified": true,
         "verifiedBy": "T1 2026-11-06：内容等于 rec ONNX metadata `character` 字段提取结果（6623 行 + 末尾换行，26,250 B）；两镜像全量下载 SHA256 一致，Range bytes=0-1023 均返回 206（.verify/v1/ocr/assets-verify.json）。URL pin 到 PaddleOCR commit 24f06d1a。"
       }
+    },
+    {
+      "id": "ocr-lang-ru",
+      "name": "俄语识别模型（PP-OCRv5 cyrillic，语言包）",
+      "kind": "onnx",
+      "sizeBytes": 8074092,
+      "sha256": "90f761b4bfcce0c8c561c0cb5c887b0971d3ec01c32164bdf7374a35b0982711",
+      "license": "Apache-2.0",
+      "minRamMB": 512,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv5/rec/cyrillic_PP-OCRv5_rec_mobile.onnx"
+      ],
+      "params": {
+        "fileName": "cyrillic_PP-OCRv5_rec_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "language": "ru",
+        "sourceFileName": "cyrillic_PP-OCRv5_rec_mobile.onnx",
+        "script": "Cyrillic",
+        "verified": true,
+        "verifiedBy": "Lead 2026-11-07：ModelScope RapidAI/RapidOCR 官方 ONNX 下载；SHA256 与本地文件一致；ONNX metadata character（850 行）与官方 cyrillic 字典一致；真实渲染俄语字符准确率 1.000。"
+      }
+    },
+    {
+      "id": "ocr-lang-ja",
+      "name": "日语识别模型（PP-OCRv4 japan，语言包）",
+      "kind": "onnx",
+      "sizeBytes": 9753335,
+      "sha256": "e1075a67dba758ecfc7ebc78a10ae61c95ac8fb66a9c86fab5541e33f085cb7a",
+      "license": "Apache-2.0",
+      "minRamMB": 512,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv4/rec/japan_PP-OCRv4_rec_mobile.onnx"
+      ],
+      "params": {
+        "fileName": "japan_PP-OCRv4_rec_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "language": "ja",
+        "sourceFileName": "japan_PP-OCRv4_rec_mobile.onnx",
+        "script": "Japanese",
+        "verified": true,
+        "verifiedBy": "Lead 2026-11-07：ModelScope RapidAI/RapidOCR 官方 ONNX 下载；SHA256 与本地文件一致；ONNX metadata character（4399 行）与官方 japan 字典一致；真实渲染日语字符准确率 1.000。"
+      }
+    },
+    {
+      "id": "ocr-lang-ko",
+      "name": "韩语识别模型（PP-OCRv5 korean，语言包）",
+      "kind": "onnx",
+      "sizeBytes": 13488748,
+      "sha256": "cd6e2ea50f6943ca7271eb8c56a877a5a90720b7047fe9c41a2e541a25773c9b",
+      "license": "Apache-2.0",
+      "minRamMB": 512,
+      "vramMB": 0,
+      "urls": [
+        "https://modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv5/rec/korean_PP-OCRv5_rec_mobile.onnx"
+      ],
+      "params": {
+        "fileName": "korean_PP-OCRv5_rec_infer.onnx",
+        "role": "ocr",
+        "format": "onnx",
+        "engine": "onnxruntime",
+        "language": "ko",
+        "sourceFileName": "korean_PP-OCRv5_rec_mobile.onnx",
+        "script": "Korean",
+        "verified": true,
+        "verifiedBy": "Lead 2026-11-07：ModelScope RapidAI/RapidOCR 官方 ONNX 下载；SHA256 与本地文件一致；ONNX metadata character（11945 行）与官方 korean 字典一致；真实渲染韩语字符准确率 1.000。"
+      }
     }
   ]
 }

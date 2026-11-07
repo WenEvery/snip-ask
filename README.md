@@ -18,7 +18,7 @@
   - **解答**：解释代码、分析图表、总结内容；
   - **复制文字**：只把本地识别出的文字写入剪贴板，不调用 AI；
   - **图片搜索**：以图搜图，只上传你框选的区域，不上传整张桌面。
-- **本地文字识别**：RapidOCR（PP-OCRv4）+ ONNX Runtime，截图不出本机；内置模型版把识别模型随包提供，装好即可离线识别。
+- **本地文字识别**：RapidOCR（PP-OCRv4）+ ONNX Runtime，截图不出本机；内置模型版把识别模型随包提供，装好即可离线识别。识别语言支持中文（含英文，默认）、俄语、日语、韩语，后三种按需下载语言包。
 - **AI 可云端可本地**：支持 DeepSeek、DashScope Qwen-MT 和任意 OpenAI 兼容服务；本地用 llama.cpp（Vulkan / CUDA / CPU 回退）。
 - **结果窗**：流式输出，可追问、可重答、可复制；成功任务会写入本机历史，重启后仍可回看。
 - **桌面体验**：托盘常驻、单实例、开机自启、全局热键可改，界面支持中文 / 英文。
@@ -55,7 +55,7 @@ flowchart LR
 | 版本 | 文件 | 说明 |
 | --- | --- | --- |
 | 在线版 | [`release/SnipAsk_1.1.0_x64-setup.exe`](release/SnipAsk_1.1.0_x64-setup.exe)（7.46 MiB） | 体积小；首次使用文字识别时下载约 16 MB 模型 |
-| 内置模型版 | [`release/SnipAsk_1.1.0_x64-full-setup.exe`](release/SnipAsk_1.1.0_x64-full-setup.exe)（21.56 MiB） | 模型随包，离线开箱即用 |
+| 内置模型版 | [`release/SnipAsk_1.1.0_x64-full-setup.exe`](release/SnipAsk_1.1.0_x64-full-setup.exe)（21.57 MiB） | 模型随包，离线开箱即用 |
 | 校验和 | [`release/SHA256SUMS.txt`](release/SHA256SUMS.txt) | 下载后建议先校验 |
 
 > 两个版本功能一致，区别只在文字识别模型是否随包。

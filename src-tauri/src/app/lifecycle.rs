@@ -71,6 +71,12 @@ pub fn setup(app: &mut AppHandle) -> AppResult<()> {
         tracing::warn!("AppState 已被托管，跳过重复初始化");
     }
 
+    // 3.5) 开机自启对账（配置是唯一事实来源）。
+    //      首启引导 / 配置导入 / 旧版本只写了配置没写系统启动项，这里按配置补齐或移除。
+    if !skeleton_mode {
+        reconcile_autostart(app);
+    }
+
     // 4) 托盘
     if let Err(err) = tray::create(app) {
         tracing::warn!(code = %err.code, "托盘创建失败，应用将继续以无托盘模式运行");
@@ -220,6 +226,32 @@ pub fn shutdown(app: &AppHandle) -> AppResult<()> {
 
     tracing::info!("框选 AI 已退出");
     Ok(())
+}
+
+/// 启动时对账「配置里的开机自启」与「系统启动项」。
+///
+/// 首启引导、配置导入/恢复默认等路径只写 `config.app.autostart`，不一定落到系统启动项；
+/// 启动时以配置为准同步一次（失败只记日志，不阻断启动）。
+fn reconcile_autostart(app: &AppHandle) {
+    let Some(state) = app.try_state::<AppState>() else {
+        return;
+    };
+    let desired = state.snapshot_config().app.autostart;
+    match crate::platform::autostart::is_enabled(app, false) {
+        Ok(actual) if actual != desired => {
+            match crate::platform::autostart::set_enabled(app, desired, false) {
+                Ok(()) => tracing::info!(desired, actual, "开机自启已按配置纠正"),
+                Err(err) => tracing::warn!(
+                    code = %err.code,
+                    desired,
+                    actual,
+                    "开机自启对账失败（可在设置页重新开关一次）"
+                ),
+            }
+        }
+        Ok(_) => tracing::debug!(enabled = desired, "开机自启状态与配置一致"),
+        Err(err) => tracing::warn!(code = %err.code, "读取开机自启状态失败"),
+    }
 }
 
 /// 初始化 tracing（按日滚动文件 + 环境变量级别）。

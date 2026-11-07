@@ -28,6 +28,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use parking_lot::Mutex;
 
+use crate::contract::config::OcrLanguage;
 use crate::contract::errors::AppResult;
 use crate::contract::types::{OcrBox, RectPhys};
 
@@ -115,6 +116,15 @@ pub trait OcrEngine: Send + Sync {
         rect_phys: &RectPhys,
         det_max_edge: u32,
     ) -> AppResult<Vec<OcrBox>>;
+
+    /// 切换识别语言（配置 `ocr.language` 热生效）。
+    ///
+    /// 默认实现为空操作（骨架引擎 / 测试 fake 不需要语言概念）；真实引擎在下次识别时
+    /// 按新语言懒加载对应语言包。语言包缺失不在这里报错（配置保存不应被资产状态阻断），
+    /// 由识别时的 `model_missing` 给出可操作提示。
+    fn set_language(&self, _language: OcrLanguage) -> AppResult<()> {
+        Ok(())
+    }
 }
 
 /// 骨架 OCR 引擎：瞬时返回占位结果（契约 150/400ms 时序由命令层控制）。
@@ -323,6 +333,11 @@ impl OcrPipeline {
     /// 当前引擎（供诊断 / 测试断言使用）。
     pub fn engine(&self) -> &Arc<dyn OcrEngine> {
         &self.engine
+    }
+
+    /// 切换识别语言（转发给引擎；配置 `ocr.language` 热生效用）。
+    pub fn set_language(&self, language: OcrLanguage) -> AppResult<()> {
+        self.engine.set_language(language)
     }
 
     /// 整屏检测缓存（只读访问，供观察/测试）。
@@ -909,5 +924,56 @@ mod tests {
             .await
             .expect("兜底成功");
         assert_eq!(selection.boxes[0].bbox, rect(-500.0, -200.0, 300.0, 150.0));
+    }
+
+    /// 记录 `set_language` 调用的 fake（验证 pipeline 转发路径）。
+    struct LanguageTrackingEngine {
+        language: Mutex<Option<OcrLanguage>>,
+    }
+
+    #[async_trait]
+    impl OcrEngine for LanguageTrackingEngine {
+        async fn detect(&self, _frame: &FrozenFrame, _det_max_edge: u32) -> AppResult<Vec<OcrBox>> {
+            Ok(Vec::new())
+        }
+
+        async fn recognize(
+            &self,
+            _frame: &FrozenFrame,
+            boxes: Vec<OcrBox>,
+        ) -> AppResult<Vec<OcrBox>> {
+            Ok(boxes)
+        }
+
+        async fn detect_and_recognize(
+            &self,
+            _frame: &FrozenFrame,
+            _frame_origin: &RectPhys,
+            _rect_phys: &RectPhys,
+            _det_max_edge: u32,
+        ) -> AppResult<Vec<OcrBox>> {
+            Ok(Vec::new())
+        }
+
+        fn set_language(&self, language: OcrLanguage) -> AppResult<()> {
+            *self.language.lock() = Some(language);
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn pipeline_set_language_forwards_to_engine() {
+        let engine = Arc::new(LanguageTrackingEngine {
+            language: Mutex::new(None),
+        });
+        let pipeline = OcrPipeline::new(engine.clone());
+        pipeline
+            .set_language(OcrLanguage::Ru)
+            .expect("切换语言应成功");
+        assert_eq!(*engine.language.lock(), Some(OcrLanguage::Ru));
+        // 骨架引擎用默认实现：不报错、不影响识别语义。
+        OcrPipeline::with_skeleton()
+            .set_language(OcrLanguage::Ko)
+            .expect("骨架引擎 set_language 默认实现应为空操作");
     }
 }

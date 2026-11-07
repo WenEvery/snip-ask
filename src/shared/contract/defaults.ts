@@ -128,6 +128,7 @@ export const defaultConfig: Config = {
     detMaxEdge: 3200,
     textThreshold: 0.6,
     preserveBoxes: true,
+    language: "zh",
   },
   privacy: {
     allowTextUpload: true,

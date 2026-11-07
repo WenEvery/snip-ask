@@ -117,6 +117,28 @@ pub(crate) fn apply_config_side_effects(app: &AppHandle, state: &AppState, chang
             tracing::warn!(code = %err.code, "热键重新注册失败");
         }
     }
+    if changed.iter().any(|key| key == "app.autostart") {
+        // 开机自启：首启引导 / 配置导入 / 恢复默认等路径只写配置，必须在这里同步到系统启动项；
+        // 失败不阻断配置保存（设置页的手动开关走 `set_autostart` 命令，会返回可操作错误）。
+        let config = state.snapshot_config();
+        if let Err(err) =
+            crate::platform::autostart::set_enabled(app, config.app.autostart, state.is_skeleton())
+        {
+            tracing::warn!(
+                code = %err.code,
+                enabled = config.app.autostart,
+                "开机自启同步失败（配置已保存，可在设置页重新开关）"
+            );
+        } else {
+            tracing::info!(enabled = config.app.autostart, "开机自启已同步到系统启动项");
+        }
+    }
+    if changed.iter().any(|key| key.starts_with("ocr.")) {
+        let config = state.snapshot_config();
+        if let Err(err) = state.ocr.set_language(config.ocr.language) {
+            tracing::warn!(code = %err.code, "OCR 识别语言切换失败（下次 OCR 时重试）");
+        }
+    }
     if changed.iter().any(|key| key == "history.enabled") {
         let config = state.snapshot_config();
         state.history.set_enabled(config.history.enabled);

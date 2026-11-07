@@ -11,8 +11,17 @@ import {
   allBundled,
   editionBadge,
   editionLabel,
+  isOcrLanguage,
+  isOcrLanguagePackId,
+  languageInstalled,
+  languagePackModel,
+  languagePackSize,
   mergeOcrRows,
+  ocrLanguageLabel,
+  ocrLanguageOptions,
+  ocrLanguagePackId,
   ocrModels,
+  pendingLanguagePacks,
   pendingOcrRows,
   summarizeOcr,
 } from "./status.ts";
@@ -166,4 +175,129 @@ test("pendingOcrRows / allBundled：决定下载入口与内置徽标", () => {
   assert.equal(allBundled(rows), false);
   assert.equal(allBundled(rows.map((row) => ({ ...row, bundled: true }))), true);
   assert.equal(allBundled([]), false);
+});
+
+/* ───────────────── 识别语言 / 语言包（契约 v7 增量） ───────────────── */
+
+function languageStatus(language, installed) {
+  return { language, installed };
+}
+
+function langStatus(overrides = {}) {
+  return status({
+    language: "zh",
+    languages: [
+      languageStatus("zh", true),
+      languageStatus("ru", false),
+      languageStatus("ja", false),
+      languageStatus("ko", false),
+    ],
+    ...overrides,
+  });
+}
+
+test("ocrLanguageLabel / id 映射：zh 无语言包，ru/ja/ko 固定资产 id", () => {
+  assert.equal(ocrLanguageLabel("zh"), "中文（含英文）");
+  assert.equal(ocrLanguageLabel("ru"), "俄语");
+  assert.equal(ocrLanguageLabel("ja"), "日语");
+  assert.equal(ocrLanguageLabel("ko"), "韩语");
+  assert.equal(ocrLanguagePackId("zh"), null);
+  assert.equal(ocrLanguagePackId("ru"), "ocr-lang-ru");
+  assert.equal(ocrLanguagePackId("ja"), "ocr-lang-ja");
+  assert.equal(ocrLanguagePackId("ko"), "ocr-lang-ko");
+  assert.equal(isOcrLanguage("zh"), true);
+  assert.equal(isOcrLanguage("de"), false);
+  assert.equal(isOcrLanguagePackId("ocr-lang-ru"), true);
+  assert.equal(isOcrLanguagePackId("ocr-rec"), false);
+});
+
+test("ocrModels：语言包 ONNX 不混入基础 4 项资产", () => {
+  const models = [
+    model("ocr-det"),
+    model("ocr-lang-ru"),
+    model("ocr-lang-ja"),
+    model("ocr-lang-ko"),
+  ];
+  assert.deepEqual(
+    ocrModels(models).map((item) => item.id),
+    ["ocr-det"],
+  );
+});
+
+test("languageInstalled：zh 恒可用；状态缺失不限制；按 languages.installed 判定", () => {
+  assert.equal(languageInstalled(null, "zh"), true);
+  assert.equal(languageInstalled(langStatus(), "zh"), true);
+  // 旧后端 / 状态未加载：没有 languages 字段时不把其它语言全部禁用
+  assert.equal(languageInstalled(status(), "ru"), true);
+  const current = langStatus({
+    languages: [
+      languageStatus("zh", true),
+      languageStatus("ru", true),
+      languageStatus("ja", false),
+    ],
+  });
+  assert.equal(languageInstalled(current, "ru"), true);
+  assert.equal(languageInstalled(current, "ja"), false);
+  assert.equal(languageInstalled(current, "ko"), false);
+});
+
+test("pendingLanguagePacks：只列出未安装的非中文语言包", () => {
+  assert.deepEqual(
+    pendingLanguagePacks(langStatus()).map((item) => item.language),
+    ["ru", "ja", "ko"],
+  );
+  assert.deepEqual(pendingLanguagePacks(null), []);
+  assert.deepEqual(
+    pendingLanguagePacks(
+      langStatus({
+        languages: [
+          languageStatus("zh", true),
+          languageStatus("ru", true),
+          languageStatus("ja", false),
+          languageStatus("ko", false),
+        ],
+      }),
+    ).map((item) => item.language),
+    ["ja", "ko"],
+  );
+});
+
+test("ocrLanguageOptions：未下载语言后缀「（未下载）」并禁用", () => {
+  const options = ocrLanguageOptions(langStatus());
+  assert.deepEqual(
+    options.map((option) => option.value),
+    ["zh", "ru", "ja", "ko"],
+  );
+  assert.deepEqual(
+    options.map((option) => option.disabled),
+    [false, true, true, true],
+  );
+  assert.equal(options[0].label, "中文（含英文）");
+  assert.equal(options[1].label, "俄语（未下载）");
+
+  const allInstalled = ocrLanguageOptions(
+    langStatus({
+      languages: [
+        languageStatus("zh", true),
+        languageStatus("ru", true),
+        languageStatus("ja", true),
+        languageStatus("ko", true),
+      ],
+    }),
+  );
+  assert.deepEqual(
+    allInstalled.map((option) => option.disabled),
+    [false, false, false, false],
+  );
+});
+
+test("languagePackModel / languagePackSize：优先 models_list，缺失用契约大小兜底", () => {
+  assert.equal(languagePackSize([], "zh"), 0);
+  assert.equal(languagePackSize([], "ru"), 8_074_092);
+  assert.equal(languagePackSize([], "ja"), 9_753_335);
+  assert.equal(languagePackSize([], "ko"), 13_488_748);
+  const models = [model("ocr-lang-ru", { sizeBytes: 123 })];
+  assert.equal(languagePackModel(models, "ru")?.id, "ocr-lang-ru");
+  assert.equal(languagePackSize(models, "ru"), 123);
+  assert.equal(languagePackModel(models, "ko"), null);
 });

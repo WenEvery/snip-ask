@@ -691,6 +691,69 @@ impl LocalPrefs {
     }
 }
 
+/// OCR 识别语言（`ocr.language`，契约 v7 增量）。
+///
+/// - `Zh`：默认，使用随包/下载的 PP-OCRv4 中文 rec（含英文/拉丁字母/数字/符号）；
+/// - `Ru` / `Ja` / `Ko`：语言包（单个 rec ONNX，字典取模型 metadata `character`）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum OcrLanguage {
+    /// 中文（含英文）。
+    #[default]
+    Zh,
+    /// 俄语（cyrillic PP-OCRv5 语言包）。
+    Ru,
+    /// 日语（japan PP-OCRv4 语言包）。
+    Ja,
+    /// 韩语（korean PP-OCRv5 语言包）。
+    Ko,
+}
+
+impl OcrLanguage {
+    /// 全部识别语言（固定顺序，`ocr_status.languages` 用）。
+    pub const ALL: [OcrLanguage; 4] = [Self::Zh, Self::Ru, Self::Ja, Self::Ko];
+
+    /// 稳定标识（配置 / 前端 / 资产 id 用）。
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Zh => "zh",
+            Self::Ru => "ru",
+            Self::Ja => "ja",
+            Self::Ko => "ko",
+        }
+    }
+
+    /// 展示名（错误提示用；前端有自己的 i18n 文案）。
+    pub const fn display_name(self) -> &'static str {
+        match self {
+            Self::Zh => "中文（含英文）",
+            Self::Ru => "俄语",
+            Self::Ja => "日语",
+            Self::Ko => "韩语",
+        }
+    }
+
+    /// 语言包 ONNX 固定文件名；`Zh` 返回 `None`（用基础 rec 资产）。
+    pub const fn rec_file_name(self) -> Option<&'static str> {
+        match self {
+            Self::Zh => None,
+            Self::Ru => Some("cyrillic_PP-OCRv5_rec_infer.onnx"),
+            Self::Ja => Some("japan_PP-OCRv4_rec_infer.onnx"),
+            Self::Ko => Some("korean_PP-OCRv5_rec_infer.onnx"),
+        }
+    }
+
+    /// 语言包资产 id（非 `Zh`）：`ocr-lang-ru` / `ocr-lang-ja` / `ocr-lang-ko`。
+    pub const fn asset_id(self) -> Option<&'static str> {
+        match self {
+            Self::Zh => None,
+            Self::Ru => Some("ocr-lang-ru"),
+            Self::Ja => Some("ocr-lang-ja"),
+            Self::Ko => Some("ocr-lang-ko"),
+        }
+    }
+}
+
 /// OCR 偏好。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -703,6 +766,8 @@ pub struct OcrPrefs {
     pub text_threshold: f64,
     /// 是否保留文字框。
     pub preserve_boxes: bool,
+    /// 识别语言（默认中文；非中文走按需下载的语言包）。
+    pub language: OcrLanguage,
     /// 未知字段。
     #[serde(flatten)]
     pub extra: serde_json::Map<String, serde_json::Value>,
@@ -715,6 +780,7 @@ impl Default for OcrPrefs {
             det_max_edge: 3200,
             text_threshold: 0.6,
             preserve_boxes: true,
+            language: OcrLanguage::Zh,
             extra: serde_json::Map::new(),
         }
     }
@@ -1610,7 +1676,10 @@ mod tests {
                 "engine": "llama.cpp", "model": "hy-mt-1.8b-q4", "port": 39281, "idleUnloadSec": 600,
                 "device": "auto", "gpuBackend": "auto", "gpuLayers": 99
             },
-            "ocr": { "engine": "rapidocr", "detMaxEdge": 3200, "textThreshold": 0.6, "preserveBoxes": true },
+            "ocr": {
+                "engine": "rapidocr", "detMaxEdge": 3200, "textThreshold": 0.6,
+                "preserveBoxes": true, "language": "zh"
+            },
             "privacy": { "allowTextUpload": true, "allowImageUpload": true, "localOnly": false },
             "history": { "enabled": true, "maxEntries": 1000, "retentionDays": 90 },
             "advanced": { "proxy": null, "skeletonMode": false }
@@ -1750,6 +1819,8 @@ mod tests {
         assert_eq!(config.local.device, LocalDevice::Auto);
         assert_eq!(config.local.gpu_backend, GpuBackend::Auto);
         assert_eq!(config.local.gpu_layers, 99);
+        // v7 增量：旧配置缺 `ocr.language` 时取默认中文（无需迁移步骤）。
+        assert_eq!(config.ocr.language, OcrLanguage::Zh);
         assert!(
             !config.advanced.skeleton_mode,
             "v5 迁移必须关闭历史默认开启的骨架模式"
@@ -1982,5 +2053,35 @@ mod tests {
         let mut json = serde_json::to_value(Config::default()).unwrap();
         json["providers"][0]["kind"] = serde_json::json!("anthropic");
         assert!(serde_json::from_value::<Config>(json).is_err());
+    }
+
+    #[test]
+    fn ocr_language_serializes_as_contract_literals() {
+        // 默认中文；枚举字面量小写（配置 / 前端 / 资产 id 一致）。
+        assert_eq!(OcrPrefs::default().language, OcrLanguage::Zh);
+        let mut config = Config::default();
+        for (language, literal) in [
+            (OcrLanguage::Zh, "zh"),
+            (OcrLanguage::Ru, "ru"),
+            (OcrLanguage::Ja, "ja"),
+            (OcrLanguage::Ko, "ko"),
+        ] {
+            config.ocr.language = language;
+            let value = serde_json::to_value(&config).unwrap();
+            assert_eq!(value["ocr"]["language"], literal);
+            assert_eq!(language.as_str(), literal);
+            // 反序列化：契约字面量 → 枚举。
+            let round: Config = serde_json::from_value(value).unwrap();
+            assert_eq!(round.ocr.language, language);
+        }
+        // 非法语言值必须被拒绝（serde 生成可操作错误）。
+        let mut json = serde_json::to_value(Config::default()).unwrap();
+        json["ocr"]["language"] = serde_json::json!("de");
+        assert!(serde_json::from_value::<Config>(json).is_err());
+        // 旧配置缺 language → serde 默认中文（Schema 7 向后兼容，无需迁移）。
+        let mut json = serde_json::to_value(Config::default()).unwrap();
+        json["ocr"].as_object_mut().unwrap().remove("language");
+        let round: Config = serde_json::from_value(json).unwrap();
+        assert_eq!(round.ocr.language, OcrLanguage::Zh);
     }
 }

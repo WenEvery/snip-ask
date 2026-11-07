@@ -13,7 +13,13 @@
  * 本模块把三者合并成设置页 / 引导页共用的展示模型，避免 UI 里散落判断。
  */
 
-import type { ModelInfo, OcrAssetStatus, OcrStatus } from "@/shared/contract/types";
+import type {
+  ModelInfo,
+  OcrAssetStatus,
+  OcrLanguage,
+  OcrLanguageStatus,
+  OcrStatus,
+} from "@/shared/contract/types";
 
 /** 与 `src/i18n` 的 `t(zh, vars?)` 同形；默认实现仅插值、不翻译（中文回退）。 */
 export type TranslateText = (zh: string, vars?: Record<string, string | number>) => string;
@@ -69,9 +75,98 @@ export interface OcrAssetRow {
   model: ModelInfo | null;
 }
 
-/** `models_list` 中属于 OCR 的条目（契约 v5：`kind === "onnx"`）。 */
+/** `models_list` 中属于 OCR 的条目（契约 v5：`kind === "onnx"`；语言包不计入基础 4 项资产）。 */
 export function ocrModels(models: ModelInfo[]): ModelInfo[] {
-  return models.filter((model) => model.kind === "onnx");
+  return models.filter((model) => model.kind === "onnx" && !isOcrLanguagePackId(model.id));
+}
+
+/* ───────────────────── 识别语言与语言包（契约 v7 增量） ───────────────────── */
+
+/** `OcrLanguage` 的展示顺序（与后端 `OcrLanguage::ALL` 一致）。 */
+export const OCR_LANGUAGES: readonly OcrLanguage[] = ["zh", "ru", "ja", "ko"];
+
+/** 语言包资产 id 前缀：`ocr-lang-<language>`（`zh` 没有语言包）。 */
+const LANGUAGE_PACK_ID_PREFIX = "ocr-lang-";
+
+const LANGUAGE_LABELS: Record<OcrLanguage, string> = {
+  zh: "中文（含英文）",
+  ru: "俄语",
+  ja: "日语",
+  ko: "韩语",
+};
+
+/** 契约 §0.3 的语言包字节数（`models_list` 缺条目时兜底展示，避免出现 0 B）。 */
+const LANGUAGE_PACK_FALLBACK_BYTES: Record<Exclude<OcrLanguage, "zh">, number> = {
+  ru: 8_074_092,
+  ja: 9_753_335,
+  ko: 13_488_748,
+};
+
+export function isOcrLanguage(value: string): value is OcrLanguage {
+  return (OCR_LANGUAGES as readonly string[]).includes(value);
+}
+
+/** 面向用户的识别语言名称（`translate` 注入 UI 的 `t`）。 */
+export function ocrLanguageLabel(
+  language: OcrLanguage,
+  translate: TranslateText = identityTranslate,
+): string {
+  return translate(LANGUAGE_LABELS[language] ?? language);
+}
+
+/** 语言包资产 id；`zh` 使用基础 rec/dict 资产，返回 `null`。 */
+export function ocrLanguagePackId(language: OcrLanguage): string | null {
+  return language === "zh" ? null : `${LANGUAGE_PACK_ID_PREFIX}${language}`;
+}
+
+/** `models_list` / `download:*` 事件里的 id 是否为语言包资产。 */
+export function isOcrLanguagePackId(id: string): boolean {
+  return /^ocr-lang-(ru|ja|ko)$/.test(id);
+}
+
+/**
+ * 该识别语言是否可用：`zh` 使用基础 rec/dict 资产，恒为可用；
+ * 状态缺失（旧后端未返回 `languages`）时不做限制，避免把合法选项全部禁用。
+ */
+export function languageInstalled(status: OcrStatus | null, language: OcrLanguage): boolean {
+  if (language === "zh") return true;
+  const entries = status?.languages;
+  if (!entries || entries.length === 0) return true;
+  return entries.some((item) => item.language === language && item.installed);
+}
+
+/** 未安装的语言包（不含 `zh`），决定「语言包」下载行是否出现。 */
+export function pendingLanguagePacks(status: OcrStatus | null): OcrLanguageStatus[] {
+  return (status?.languages ?? []).filter((item) => !item.installed && item.language !== "zh");
+}
+
+/** 识别语言下拉选项：未安装的语言包后缀「（未下载）」并禁用。 */
+export function ocrLanguageOptions(
+  status: OcrStatus | null,
+  translate: TranslateText = identityTranslate,
+): { value: OcrLanguage; label: string; disabled: boolean }[] {
+  return OCR_LANGUAGES.map((language) => {
+    const label = ocrLanguageLabel(language, translate);
+    const installed = languageInstalled(status, language);
+    return {
+      value: language,
+      label: installed ? label : `${label}${translate("（未下载）")}`,
+      disabled: !installed,
+    };
+  });
+}
+
+/** 语言包在 `models_list` 中的条目（用于大小与下载状态展示）。 */
+export function languagePackModel(models: ModelInfo[], language: OcrLanguage): ModelInfo | null {
+  const id = ocrLanguagePackId(language);
+  if (!id) return null;
+  return models.find((model) => model.id === id) ?? null;
+}
+
+/** 语言包大小：优先取 `models_list`，缺失时用契约固定大小兜底。 */
+export function languagePackSize(models: ModelInfo[], language: OcrLanguage): number {
+  if (language === "zh") return 0;
+  return languagePackModel(models, language)?.sizeBytes ?? LANGUAGE_PACK_FALLBACK_BYTES[language];
 }
 
 /**

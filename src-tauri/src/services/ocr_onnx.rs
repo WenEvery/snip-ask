@@ -43,14 +43,16 @@
 //!   在本机实测仅含 CPU EP；OCR 模型小（det 4.7 MB / rec 10.9 MB），CPU 即可达标
 //!   （S-02/S-03）。Vulkan/CUDA 属于本地 **LLM** 推理链路，与 OCR 无关。
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 use parking_lot::Mutex;
 
+use crate::contract::config::OcrLanguage;
 use crate::contract::errors::{AppError, AppResult, ErrorCode};
-use crate::contract::types::{OcrAssetStatus, OcrBox, OcrStatus, RectPhys};
+use crate::contract::types::{OcrAssetStatus, OcrBox, OcrLanguageStatus, OcrStatus, RectPhys};
 use crate::platform::capture::FrozenFrame;
 use crate::services::ocr_service::{det_input_size, OcrEngine};
 
@@ -82,6 +84,21 @@ pub const ASSET_REC: &str = "ocr-rec";
 pub const ASSET_CLS: &str = "ocr-cls";
 /// 字典资产 id。
 pub const ASSET_DICT: &str = "ocr-dict";
+/// 俄语语言包资产 id（单个 rec ONNX）。
+pub const ASSET_LANG_RU: &str = "ocr-lang-ru";
+/// 日语语言包资产 id。
+pub const ASSET_LANG_JA: &str = "ocr-lang-ja";
+/// 韩语语言包资产 id。
+pub const ASSET_LANG_KO: &str = "ocr-lang-ko";
+
+/// 非中文语言包 rec 文件名（固定名；与 manifest `params.fileName` 一致）。
+///
+/// 语言包不随包：`installed` = 文件存在。`Zh` 用基础 [`REC_FILE_NAME`] + [`DICT_FILE_NAME`]。
+pub const LANG_REC_NAMES: [(OcrLanguage, &str); 3] = [
+    (OcrLanguage::Ru, "cyrillic_PP-OCRv5_rec_infer.onnx"),
+    (OcrLanguage::Ja, "japan_PP-OCRv4_rec_infer.onnx"),
+    (OcrLanguage::Ko, "korean_PP-OCRv5_rec_infer.onnx"),
+];
 
 /// DB 二值化阈值（RapidOCR `Det.thresh`）。
 pub const DET_THRESH: f32 = 0.3;
@@ -243,6 +260,10 @@ pub struct OcrAssets {
     pub cls: Option<ResolvedAsset>,
     /// rec 字典。
     pub dict: Option<ResolvedAsset>,
+    /// 语言包 rec（固定 4 项，含 `Zh` → 复用 [`Self::rec`]）。
+    pub lang_rec: Vec<(OcrLanguage, Option<ResolvedAsset>)>,
+    /// 解析时使用的目录列表（内部 `refresh` 用，不参与契约）。
+    resolve_dirs: Vec<(PathBuf, AssetSource)>,
 }
 
 impl OcrAssets {
@@ -278,7 +299,11 @@ impl OcrAssets {
         if let Some(dir) = dev_dir {
             dirs.push((dir.to_path_buf(), AssetSource::DevHook));
         }
+        Self::resolve_dirs(dirs)
+    }
 
+    /// 按已展开的目录优先级解析（[`Self::resolve_from`] / [`Self::refresh`] 共用）。
+    fn resolve_dirs(dirs: Vec<(PathBuf, AssetSource)>) -> Self {
         let find = |id: &'static str, file_name: &str| -> Option<ResolvedAsset> {
             dirs.iter().find_map(|(dir, source)| {
                 let path = dir.join(file_name);
@@ -287,25 +312,84 @@ impl OcrAssets {
             })
         };
 
+        let runtime = find(ASSET_DICT, ORT_DLL_NAME).map(|asset| ResolvedAsset {
+            id: "ocr-runtime",
+            ..asset
+        });
+        let det = find(ASSET_DET, DET_FILE_NAME);
+        let rec = find(ASSET_REC, REC_FILE_NAME);
+        let cls = find(ASSET_CLS, CLS_FILE_NAME);
+        let dict = find(ASSET_DICT, DICT_FILE_NAME);
+        // 语言包固定 4 项（含 Zh → 复用基础 rec），顺序与 [`OcrLanguage::ALL`] 一致。
+        let mut lang_rec: Vec<(OcrLanguage, Option<ResolvedAsset>)> =
+            Vec::with_capacity(OcrLanguage::ALL.len());
+        lang_rec.push((OcrLanguage::Zh, rec.clone()));
+        for (language, file_name) in LANG_REC_NAMES {
+            let id = language.asset_id().unwrap_or("ocr-lang");
+            lang_rec.push((language, find(id, file_name)));
+        }
+
         Self {
-            runtime: find(ASSET_DICT, ORT_DLL_NAME).map(|asset| ResolvedAsset {
-                id: "ocr-runtime",
-                ..asset
-            }),
-            det: find(ASSET_DET, DET_FILE_NAME),
-            rec: find(ASSET_REC, REC_FILE_NAME),
-            cls: find(ASSET_CLS, CLS_FILE_NAME),
-            dict: find(ASSET_DICT, DICT_FILE_NAME),
+            runtime,
+            det,
+            rec,
+            cls,
+            dict,
+            lang_rec,
+            resolve_dirs: dirs,
         }
     }
 
-    /// 运行时 + 全部模型/字典都可用。
+    /// 以相同目录优先级重新解析（用于「下载语言包后无需重启即可生效」）。
+    ///
+    /// 只做文件存在性检查，不做模型加载；缺资产时调用方可继续用旧快照。
+    pub fn refresh(&self) -> Self {
+        Self::resolve_dirs(self.resolve_dirs.clone())
+    }
+
+    /// 运行时 + 全部模型/字典都可用（基础中文资产；向后兼容语义）。
     pub fn is_ready(&self) -> bool {
         self.runtime.is_some()
             && self.det.is_some()
             && self.rec.is_some()
             && self.cls.is_some()
             && self.dict.is_some()
+    }
+
+    /// 基础资产齐全 + 指定语言可用（`Zh` = 基础 rec/dict；其它 = 语言包存在）。
+    pub fn is_ready_for(&self, language: OcrLanguage) -> bool {
+        self.is_ready() && self.language_installed(language)
+    }
+
+    /// 指定语言的语言包 rec 资产（`Zh` → 基础 [`Self::rec`]）。
+    pub fn lang_rec(&self, language: OcrLanguage) -> Option<&ResolvedAsset> {
+        if language == OcrLanguage::Zh {
+            return self.rec.as_ref();
+        }
+        self.lang_rec
+            .iter()
+            .find(|(item, _)| *item == language)
+            .and_then(|(_, asset)| asset.as_ref())
+    }
+
+    /// 指定语言是否已安装：`Zh` = 基础 rec + dict 都存在；其它 = 语言包文件存在。
+    pub fn language_installed(&self, language: OcrLanguage) -> bool {
+        if language == OcrLanguage::Zh {
+            self.rec.is_some() && self.dict.is_some()
+        } else {
+            self.lang_rec(language).is_some()
+        }
+    }
+
+    /// 基础缺失资产 id + 指定语言包 id（语言包缺失时）。
+    pub fn missing_for(&self, language: OcrLanguage) -> Vec<&'static str> {
+        let mut missing = self.missing();
+        if !self.language_installed(language) {
+            if let Some(id) = language.asset_id() {
+                missing.push(id);
+            }
+        }
+        missing
     }
 
     /// 运行时 + 全部资产都来自随包资源（full 版）。
@@ -347,6 +431,9 @@ impl OcrAssets {
             ASSET_REC => self.rec.as_ref(),
             ASSET_CLS => self.cls.as_ref(),
             ASSET_DICT => self.dict.as_ref(),
+            ASSET_LANG_RU => self.lang_rec(OcrLanguage::Ru),
+            ASSET_LANG_JA => self.lang_rec(OcrLanguage::Ja),
+            ASSET_LANG_KO => self.lang_rec(OcrLanguage::Ko),
             _ => None,
         }
     }
@@ -1015,6 +1102,14 @@ impl OcrDict {
         Self::parse(&content)
     }
 
+    /// 从 ONNX metadata `character`（换行分隔的字典）解析（语言包用）。
+    ///
+    /// PP-OCRv5 / v4 语言包把字典写在模型 metadata 的 `character` 键里（每个字符一行，
+    /// 末尾可能带换行）；解析口径与 `ppocr_keys_v1.txt` 完全一致（见 [`Self::parse`]）。
+    pub fn from_model_metadata(content: &str) -> AppResult<Self> {
+        Self::parse(content)
+    }
+
     /// 索引 → 字符：0 = blank（`None`），1..=N = 字典，N+1 = 空格。
     pub fn char_at(&self, index: usize) -> Option<&str> {
         if index == 0 {
@@ -1072,12 +1167,21 @@ pub fn ctc_decode(
 
 // ───────────────────────────── 会话集 ─────────────────────────────
 
-/// 已加载的 ONNX 会话 + 字典（一次加载，进程内复用）。
-struct LoadedOcr {
-    det: Mutex<ort::session::Session>,
-    rec: Mutex<ort::session::Session>,
-    cls: Mutex<ort::session::Session>,
+/// 单个识别语言的语言包（rec 会话 + 字典），首次使用该语言时懒加载。
+struct RecPack {
+    session: Mutex<ort::session::Session>,
     dict: OcrDict,
+}
+
+/// 已加载的 ONNX 会话（一次加载，进程内复用）。
+///
+/// `det` / `cls` 与语言无关；rec 按语言放在 [`Self::recs`] 里懒加载
+/// （`Zh` 用基础 rec + 字典文件，其它语言用语言包 + metadata 字典）。
+struct LoadedOcr {
+    assets: OcrAssets,
+    det: Mutex<ort::session::Session>,
+    cls: Mutex<ort::session::Session>,
+    recs: Mutex<HashMap<OcrLanguage, Arc<RecPack>>>,
 }
 
 /// 单次 OCR 的几何参数（det 前处理 / 坐标还原）。
@@ -1108,51 +1212,133 @@ fn session_intra_threads() -> usize {
         .max(1)
 }
 
+/// 创建一个 ONNX 会话（det / cls / rec 共用同一套线程与图优化配置）。
+fn load_session(
+    env: &ort::environment::Environment,
+    path: &Path,
+) -> AppResult<ort::session::Session> {
+    let mut builder = ort::session::Session::builder(env)
+        .map_err(|err| ocr_failed(format!("创建 ONNX 会话失败：{err}")))?
+        .with_intra_threads(session_intra_threads())
+        .map_err(|err| ocr_failed(format!("设置 ONNX 线程数失败：{err}")))?
+        .with_inter_threads(1)
+        .map_err(|err| ocr_failed(format!("设置 ONNX 线程数失败：{err}")))?
+        .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
+        .map_err(|err| ocr_failed(format!("设置 ONNX 图优化级别失败：{err}")))?;
+    builder
+        .commit_from_file(path)
+        .map_err(|err| ocr_failed(format!("加载 ONNX 模型 {} 失败：{err}", path.display())))
+}
+
+/// 从语言包 ONNX 模型 metadata 的 `character` 键读取字典（换行分隔）。
+///
+/// 语言包只有 1 个 ONNX 文件，字典内嵌在模型 metadata 里；解析口径与
+/// `ppocr_keys_v1.txt` 一致（见 [`OcrDict::from_model_metadata`]）。
+/// metadata 缺失时返回 `model_missing` 可操作错误（**不回退中文**，否则会输出乱码）。
+fn dict_from_model_metadata(
+    session: &ort::session::Session,
+    language: OcrLanguage,
+) -> AppResult<OcrDict> {
+    let metadata = session.metadata().map_err(|err| {
+        model_missing(format!(
+            "读取 {} 识别模型 metadata 失败：{err}。请重新下载语言包（设置 → 高级 → 文字识别）。",
+            language.display_name()
+        ))
+    })?;
+    let content = metadata.custom("character").ok_or_else(|| {
+        model_missing(format!(
+            "{} 识别模型缺少内嵌字典（metadata `character`）。请重新下载语言包（设置 → 高级 → 文字识别）。",
+            language.display_name()
+        ))
+    })?;
+    OcrDict::from_model_metadata(&content).map_err(|err| {
+        ocr_failed(format!(
+            "{} 识别模型内嵌字典解析失败：{}",
+            language.display_name(),
+            err.message
+        ))
+    })
+}
+
 impl LoadedOcr {
-    fn load(assets: &OcrAssets) -> AppResult<Self> {
+    /// 加载与语言无关的会话（det / cls），并预热当前语言的 rec pack。
+    fn load(assets: &OcrAssets, language: OcrLanguage) -> AppResult<Self> {
         let dll = assets
             .runtime_path()
-            .ok_or_else(|| engine_unavailable(missing_message(&assets.missing())))?;
-        let (det_path, rec_path, cls_path, dict_path) =
-            match (&assets.det, &assets.rec, &assets.cls, &assets.dict) {
-                (Some(det), Some(rec), Some(cls), Some(dict)) => {
-                    (&det.path, &rec.path, &cls.path, &dict.path)
-                }
-                _ => return Err(model_missing(missing_message(&assets.missing()))),
-            };
+            .ok_or_else(|| engine_unavailable(missing_message_for(assets, language)))?;
+        let (det_path, cls_path) = match (&assets.det, &assets.cls) {
+            (Some(det), Some(cls)) => (&det.path, &cls.path),
+            _ => return Err(model_missing(missing_message_for(assets, language))),
+        };
+        if !assets.is_ready_for(language) {
+            return Err(model_missing(missing_message_for(assets, language)));
+        }
 
         let started = std::time::Instant::now();
         let env = ensure_ort_env(dll)?;
-        let dict = OcrDict::from_path(dict_path)?;
-
-        let intra = session_intra_threads();
-        let load_session = |path: &Path| -> AppResult<ort::session::Session> {
-            let mut builder = ort::session::Session::builder(env)
-                .map_err(|err| ocr_failed(format!("创建 ONNX 会话失败：{err}")))?
-                .with_intra_threads(intra)
-                .map_err(|err| ocr_failed(format!("设置 ONNX 线程数失败：{err}")))?
-                .with_inter_threads(1)
-                .map_err(|err| ocr_failed(format!("设置 ONNX 线程数失败：{err}")))?
-                .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
-                .map_err(|err| ocr_failed(format!("设置 ONNX 图优化级别失败：{err}")))?;
-            builder
-                .commit_from_file(path)
-                .map_err(|err| ocr_failed(format!("加载 ONNX 模型 {} 失败：{err}", path.display())))
-        };
-
         let loaded = Self {
-            det: Mutex::new(load_session(det_path)?),
-            rec: Mutex::new(load_session(rec_path)?),
-            cls: Mutex::new(load_session(cls_path)?),
-            dict,
+            assets: assets.clone(),
+            det: Mutex::new(load_session(env, det_path)?),
+            cls: Mutex::new(load_session(env, cls_path)?),
+            recs: Mutex::new(HashMap::new()),
         };
+        // 预热：当前语言的 rec 会话 + 字典（等价旧版「加载时读 rec/dict」）。
+        loaded.rec_pack(language)?;
         tracing::info!(
             elapsed_ms = started.elapsed().as_millis() as u64,
-            intra,
-            dict_lines = loaded.dict.chars.len(),
+            intra = session_intra_threads(),
+            language = language.as_str(),
             "OCR ONNX 会话加载完成"
         );
         Ok(loaded)
+    }
+
+    /// 取指定语言的 rec pack（懒加载并缓存；不持 `recs` 锁做会话加载，避免锁顺序问题）。
+    fn rec_pack(&self, language: OcrLanguage) -> AppResult<Arc<RecPack>> {
+        if let Some(pack) = self.recs.lock().get(&language).cloned() {
+            return Ok(pack);
+        }
+
+        // 慢路径：解析资产（必要时重扫目录，覆盖「启动后下载语言包」）→ 创建会话 → 读字典。
+        let dll = self
+            .assets
+            .runtime_path()
+            .ok_or_else(|| engine_unavailable(missing_message_for(&self.assets, language)))?;
+        let env = ensure_ort_env(dll)?;
+        // 目录重扫只做文件存在性检查，可覆盖下载后未重启的情况。
+        let refreshed = self.assets.refresh();
+        let (session, dict) = if language == OcrLanguage::Zh {
+            let rec = self
+                .assets
+                .rec
+                .clone()
+                .or_else(|| refreshed.rec.clone())
+                .ok_or_else(|| model_missing(missing_message_for(&refreshed, language)))?;
+            let dict = self
+                .assets
+                .dict
+                .clone()
+                .or_else(|| refreshed.dict.clone())
+                .ok_or_else(|| model_missing(missing_message_for(&refreshed, language)))?;
+            let session = load_session(env, &rec.path)?;
+            (session, OcrDict::from_path(&dict.path)?)
+        } else {
+            let asset = self
+                .assets
+                .lang_rec(language)
+                .or_else(|| refreshed.lang_rec(language))
+                .ok_or_else(|| model_missing(missing_message_for(&refreshed, language)))?;
+            let session = load_session(env, &asset.path)?;
+            // 语言包字典在模型 metadata `character`（换行分隔）；缺失时报可操作错误，不回退中文。
+            let dict = dict_from_model_metadata(&session, language)?;
+            (session, dict)
+        };
+        let pack = Arc::new(RecPack {
+            session: Mutex::new(session),
+            dict,
+        });
+        let mut recs = self.recs.lock();
+        Ok(recs.entry(language).or_insert(pack).clone())
     }
 
     /// 整帧 det（返回帧局部物理像素框，`text` 为空、`confidence` 为 det 分数）。
@@ -1232,7 +1418,12 @@ impl LoadedOcr {
     /// **v1.0.5**：DB 在低分辨率整屏 det 下可能把相邻多行合并成一个高框；直接整框送 rec 会得到
     /// 空文本/低置信度（实测三行合并框 rec 置信度 0.00），随后被 `textThreshold` 过滤 → 用户看到
     /// 「部分文字没识别」。这里先按行墨迹投影把异常高的框拆成多行，再逐行 rec。
-    fn recognize_boxes(&self, image: &OcrImage, boxes: &[OcrBox]) -> AppResult<Vec<OcrBox>> {
+    fn recognize_boxes(
+        &self,
+        image: &OcrImage,
+        boxes: &[OcrBox],
+        language: OcrLanguage,
+    ) -> AppResult<Vec<OcrBox>> {
         if boxes.is_empty() {
             return Ok(Vec::new());
         }
@@ -1254,7 +1445,7 @@ impl LoadedOcr {
         self.classify_crops(&mut crops)?;
 
         // 3) rec：分批推理，CTC 解码。
-        let recognized = self.recognize_crops(&crops)?;
+        let recognized = self.recognize_crops(&crops, language)?;
         for (slot, (text, confidence)) in results.iter_mut().zip(recognized) {
             slot.text = text;
             slot.confidence = confidence as f64;
@@ -1329,7 +1520,11 @@ impl LoadedOcr {
         Ok(())
     }
 
-    fn recognize_crops(&self, crops: &[Option<OcrImage>]) -> AppResult<Vec<(String, f32)>> {
+    fn recognize_crops(
+        &self,
+        crops: &[Option<OcrImage>],
+        language: OcrLanguage,
+    ) -> AppResult<Vec<(String, f32)>> {
         let mut output: Vec<(String, f32)> = vec![(String::new(), 0.0); crops.len()];
         let indices: Vec<usize> = crops
             .iter()
@@ -1339,6 +1534,8 @@ impl LoadedOcr {
         if indices.is_empty() {
             return Ok(output);
         }
+        // 当前语言的 rec 会话 + 字典（语言包首次使用时懒加载并缓存）。
+        let pack = self.rec_pack(language)?;
         for chunk in indices.chunks(REC_BATCH_NUM) {
             // 批内最大宽高比（下限 320/48，与 RapidOCR 一致）。
             let mut max_wh_ratio = REC_BASE_WIDTH as f32 / REC_IMG_HEIGHT as f32;
@@ -1369,7 +1566,7 @@ impl LoadedOcr {
                     dst,
                 )?;
             }
-            let mut session = self.rec.lock();
+            let mut session = pack.session.lock();
             let input = ort::value::Tensor::from_array((
                 [chunk.len(), 3, REC_IMG_HEIGHT as usize, batch_w],
                 tensor,
@@ -1392,7 +1589,7 @@ impl LoadedOcr {
             for (slot, &idx) in chunk.iter().enumerate() {
                 let start = slot * timesteps * classes;
                 let slice = &probs[start..start + timesteps * classes];
-                output[idx] = ctc_decode(slice, timesteps, classes, &self.dict);
+                output[idx] = ctc_decode(slice, timesteps, classes, &pack.dict);
             }
         }
         Ok(output)
@@ -1434,8 +1631,8 @@ fn resize_bgra_into_padded(
 /// 真实 OCR 引擎（懒加载；实现 [`OcrEngine`]）。
 ///
 /// - 构造 [`OnnxOcrEngine::new`] **不加载模型**（启动快、slim 版首次使用前模型可能还没下载）；
-/// - 首次推理时加载 det/rec/cls 三个 session（约 300–600 ms）并在进程内复用；
-/// - 模型下载完成后再调用即可自动生效，无需重启。
+/// - 首次推理时加载 det/cls session + 当前语言的 rec pack（约 300–600 ms）并在进程内复用；
+/// - 模型 / 语言包下载完成后再调用即可自动生效（加载前会重扫资产目录），无需重启。
 #[derive(Clone)]
 pub struct OnnxOcrEngine {
     inner: Arc<EngineInner>,
@@ -1443,16 +1640,19 @@ pub struct OnnxOcrEngine {
 
 struct EngineInner {
     assets: OcrAssets,
+    /// 当前识别语言（配置 `ocr.language`；热切换由 [`OnnxOcrEngine::set_language`] 更新）。
+    language: Mutex<OcrLanguage>,
     loaded: Mutex<Option<Arc<LoadedOcr>>>,
     load_lock: Mutex<()>,
 }
 
 impl OnnxOcrEngine {
     /// 创建懒加载引擎（不读取模型文件）。
-    pub fn new(assets: OcrAssets) -> Self {
+    pub fn new(assets: OcrAssets, language: OcrLanguage) -> Self {
         Self {
             inner: Arc::new(EngineInner {
                 assets,
+                language: Mutex::new(language),
                 loaded: Mutex::new(None),
                 load_lock: Mutex::new(()),
             }),
@@ -1460,8 +1660,8 @@ impl OnnxOcrEngine {
     }
 
     /// 立即加载模型（可选；测试 / 预热门闩用）。
-    pub fn load(assets: OcrAssets) -> AppResult<Self> {
-        let engine = Self::new(assets);
+    pub fn load(assets: OcrAssets, language: OcrLanguage) -> AppResult<Self> {
+        let engine = Self::new(assets, language);
         engine.ensure_loaded()?;
         Ok(engine)
     }
@@ -1471,19 +1671,48 @@ impl OnnxOcrEngine {
         &self.inner.assets
     }
 
+    /// 当前识别语言。
+    pub fn language(&self) -> OcrLanguage {
+        *self.inner.language.lock()
+    }
+
+    /// 切换识别语言（热生效；不要求已加载）。
+    ///
+    /// 已加载的其它语言 rec pack 留在缓存里（切回时无需重新加载）；新语言在首次识别时
+    /// 懒加载语言包。语言包缺失不会在切换时报错（配置保存不受影响），首次 OCR 时返回
+    /// 可操作的 `SA-4001` 提示。
+    pub fn set_language(&self, language: OcrLanguage) -> AppResult<()> {
+        *self.inner.language.lock() = language;
+        Ok(())
+    }
+
     /// 是否已加载模型。
     pub fn is_loaded(&self) -> bool {
         self.inner.loaded.lock().is_some()
     }
 
-    /// 预热（后台线程调用；等价于首次推理前的加载）。
+    /// 预热（后台线程调用；等价于首次推理前的加载 + 当前语言包预加载）。
     pub fn warmup(&self) -> AppResult<()> {
         self.ensure_loaded().map(|_| ())
     }
 
-    /// 资产是否齐全（不加载模型）。
+    /// 资产是否齐全（不加载模型；含当前语言的语言包）。
     pub fn is_ready(&self) -> bool {
-        self.inner.assets.is_ready()
+        self.inner.assets.is_ready_for(self.language())
+    }
+
+    /// 加载用资产快照：当前语言缺失时重扫目录（覆盖「启动后下载语言包」）。
+    fn effective_assets(&self, language: OcrLanguage) -> OcrAssets {
+        let snapshot = self.inner.assets.clone();
+        if snapshot.is_ready_for(language) {
+            return snapshot;
+        }
+        let refreshed = snapshot.refresh();
+        if refreshed.is_ready_for(language) {
+            refreshed
+        } else {
+            snapshot
+        }
     }
 
     fn ensure_loaded(&self) -> AppResult<Arc<LoadedOcr>> {
@@ -1494,14 +1723,11 @@ impl OnnxOcrEngine {
         if let Some(loaded) = self.inner.loaded.lock().clone() {
             return Ok(loaded);
         }
-        match LoadedOcr::load(&self.inner.assets) {
-            Ok(loaded) => {
-                let loaded = Arc::new(loaded);
-                *self.inner.loaded.lock() = Some(loaded.clone());
-                Ok(loaded)
-            }
-            Err(err) => Err(err),
-        }
+        let language = self.language();
+        let assets = self.effective_assets(language);
+        let loaded = Arc::new(LoadedOcr::load(&assets, language)?);
+        *self.inner.loaded.lock() = Some(loaded.clone());
+        Ok(loaded)
     }
 }
 
@@ -1533,7 +1759,8 @@ impl OcrEngine for OnnxOcrEngine {
         let engine = self.clone();
         run_blocking(move || {
             let loaded = engine.ensure_loaded()?;
-            loaded.recognize_boxes(&image, &boxes)
+            let language = engine.language();
+            loaded.recognize_boxes(&image, &boxes, language)
         })
         .await
     }
@@ -1567,8 +1794,9 @@ impl OcrEngine for OnnxOcrEngine {
         let engine = self.clone();
         run_blocking(move || {
             let loaded = engine.ensure_loaded()?;
+            let language = engine.language();
             let local_boxes = loaded.detect_frame(&crop, det_max_edge)?;
-            let recognized = loaded.recognize_boxes(&crop, &local_boxes)?;
+            let recognized = loaded.recognize_boxes(&crop, &local_boxes, language)?;
             Ok(recognized
                 .into_iter()
                 .map(|mut item| {
@@ -1611,8 +1839,26 @@ fn missing_message(missing: &[&str]) -> String {
     )
 }
 
-/// 构建 `ocr_status` 返回（契约 v5 §3.3）。
-pub fn build_status(assets: &OcrAssets) -> OcrStatus {
+/// 缺失资产提示文案（按识别语言选择最可操作的一条）。
+///
+/// - 运行时缺失 → 始终提示运行时（所有语言共用）；
+/// - 基础资产缺失 → 提示下载 OCR 资产 / 用 full 版；
+/// - 仅语言包缺失 → 提示去设置页下载对应语言包（例如「缺少 俄语 识别模型：…”）。
+fn missing_message_for(assets: &OcrAssets, language: OcrLanguage) -> String {
+    if !assets.is_ready() {
+        return missing_message(&assets.missing());
+    }
+    if language != OcrLanguage::Zh && !assets.language_installed(language) {
+        return format!(
+            "缺少 {} 识别模型：请在「设置 → 高级 → 文字识别」下载语言包（语言包不随安装包提供）。",
+            language.display_name()
+        );
+    }
+    missing_message(&assets.missing_for(language))
+}
+
+/// 构建 `ocr_status` 返回（契约 v5；v7 增加 `language` / `languages`）。
+pub fn build_status(assets: &OcrAssets, language: OcrLanguage) -> OcrStatus {
     let manifest = crate::domain::models::parse_manifest(crate::resources::MODELS_MANIFEST).ok();
     let mut statuses = Vec::with_capacity(OCR_ASSET_SPECS.len());
     for (id, default_name, default_size, default_sha) in OCR_ASSET_SPECS {
@@ -1642,6 +1888,15 @@ pub fn build_status(assets: &OcrAssets) -> OcrStatus {
         });
     }
 
+    // 语言包状态（固定 4 项，含 zh；不塞进 `assets`，避免既有 UI / 测试口径变化）。
+    let languages: Vec<OcrLanguageStatus> = OcrLanguage::ALL
+        .iter()
+        .map(|language| OcrLanguageStatus {
+            language: *language,
+            installed: assets.language_installed(*language),
+        })
+        .collect();
+
     let runtime_ready = assets.runtime.is_some();
     let bundled = runtime_ready
         && assets
@@ -1663,6 +1918,8 @@ pub fn build_status(assets: &OcrAssets) -> OcrStatus {
         runtime_ready,
         runtime_path: assets.runtime_path().map(|path| path.display().to_string()),
         assets: statuses,
+        language,
+        languages,
         missing: missing.into_iter().map(str::to_string).collect(),
         message,
     }
@@ -1671,10 +1928,15 @@ pub fn build_status(assets: &OcrAssets) -> OcrStatus {
 /// `ocr_status` 命令实现（Lead 接线用）：每次调用重新解析资产（下载模型后立刻反映）。
 ///
 /// - `resource_dir`：`app.path().resource_dir().ok()`（安装目录，内部拼 `\ocr`）；
-/// - `models_dir`：`state.paths.models_dir`（内部拼 `\ocr`）。
-pub fn ocr_status(resource_dir: Option<&Path>, models_dir: &Path) -> OcrStatus {
+/// - `models_dir`：`state.paths.models_dir`（内部拼 `\ocr`）；
+/// - `language`：当前识别语言（配置 `ocr.language`）。
+pub fn ocr_status(
+    resource_dir: Option<&Path>,
+    models_dir: &Path,
+    language: OcrLanguage,
+) -> OcrStatus {
     let assets = OcrAssets::resolve_from(resource_dir, models_dir, dev_ocr_dir().as_deref());
-    build_status(&assets)
+    build_status(&assets, language)
 }
 
 #[cfg(test)]
@@ -2053,7 +2315,7 @@ mod tests {
     fn status_reports_missing_assets_and_actionable_message() {
         let root = temp_root("status-missing");
         let assets = OcrAssets::resolve_from(None, &root.join("models"), None);
-        let status = build_status(&assets);
+        let status = build_status(&assets, OcrLanguage::Zh);
         assert!(!status.ready);
         assert!(!status.runtime_ready);
         assert!(!status.bundled);
@@ -2085,7 +2347,7 @@ mod tests {
         let resource = root.join("resource");
         dummy_ocr_dir(&resource);
         let assets = OcrAssets::resolve_from(Some(&resource), &root.join("models"), None);
-        let status = build_status(&assets);
+        let status = build_status(&assets, OcrLanguage::Ja);
         assert!(status.ready);
         assert!(status.runtime_ready);
         assert!(status.bundled);
@@ -2094,6 +2356,30 @@ mod tests {
         assert!(status.runtime_path.unwrap().ends_with(ORT_DLL_NAME));
         assert!(status.assets.iter().all(|asset| asset.installed));
         assert!(status.assets.iter().all(|asset| asset.bundled));
+        // 契约 v7：language / languages 固定 4 项，zh 恒可用；语言包缺失 = installed:false。
+        assert_eq!(status.language, OcrLanguage::Ja);
+        assert_eq!(status.languages.len(), 4);
+        let installed: Vec<(OcrLanguage, bool)> = status
+            .languages
+            .iter()
+            .map(|item| (item.language, item.installed))
+            .collect();
+        assert_eq!(
+            installed,
+            vec![
+                (OcrLanguage::Zh, true),
+                (OcrLanguage::Ru, false),
+                (OcrLanguage::Ja, false),
+                (OcrLanguage::Ko, false),
+            ],
+            "基础 4 资产齐全时仅 zh 可用（语言包未安装）"
+        );
+        // 语言包缺失时：is_ready_for 为 false、missing_for 指出语言包 id。
+        assert!(assets.is_ready_for(OcrLanguage::Zh));
+        assert!(!assets.is_ready_for(OcrLanguage::Ja));
+        assert_eq!(assets.missing_for(OcrLanguage::Ja), vec![ASSET_LANG_JA]);
+        assert!(assets.language_installed(OcrLanguage::Zh));
+        assert!(!assets.language_installed(OcrLanguage::Ko));
         let _ = std::fs::remove_dir_all(&root);
     }
 
@@ -2105,13 +2391,168 @@ mod tests {
         write_dummy(&resource.join(OCR_DIR_NAME).join(ORT_DLL_NAME), 16);
         dummy_ocr_dir(&models);
         let assets = OcrAssets::resolve_from(Some(&resource), &models, None);
-        let status = build_status(&assets);
+        let status = build_status(&assets, OcrLanguage::Ko);
         assert!(status.ready);
         assert!(!status.bundled);
         assert!(status.message.is_none());
         assert!(status.assets.iter().all(|asset| asset.installed));
         assert!(status.assets.iter().all(|asset| !asset.bundled));
+        assert_eq!(status.language, OcrLanguage::Ko);
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    // ───────── 语言包资产解析 / 映射 ─────────
+
+    #[test]
+    fn ocr_language_contract_mappings_are_stable() {
+        // 稳定标识 / 展示名 / 语言包文件名 / 资产 id。
+        assert_eq!(OcrLanguage::ALL.len(), 4);
+        assert_eq!(
+            OcrLanguage::ALL.map(OcrLanguage::as_str),
+            ["zh", "ru", "ja", "ko"]
+        );
+        assert_eq!(OcrLanguage::default(), OcrLanguage::Zh);
+        assert_eq!(OcrLanguage::Zh.rec_file_name(), None);
+        assert_eq!(OcrLanguage::Zh.asset_id(), None);
+        assert_eq!(OcrLanguage::Ru.display_name(), "俄语");
+        assert_eq!(OcrLanguage::Ja.display_name(), "日语");
+        assert_eq!(OcrLanguage::Ko.display_name(), "韩语");
+        for language in [OcrLanguage::Ru, OcrLanguage::Ja, OcrLanguage::Ko] {
+            let file_name = language.rec_file_name().expect("非 zh 必须有语言包文件名");
+            let asset_id = language.asset_id().expect("非 zh 必须有语言包资产 id");
+            assert!(file_name.ends_with("_rec_infer.onnx"), "{file_name}");
+            assert!(asset_id.starts_with("ocr-lang-"), "{asset_id}");
+            // 与 `LANG_REC_NAMES` 单一事实来源保持一致
+            let mapped = LANG_REC_NAMES
+                .iter()
+                .find(|(item, _)| *item == language)
+                .map(|(_, name)| *name)
+                .expect("语言包文件名表必须覆盖该语言");
+            assert_eq!(file_name, mapped);
+            let expected_id = match language {
+                OcrLanguage::Ru => ASSET_LANG_RU,
+                OcrLanguage::Ja => ASSET_LANG_JA,
+                OcrLanguage::Ko => ASSET_LANG_KO,
+                OcrLanguage::Zh => unreachable!(),
+            };
+            assert_eq!(asset_id, expected_id);
+        }
+    }
+
+    #[test]
+    fn resolve_finds_language_packs_in_priority_order() {
+        let root = temp_root("lang-resolve");
+        let resource = root.join("resource");
+        let models = root.join("models");
+        dummy_ocr_dir(&resource);
+        let bundled_ocr = resource.join(OCR_DIR_NAME);
+        for (_, file_name) in LANG_REC_NAMES {
+            write_dummy(&bundled_ocr.join(file_name), 16);
+        }
+
+        let assets = OcrAssets::resolve_from(Some(&resource), &models, None);
+        // 基础 4 资产 + 3 个语言包都来自随包目录。
+        assert!(assets.is_ready());
+        assert!(assets.is_ready_for(OcrLanguage::Zh));
+        for (language, file_name) in LANG_REC_NAMES {
+            assert!(assets.is_ready_for(language), "{file_name} 应已解析");
+            let asset = assets.lang_rec(language).expect("语言包应解析到");
+            assert_eq!(asset.source, AssetSource::Bundled);
+            assert_eq!(asset.path, bundled_ocr.join(file_name));
+            // `asset(id)` 支持语言包 id（build_status 的 size/sha 查找口径）。
+            assert_eq!(
+                assets.asset(language.asset_id().unwrap()).unwrap().id,
+                language.asset_id().unwrap()
+            );
+        }
+        // `zh` 的 lang_rec 复用基础 rec。
+        assert_eq!(
+            assets.lang_rec(OcrLanguage::Zh).map(|a| a.path.clone()),
+            assets.rec.as_ref().map(|a| a.path.clone())
+        );
+
+        // 随包缺语言包但数据目录有 → 走 installed。
+        std::fs::remove_file(bundled_ocr.join(LANG_REC_NAMES[0].1)).unwrap();
+        let installed_ocr = models.join(OCR_DIR_NAME);
+        std::fs::create_dir_all(&installed_ocr).unwrap();
+        write_dummy(&installed_ocr.join(LANG_REC_NAMES[0].1), 16);
+        let assets = OcrAssets::resolve_from(Some(&resource), &models, None);
+        assert_eq!(
+            assets.lang_rec(LANG_REC_NAMES[0].0).unwrap().source,
+            AssetSource::Installed
+        );
+        assert_eq!(
+            assets.lang_rec(LANG_REC_NAMES[0].0).unwrap().id,
+            ASSET_LANG_RU
+        );
+
+        // 全缺 → 语言包缺失（installed:false / missing_for 含语言包 id / 错误提示可操作）。
+        let empty = OcrAssets::resolve_from(None, &root.join("nope"), None);
+        assert!(!empty.language_installed(OcrLanguage::Ru));
+        assert_eq!(
+            empty.missing_for(OcrLanguage::Ru).last(),
+            Some(&ASSET_LANG_RU)
+        );
+        // 基础资产齐全、仅语言包缺失：提示应直接指向语言包下载。
+        let base_only = OcrAssets::resolve_from(Some(&resource), &root.join("models-empty"), None);
+        assert!(base_only.is_ready());
+        let message = missing_message_for(&base_only, OcrLanguage::Ru);
+        assert!(message.contains("俄语"), "message = {message}");
+        assert!(message.contains("语言包"), "message = {message}");
+        // 运行时缺失时优先提示运行时（所有语言共用）。
+        assert!(missing_message_for(&empty, OcrLanguage::Ru).contains("ONNX Runtime"));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn refresh_picks_up_language_pack_added_after_resolve() {
+        // 模拟「启动后下载语言包」：快照缺包，refresh 后可见。
+        let root = temp_root("lang-refresh");
+        let models = root.join("models");
+        dummy_ocr_dir(&models);
+        let assets = OcrAssets::resolve_from(None, &models, None);
+        assert!(!assets.is_ready_for(OcrLanguage::Ja));
+
+        write_dummy(&models.join(OCR_DIR_NAME).join(LANG_REC_NAMES[1].1), 16);
+        let refreshed = assets.refresh();
+        assert!(refreshed.is_ready_for(OcrLanguage::Ja));
+        assert_eq!(
+            refreshed.lang_rec(OcrLanguage::Ja).unwrap().source,
+            AssetSource::Installed
+        );
+        // 旧快照不受影响（引擎按需 refresh，不修改已缓存会话）。
+        assert!(!assets.is_ready_for(OcrLanguage::Ja));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn metadata_dict_parses_language_pack_character_lines() {
+        // 与三套语言包真实 metadata 形状一致：每字符一行 + 末尾换行；行数 > 100。
+        let content = (0..850)
+            .map(|index| format!("字{index}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
+        let dict = OcrDict::from_model_metadata(&content).unwrap();
+        assert_eq!(dict.chars.len(), 850);
+        assert_eq!(dict.char_at(0), None);
+        assert_eq!(dict.char_at(1), Some("字0"));
+        assert_eq!(dict.char_at(850), Some("字849"));
+        // 语言包模型输出 classes = 字典行数 + 2（blank + 末尾空格）。
+        assert_eq!(dict.char_at(851), Some(" "));
+        assert_eq!(dict.char_at(852), None);
+        // 行内空格必须保留为字典字符（日语语言包字典 4399 行里就含一个空格字符）。
+        let with_space = format!(
+            "a\n \n{}\n",
+            (0..120)
+                .map(|index| format!("c{index}"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+        let dict = OcrDict::from_model_metadata(&with_space).unwrap();
+        assert_eq!(dict.chars[0], "a");
+        assert_eq!(dict.chars[1], " ");
+        assert_eq!(dict.chars[2], "c0");
     }
 
     // ───────── 引擎构造（不加载模型） ─────────
@@ -2120,9 +2561,10 @@ mod tests {
     fn engine_construct_is_lazy_and_reports_assets() {
         let root = temp_root("engine");
         let assets = OcrAssets::resolve_from(None, &root.join("models"), None);
-        let engine = OnnxOcrEngine::new(assets);
+        let engine = OnnxOcrEngine::new(assets, OcrLanguage::Zh);
         assert!(!engine.is_loaded());
         assert!(!engine.is_ready());
+        assert_eq!(engine.language(), OcrLanguage::Zh);
         // 缺资产时 warmup 返回可操作错误（SA-4001 / SA-2001），而不是 panic。
         let err = engine.warmup().unwrap_err();
         assert!(
@@ -2130,6 +2572,12 @@ mod tests {
             "code = {}",
             err.code
         );
+        // set_language 只更新配置语义（不要求已加载，不触碰会话缓存）。
+        engine.set_language(OcrLanguage::Ko).unwrap();
+        assert_eq!(engine.language(), OcrLanguage::Ko);
+        assert!(!engine.is_loaded());
+        // 缺语言包时 warmup / is_ready 给出 false（不 panic）。
+        assert!(!engine.is_ready());
     }
 
     #[test]

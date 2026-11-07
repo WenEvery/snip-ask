@@ -794,6 +794,17 @@ export const EN_MAIN: Record<string, string> = {
   文字识别模型: "Text recognition model",
   文字方向校正: "Text orientation correction",
   识别字典: "Recognition dictionary",
+  识别语言: "Recognition language",
+  "中文（含英文）": "Chinese (includes English)",
+  "（未下载）": " (not downloaded)",
+  "{language}语言包（约 {size}）": "{language} language pack (about {size})",
+  "语言包下载后立即生效；中文模型同时支持英文、数字与常见符号。":
+    "Language packs take effect immediately after download; the Chinese model also supports English, digits and common symbols.",
+  "框选后的文字在本机识别，不会上传。可以切换识别语言；非中文语言需要先下载对应的语言包。":
+    "Selected text is recognized locally and never uploaded. You can switch the recognition language; non-Chinese languages require downloading the corresponding language pack first.",
+  "当前识别语言的语言包未下载，识别暂时不可用；请下载语言包或改回中文。":
+    "The language pack for the current recognition language is not downloaded, so recognition is unavailable. Download the language pack or switch back to Chinese.",
+  "读取语言包状态失败：{error}": "Failed to read language pack status: {error}",
   换一种截图方式: "Use another capture method",
   改用浏览器搜索: "Use browser search",
   改用图片识别: "Switch to image recognition",

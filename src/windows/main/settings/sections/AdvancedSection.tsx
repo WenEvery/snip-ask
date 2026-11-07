@@ -11,6 +11,7 @@ import { buildPatch, hasChanges } from "../diff";
 import { errorMessage } from "../error";
 import { formatDuration } from "../format";
 import { editionLabel } from "../../ocr/status";
+import { OcrLanguageCard } from "../components/OcrLanguageCard";
 import { DEVICE_LABELS, LOCAL_BACKEND_LABELS } from "../presets";
 import {
   Hint,
@@ -50,7 +51,7 @@ export function AdvancedSection(props: SectionProps) {
   const { draft, baseline, saving, onEdit, onApply, onError } = props;
   const advanced = draft.advanced;
   const budget = draft.modes.deepBudget;
-  const dirty = hasChanges(baseline, draft, ["modes", "advanced"]);
+  const dirty = hasChanges(baseline, draft, ["modes", "advanced", "ocr"]);
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -108,7 +109,7 @@ export function AdvancedSection(props: SectionProps) {
   };
 
   const save = async () => {
-    const patch = buildPatch(baseline, draft, ["modes", "advanced"]);
+    const patch = buildPatch(baseline, draft, ["modes", "advanced", "ocr"]);
     if (Object.keys(patch).length === 0) return;
     await onApply(patch, t("高级设置"));
   };
@@ -271,6 +272,21 @@ export function AdvancedSection(props: SectionProps) {
           </p>
         ) : null}
         <Hint>{t("本地引擎没有启动时，云端 AI 和浏览器搜索仍然可以正常使用。")}</Hint>
+      </Panel>
+
+      <Panel
+        title={t("文字识别")}
+        description={t(
+          "框选后的文字在本机识别，不会上传。可以切换识别语言；非中文语言需要先下载对应的语言包。",
+        )}
+      >
+        <OcrLanguageCard
+          language={draft.ocr.language}
+          onChange={(language) =>
+            onEdit((current) => ({ ...current, ocr: { ...current.ocr, language } }))
+          }
+          onError={onError}
+        />
       </Panel>
 
       <Panel title={t("运行信息")} description={t("每 5 秒自动更新。")}>
